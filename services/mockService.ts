@@ -1,4 +1,4 @@
-import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement, ChatMessage, SystemHealth } from '../types';
+import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement, ChatMessage, SystemHealth, SupportTicket, KnowledgeBaseItem, UserActivity } from '../types';
 import { VEHICLE_PRICING } from '../constants';
 
 // --- Local Storage Helpers ---
@@ -8,7 +8,10 @@ const STORAGE_KEYS = {
   RIDES: 'naijamove_rides',
   TEMPLATES: 'naijamove_templates',
   ANNOUNCEMENTS: 'naijamove_announcements',
-  MESSAGES: 'naijamove_messages'
+  MESSAGES: 'naijamove_messages',
+  TICKETS: 'naijamove_tickets',
+  KB: 'naijamove_kb',
+  ACTIVITIES: 'naijamove_activities'
 };
 
 const load = <T>(key: string, defaultValue: T): T => {
@@ -110,17 +113,11 @@ const DEFAULT_USERS: User[] = [
     role: UserRole.ADMIN,
     walletBalance: 5000000,
     avatar: 'https://ui-avatars.com/api/?name=Super+Admin&background=10b981&color=fff',
-    status: 'ACTIVE'
-  },
-  {
-    id: 'staff-1',
-    name: 'Support Staff',
-    email: 'support@naijamove.ng',
-    role: UserRole.STAFF,
-    token: 'STAFF-TOKEN-123',
-    walletBalance: 0,
     status: 'ACTIVE',
-    permissions: ['view_users', 'manage_rides']
+    ip: '102.134.1.20',
+    device: 'MacBook Pro 16"',
+    isp: 'Starlink Nigeria',
+    location: { lat: 6.5244, lng: 3.3792 }
   },
   {
     id: 'driver-1',
@@ -135,7 +132,9 @@ const DEFAULT_USERS: User[] = [
     avatar: 'https://ui-avatars.com/api/?name=Musa+Ibrahim&background=f97316&color=fff',
     status: 'ACTIVE',
     ip: '197.210.1.1',
-    device: 'Android'
+    device: 'Samsung A54',
+    isp: 'MTN Nigeria',
+    location: { lat: 6.528, lng: 3.385 }
   },
   {
     id: 'driver-2',
@@ -149,7 +148,10 @@ const DEFAULT_USERS: User[] = [
     totalTrips: 89,
     avatar: 'https://ui-avatars.com/api/?name=Chinedu+Eze&background=3b82f6&color=fff',
     status: 'ACTIVE',
-    device: 'Android'
+    device: 'Infinix Hot 10',
+    ip: '105.112.44.12',
+    isp: 'Airtel Nigeria',
+    location: { lat: 6.520, lng: 3.370 }
   },
   {
     id: 'passenger-1',
@@ -160,64 +162,32 @@ const DEFAULT_USERS: User[] = [
     avatar: 'https://ui-avatars.com/api/?name=Tola+Adebayo&background=8b5cf6&color=fff',
     status: 'ACTIVE',
     ip: '102.12.33.1',
-    device: 'iPhone'
+    device: 'iPhone 13',
+    isp: 'Glo Mobile',
+    location: { lat: 6.530, lng: 3.390 }
   },
 ];
 
-const DEFAULT_RIDES: RideRequest[] = [
-  {
-    id: 'ride-101',
-    passengerId: 'passenger-1',
-    driverId: 'driver-1',
-    type: 'RIDE',
-    vehicleType: VehicleType.OKADA,
-    pickupAddress: 'Ikeja City Mall, Lagos',
-    dropoffAddress: 'Maryland Mall, Lagos',
-    price: 850,
-    status: RideStatus.COMPLETED,
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    distanceKm: 5.2,
-  },
-  {
-    id: 'ride-102',
-    passengerId: 'passenger-1',
-    type: 'LOGISTICS',
-    vehicleType: VehicleType.OKADA,
-    pickupAddress: 'Computer Village, Ikeja',
-    dropoffAddress: 'Victoria Island, Lagos',
-    price: 2500,
-    status: RideStatus.PENDING,
-    createdAt: new Date().toISOString(),
-    distanceKm: 18.5,
-    parcelDescription: 'MacBook Charger',
-    parcelWeight: '0.5kg',
-    receiverPhone: '08012345678',
-  },
-];
-
-const DEFAULT_TEMPLATES: NotificationTemplate[] = [
-    {
-        id: 'tpl-1',
-        name: 'Welcome Email',
-        type: 'EMAIL',
-        subject: 'Welcome to NaijaMove, {{name}}!',
-        body: 'Hi {{name}},\n\nWelcome to Nigeria\'s fastest logistics platform.',
-        variables: ['{{name}}']
-    }
+const DEFAULT_KB: KnowledgeBaseItem[] = [
+    { id: 'kb-1', question: 'How do I fund my wallet?', answer: 'You can fund your wallet via Bank Transfer or Paystack. Go to the Wallet section in the app.', tags: ['wallet', 'payment'] },
+    { id: 'kb-2', question: 'What is the base fare for Okada?', answer: 'The base fare for Okada rides is ₦200, plus ₦50 per km.', tags: ['pricing', 'okada'] },
+    { id: 'kb-3', question: 'Do you do interstate delivery?', answer: 'Currently, we only support logistics within Lagos and Abuja. Interstate is coming soon.', tags: ['logistics', 'delivery'] }
 ];
 
 // --- Initialize State from Storage ---
 
 let SETTINGS = load<SystemSettings>(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
 let USERS = load<User[]>(STORAGE_KEYS.USERS, DEFAULT_USERS);
-let RIDES = load<RideRequest[]>(STORAGE_KEYS.RIDES, DEFAULT_RIDES);
-let TEMPLATES = load<NotificationTemplate[]>(STORAGE_KEYS.TEMPLATES, DEFAULT_TEMPLATES);
+let RIDES = load<RideRequest[]>(STORAGE_KEYS.RIDES, []);
+let TEMPLATES = load<NotificationTemplate[]>(STORAGE_KEYS.TEMPLATES, []);
 let ANNOUNCEMENTS = load<Announcement[]>(STORAGE_KEYS.ANNOUNCEMENTS, []);
 let MESSAGES = load<ChatMessage[]>(STORAGE_KEYS.MESSAGES, []);
+let TICKETS = load<SupportTicket[]>(STORAGE_KEYS.TICKETS, []);
+let KB = load<KnowledgeBaseItem[]>(STORAGE_KEYS.KB, DEFAULT_KB);
+let ACTIVITIES = load<UserActivity[]>(STORAGE_KEYS.ACTIVITIES, []);
 
 // --- Helper Functions ---
 
-// Text-to-Speech Helper
 export const speak = (text: string) => {
   if ('speechSynthesis' in window) {
     const utterance = new SpeechSynthesisUtterance(text);
@@ -225,14 +195,28 @@ export const speak = (text: string) => {
   }
 };
 
+const logActivity = (userId: string, action: string, details: string) => {
+    const activity: UserActivity = {
+        id: `act-${Date.now()}-${Math.random()}`,
+        userId,
+        action,
+        details,
+        timestamp: new Date().toISOString(),
+        ip: USERS.find(u => u.id === userId)?.ip || 'Unknown'
+    };
+    ACTIVITIES = [activity, ...ACTIVITIES].slice(0, 1000); // Keep last 1000
+    save(STORAGE_KEYS.ACTIVITIES, ACTIVITIES);
+};
+
 // --- Service Methods ---
 
 export const login = async (identifier: string, isToken = false): Promise<User> => {
-  await new Promise(resolve => setTimeout(resolve, 800)); // Simulate latency
+  await new Promise(resolve => setTimeout(resolve, 800)); 
   
   if (isToken) {
     const user = USERS.find(u => u.token === identifier);
     if (!user) throw new Error('Invalid Staff Token');
+    logActivity(user.id, 'LOGIN', 'Staff login via token');
     return user;
   }
 
@@ -240,14 +224,11 @@ export const login = async (identifier: string, isToken = false): Promise<User> 
   if (!user) throw new Error('User not found');
   if (user.status !== 'ACTIVE') throw new Error(`Account is ${user.status}`);
 
-  // SECURITY CHECKS
   if (user.ip && SETTINGS.security.blockedIps.includes(user.ip)) {
       throw new Error(`Access Denied: Your IP (${user.ip}) is blocked.`);
   }
-  if (user.device && SETTINGS.security.blockedDevices.includes(user.device)) {
-      throw new Error(`Access Denied: Your device (${user.device}) is restricted.`);
-  }
   
+  logActivity(user.id, 'LOGIN', `Logged in via ${user.device}`);
   return user;
 };
 
@@ -267,11 +248,16 @@ export const getAllUsers = async (): Promise<User[]> => {
     return [...USERS];
 };
 
+export const getUserActivity = async (userId: string): Promise<UserActivity[]> => {
+    return ACTIVITIES.filter(a => a.userId === userId);
+};
+
 export const updateUserStatus = async (userId: string, status: 'ACTIVE' | 'BANNED' | 'SUSPENDED') => {
     const idx = USERS.findIndex(u => u.id === userId);
     if(idx !== -1) {
         USERS[idx] = { ...USERS[idx], status };
         save(STORAGE_KEYS.USERS, USERS);
+        logActivity('admin-1', 'USER_MOD', `Changed status of ${userId} to ${status}`);
     }
 };
 
@@ -279,8 +265,6 @@ export const getActiveRides = async (role: UserRole, userId: string): Promise<Ri
   await new Promise(resolve => setTimeout(resolve, 500));
   if (role === UserRole.ADMIN || role === UserRole.STAFF) return RIDES;
   if (role === UserRole.DRIVER) {
-    // Return rides that are Pending AND NOT rejected by this driver
-    // OR rides that are already accepted by this driver
     return RIDES.filter(r => 
         (r.status === RideStatus.PENDING && !r.rejectedBy?.includes(userId)) || 
         r.driverId === userId
@@ -299,6 +283,7 @@ export const createRide = async (ride: Omit<RideRequest, 'id' | 'status' | 'crea
   };
   RIDES = [newRide, ...RIDES];
   save(STORAGE_KEYS.RIDES, RIDES);
+  logActivity(ride.passengerId, 'BOOK_RIDE', `Booked ${ride.vehicleType} trip`);
   return newRide;
 };
 
@@ -308,7 +293,10 @@ export const updateRideStatus = async (rideId: string, status: RideStatus, drive
   if (rideIndex === -1) throw new Error("Ride not found");
   
   const updatedRide = { ...RIDES[rideIndex], status };
-  if (driverId) updatedRide.driverId = driverId;
+  if (driverId) {
+      updatedRide.driverId = driverId;
+      logActivity(driverId, 'RIDE_UPDATE', `Updated ride ${rideId} to ${status}`);
+  }
   
   RIDES[rideIndex] = updatedRide;
   save(STORAGE_KEYS.RIDES, RIDES);
@@ -337,7 +325,7 @@ export const getDashboardStats = async () => {
     totalRevenue,
     activeDrivers,
     completedTrips,
-    platformCommission: totalRevenue * 0.2 // 20% commission
+    platformCommission: totalRevenue * 0.2
   };
 };
 
@@ -347,9 +335,7 @@ export const calculateFare = (vehicleType: VehicleType, distanceKm: number): num
 };
 
 // --- Template & Announcement Services ---
-
 export const getTemplates = async () => [...TEMPLATES];
-
 export const saveTemplate = async (template: NotificationTemplate) => {
     const idx = TEMPLATES.findIndex(t => t.id === template.id);
     if(idx !== -1) TEMPLATES[idx] = template;
@@ -357,14 +343,11 @@ export const saveTemplate = async (template: NotificationTemplate) => {
     save(STORAGE_KEYS.TEMPLATES, TEMPLATES);
     return template;
 }
-
 export const deleteTemplate = async (id: string) => {
     TEMPLATES = TEMPLATES.filter(t => t.id !== id);
     save(STORAGE_KEYS.TEMPLATES, TEMPLATES);
 }
-
 export const getAnnouncements = async () => [...ANNOUNCEMENTS];
-
 export const createAnnouncement = async (announcement: Omit<Announcement, 'id' | 'createdAt' | 'status'>) => {
     const newAnn: Announcement = {
         ...announcement,
@@ -375,13 +358,12 @@ export const createAnnouncement = async (announcement: Omit<Announcement, 'id' |
     };
     ANNOUNCEMENTS = [newAnn, ...ANNOUNCEMENTS];
     save(STORAGE_KEYS.ANNOUNCEMENTS, ANNOUNCEMENTS);
-    speak("Announcement broadcasted successfully.");
     return newAnn;
 }
 
-// --- Chat Services ---
+// --- Chat & Support Services ---
+
 export const getRideMessages = async (rideId: string) => {
-    // In a real app, this would be an API call
     return MESSAGES.filter(m => m.rideId === rideId).sort((a,b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 }
 
@@ -400,11 +382,82 @@ export const sendMessage = async (rideId: string, senderId: string, senderName: 
     return msg;
 }
 
-// --- System Health Services ---
-export const getSystemHealth = async (): Promise<SystemHealth> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
+// Support Tickets
+export const getSupportTickets = async () => [...TICKETS];
 
+export const createSupportTicket = async (userId: string, userName: string, subject: string, initialMessage: string) => {
+    const ticket: SupportTicket = {
+        id: `TKT-${Date.now()}`,
+        userId,
+        userName,
+        subject,
+        status: 'OPEN',
+        priority: 'MEDIUM',
+        createdAt: new Date().toISOString(),
+        messages: [{
+            id: `msg-${Date.now()}`,
+            senderId: userId,
+            senderName: userName,
+            content: initialMessage,
+            timestamp: new Date().toISOString(),
+            isRead: false
+        }]
+    };
+    TICKETS = [ticket, ...TICKETS];
+    save(STORAGE_KEYS.TICKETS, TICKETS);
+    return ticket;
+};
+
+export const addTicketMessage = async (ticketId: string, senderId: string, senderName: string, content: string, isAi = false) => {
+    const ticketIdx = TICKETS.findIndex(t => t.id === ticketId);
+    if(ticketIdx !== -1) {
+        const msg: ChatMessage = {
+            id: `msg-${Date.now()}`,
+            senderId,
+            senderName,
+            content,
+            timestamp: new Date().toISOString(),
+            isRead: false,
+            isAi
+        };
+        TICKETS[ticketIdx].messages.push(msg);
+        save(STORAGE_KEYS.TICKETS, TICKETS);
+        return msg;
+    }
+};
+
+// Knowledge Base
+export const getKnowledgeBase = async () => [...KB];
+
+export const saveKBItem = async (item: KnowledgeBaseItem) => {
+    const idx = KB.findIndex(k => k.id === item.id);
+    if(idx !== -1) KB[idx] = item;
+    else KB.push({...item, id: `kb-${Date.now()}`});
+    save(STORAGE_KEYS.KB, KB);
+};
+
+export const deleteKBItem = async (id: string) => {
+    KB = KB.filter(k => k.id !== id);
+    save(STORAGE_KEYS.KB, KB);
+};
+
+// Simple AI Logic
+export const queryAiAgent = async (question: string): Promise<{answer?: string, escalate?: boolean}> => {
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Think time
+    
+    // Simple keyword matching
+    const qLower = question.toLowerCase();
+    const match = KB.find(k => qLower.includes(k.question.toLowerCase()) || k.tags.some(t => qLower.includes(t)));
+    
+    if (match) {
+        return { answer: match.answer };
+    }
+    
+    return { escalate: true };
+};
+
+export const getSystemHealth = async (): Promise<SystemHealth> => {
+    await new Promise(resolve => setTimeout(resolve, 300));
     return {
         database: {
             status: Math.random() > 0.95 ? 'DEGRADED' : 'OPTIMAL',

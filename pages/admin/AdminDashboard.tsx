@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import AdminSettings from './AdminSettings';
 import UserManagement from './UserManagement';
+import SupportManagement from './SupportManagement';
 import { RideRequest, UserRole, SystemHealth } from '../../types';
 
 interface AdminDashboardProps {
@@ -87,6 +88,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
 
   if (view === 'settings') return <AdminSettings />;
   if (view === 'users') return <UserManagement />;
+  if (view === 'support') return <SupportManagement />;
   
   // Logistics View
   if (view === 'logistics') {

@@ -32,6 +32,8 @@ export interface User {
   status?: 'ACTIVE' | 'BANNED' | 'SUSPENDED';
   ip?: string;
   device?: string;
+  isp?: string; // Internet Service Provider
+  location?: Coordinates;
   // Driver specific
   isOnline?: boolean;
   vehicleType?: VehicleType;
@@ -42,14 +44,43 @@ export interface User {
   permissions?: string[];
 }
 
+export interface UserActivity {
+    id: string;
+    userId: string;
+    action: string; // e.g., "LOGIN", "BOOK_RIDE", "UPDATE_PROFILE"
+    timestamp: string;
+    details: string;
+    ip: string;
+}
+
+export interface SupportTicket {
+    id: string;
+    userId: string;
+    userName: string;
+    subject: string;
+    status: 'OPEN' | 'RESOLVED' | 'ESCALATED';
+    priority: 'LOW' | 'MEDIUM' | 'HIGH';
+    createdAt: string;
+    messages: ChatMessage[];
+}
+
+export interface KnowledgeBaseItem {
+    id: string;
+    question: string;
+    answer: string;
+    tags: string[];
+}
+
 export interface ChatMessage {
   id: string;
-  rideId: string;
+  rideId?: string; // Optional now, as support chat might not have rideId
+  ticketId?: string; // For support tickets
   senderId: string;
   senderName: string;
   content: string;
   timestamp: string;
   isRead: boolean;
+  isAi?: boolean; // If message is from AI Agent
 }
 
 export interface RideRequest {
