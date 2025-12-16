@@ -1,9 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
-import { User, UserActivity, VehicleType, UserRole } from '../../types';
-import { getAllUsers, updateUserStatus, getUserActivity, recruitDriver } from '../../services/mockService';
+import { User, UserActivity, VehicleType, UserRole, StaffPermission } from '../../types';
+import { getAllUsers, updateUserStatus, getUserActivity, recruitDriver, updateStaffPermissions } from '../../services/mockService';
 import { Button } from '../../components/ui/Button';
-import { ShieldAlert, CheckCircle, Ban, Trash2, Smartphone, Globe, MapPin, Wifi, Activity, X, UserPlus, Bike, Car, Truck } from 'lucide-react';
+import { ShieldAlert, CheckCircle, Ban, Trash2, Smartphone, Globe, MapPin, Wifi, Activity, X, UserPlus, Bike, Car, Truck, Key, Shield } from 'lucide-react';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { useToast } from '../../components/ui/Toast';
@@ -17,6 +16,7 @@ const icon = L.icon({
 });
 
 const UserManagement: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'ALL' | 'STAFF'>('ALL');
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userActivities, setUserActivities] = useState<UserActivity[]>([]);
@@ -48,6 +48,19 @@ const UserManagement: React.FC = () => {
       addToast(`User status updated to ${status}`, 'info');
   };
 
+  const handlePermissionChange = async (userId: string, perm: StaffPermission) => {
+      const user = users.find(u => u.id === userId);
+      if(!user || user.role !== UserRole.STAFF) return;
+      
+      const perms = user.permissions || [];
+      const newPerms = perms.includes(perm) ? perms.filter(p => p !== perm) : [...perms, perm];
+      
+      await updateStaffPermissions(userId, newPerms);
+      refresh();
+      if(selectedUser?.id === userId) setSelectedUser(prev => prev ? {...prev, permissions: newPerms} : null);
+      addToast("Staff permissions updated", 'success');
+  };
+
   const handleRecruitDriver = async () => {
       if(!newDriver.name || !newDriver.email || !newDriver.licensePlate) return;
       setRecruiting(true);
@@ -64,11 +77,29 @@ const UserManagement: React.FC = () => {
       }
   };
 
+  const filteredUsers = activeTab === 'STAFF' ? users.filter(u => u.role === UserRole.STAFF) : users;
+
   return (
     <div className="relative h-full">
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+                <div className="flex items-center gap-4">
+                    <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                        <button 
+                            onClick={() => setActiveTab('ALL')}
+                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'ALL' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
+                        >
+                            All Users
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('STAFF')}
+                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'STAFF' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
+                        >
+                            Staff & Admin
+                        </button>
+                    </div>
+                </div>
                 <Button onClick={() => setIsRecruitOpen(true)}>
                     <UserPlus size={18} className="mr-2"/> Recruit Driver
                 </Button>
@@ -86,7 +117,7 @@ const UserManagement: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {users.map(user => (
+                        {filteredUsers.map(user => (
                             <tr 
                                 key={user.id} 
                                 className={`hover:bg-blue-50 transition-colors cursor-pointer ${selectedUser?.id === user.id ? 'bg-blue-50' : ''}`}
@@ -100,11 +131,12 @@ const UserManagement: React.FC = () => {
                                         <div>
                                             <div className="font-bold text-gray-900">{user.name}</div>
                                             <div className="text-xs text-gray-500">{user.email}</div>
+                                            {user.status === 'SUSPENDED' && <span className="text-[10px] text-red-600 font-bold bg-red-50 px-1 rounded">SUSPENDED</span>}
                                         </div>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className={`px-2 py-1 rounded text-xs font-bold ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : user.role === 'DRIVER' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
+                                    <span className={`px-2 py-1 rounded text-xs font-bold ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : user.role === 'DRIVER' ? 'bg-orange-100 text-orange-700' : user.role === 'STAFF' ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'}`}>
                                         {user.role}
                                     </span>
                                 </td>
@@ -218,7 +250,7 @@ const UserManagement: React.FC = () => {
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">{selectedUser.name}</h2>
                                 <p className="text-sm text-gray-500">{selectedUser.email}</p>
-                                <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${selectedUser.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${selectedUser.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : selectedUser.status === 'SUSPENDED' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
                                     {selectedUser.status}
                                 </span>
                             </div>
@@ -227,6 +259,34 @@ const UserManagement: React.FC = () => {
                     </div>
 
                     <div className="space-y-6">
+                        {/* Suspension Reason */}
+                        {selectedUser.status === 'SUSPENDED' && (
+                            <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+                                <h3 className="font-bold text-red-900 mb-2 flex items-center gap-2"><ShieldAlert size={16}/> Suspension Notice</h3>
+                                <p className="text-sm text-red-800">{selectedUser.suspensionReason || 'No reason provided.'}</p>
+                            </div>
+                        )}
+
+                        {/* Staff Permissions */}
+                        {selectedUser.role === UserRole.STAFF && (
+                            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                                <h3 className="font-bold text-indigo-900 mb-3 flex items-center gap-2"><Key size={16}/> Staff Permissions</h3>
+                                <div className="space-y-2">
+                                    {['MANAGE_USERS', 'MANAGE_RIDES', 'VIEW_FINANCE', 'MANAGE_SETTINGS', 'SUPPORT'].map((perm) => (
+                                        <label key={perm} className="flex items-center gap-2 text-sm text-indigo-800 cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                className="rounded text-indigo-600 focus:ring-indigo-500"
+                                                checked={selectedUser.permissions?.includes(perm as any)}
+                                                onChange={() => handlePermissionChange(selectedUser.id, perm as any)}
+                                            />
+                                            {perm.replace('_', ' ')}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Driver Specific Load Info */}
                         {selectedUser.role === UserRole.DRIVER && (
                             <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">

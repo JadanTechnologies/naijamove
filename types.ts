@@ -21,6 +21,8 @@ export enum RideStatus {
   CANCELLED = 'CANCELLED',
 }
 
+export type StaffPermission = 'MANAGE_USERS' | 'MANAGE_RIDES' | 'VIEW_FINANCE' | 'MANAGE_SETTINGS' | 'SUPPORT';
+
 export interface User {
   id: string;
   name: string;
@@ -37,6 +39,7 @@ export interface User {
   };
   avatar?: string;
   status?: 'ACTIVE' | 'BANNED' | 'SUSPENDED';
+  suspensionReason?: string; // Reason for suspension
   ip?: string;
   device?: string;
   isp?: string; // Internet Service Provider
@@ -53,7 +56,7 @@ export interface User {
   loadStatus?: 'EMPTY' | 'HALF_LOAD' | 'FULL_LOAD' | 'OVERLOAD';
   // Staff Specific
   token?: string;
-  permissions?: string[];
+  permissions?: StaffPermission[];
 }
 
 export interface UserActivity {

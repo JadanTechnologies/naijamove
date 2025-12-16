@@ -1,4 +1,4 @@
-import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement, ChatMessage, SystemHealth, SupportTicket, KnowledgeBaseItem, UserActivity, DashboardStats, PaymentTransaction } from '../types';
+import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement, ChatMessage, SystemHealth, SupportTicket, KnowledgeBaseItem, UserActivity, DashboardStats, PaymentTransaction, StaffPermission } from '../types';
 import { CITIES } from '../constants';
 
 // --- Local Storage Helpers ---
@@ -142,7 +142,8 @@ const DEFAULT_USERS: User[] = [
     ip: '102.134.1.22',
     device: 'Dell Latitude',
     isp: 'MTN',
-    location: { lat: 13.0060, lng: 5.2470 }
+    location: { lat: 13.0060, lng: 5.2470 },
+    permissions: ['SUPPORT', 'VIEW_FINANCE']
   },
   {
     id: 'driver-1',
@@ -379,6 +380,11 @@ export const login = async (identifier: string, isToken = false): Promise<User> 
 
   const user = USERS.find(u => u.email === identifier);
   if (!user) throw new Error('User not found');
+  
+  if (user.status === 'SUSPENDED' || user.status === 'BANNED') {
+      throw new Error(`Account Suspended: ${user.suspensionReason || 'Violation of terms.'}`);
+  }
+  
   if (user.status !== 'ACTIVE') throw new Error(`Account is ${user.status}`);
 
   if (user.ip && SETTINGS.security.blockedIps.includes(user.ip)) {
@@ -398,6 +404,17 @@ export const updateUserProfile = async (userId: string, updates: Partial<User>) 
         return USERS[idx];
     }
     throw new Error("User not found");
+};
+
+export const updateStaffPermissions = async (userId: string, permissions: StaffPermission[]) => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const idx = USERS.findIndex(u => u.id === userId);
+    if(idx !== -1 && USERS[idx].role === UserRole.STAFF) {
+        USERS[idx].permissions = permissions;
+        save(STORAGE_KEYS.USERS, USERS);
+        return USERS[idx];
+    }
+    throw new Error("User not found or not staff");
 };
 
 export const getSystemSettings = async (): Promise<SystemSettings> => {
@@ -442,15 +459,54 @@ export const getActiveRides = async (role: UserRole, userId: string): Promise<Ri
   return RIDES.filter(r => r.passengerId === userId);
 };
 
+export const getOnlineDrivers = async (): Promise<User[]> => {
+    return USERS.filter(u => u.role === UserRole.DRIVER && u.isOnline && u.status === 'ACTIVE');
+};
+
+export const manualAssignDriver = async (rideId: string, driverId: string) => {
+    await new Promise(resolve => setTimeout(resolve, 800));
+    const rideIdx = RIDES.findIndex(r => r.id === rideId);
+    if(rideIdx === -1) throw new Error("Ride not found");
+    
+    // Check if driver is available
+    const driver = USERS.find(u => u.id === driverId);
+    if(!driver || !driver.isOnline) throw new Error("Driver not available");
+
+    RIDES[rideIdx].driverId = driverId;
+    RIDES[rideIdx].status = RideStatus.ACCEPTED;
+    
+    save(STORAGE_KEYS.RIDES, RIDES);
+    logActivity('admin-1', 'MANUAL_ASSIGN', `Assigned driver ${driver.name} to ride ${rideId}`);
+    return RIDES[rideIdx];
+};
+
 export const createRide = async (ride: Omit<RideRequest, 'id' | 'status' | 'createdAt'>): Promise<RideRequest> => {
   await new Promise(resolve => setTimeout(resolve, 1000));
   
+  // AI Fraud Detection Check
+  const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+  const recentCancelled = RIDES.filter(r => 
+      r.passengerId === ride.passengerId && 
+      r.status === RideStatus.CANCELLED && 
+      r.createdAt > oneHourAgo
+  ).length;
+
+  if (recentCancelled >= 3) {
+      // Auto Suspend
+      const userIdx = USERS.findIndex(u => u.id === ride.passengerId);
+      if(userIdx !== -1) {
+          USERS[userIdx].status = 'SUSPENDED';
+          USERS[userIdx].suspensionReason = "AI Detection: Suspicious booking activity detected (multiple rapid cancellations).";
+          save(STORAGE_KEYS.USERS, USERS);
+      }
+      throw new Error("Account Suspended: Suspicious booking activity detected.");
+  }
+
   // Debit check
   const user = USERS.find(u => u.id === ride.passengerId);
   if (!user) throw new Error("User not found");
   
   // Calculate Weight Logic (Simulated)
-  // Assume avg person is 75kg if standard ride, else use parcel weight
   let weight = 0;
   if (ride.type === 'RIDE') {
       weight = 75; // 1 passenger
