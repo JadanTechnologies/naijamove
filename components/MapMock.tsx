@@ -59,7 +59,8 @@ const RecenterMap = ({ coords }: { coords: [number, number] }) => {
 }
 
 const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide }) => {
-  const defaultPosition: [number, number] = [6.5244, 3.3792];
+  // Coordinates for Sokoto, Nigeria
+  const defaultPosition: [number, number] = [13.0059, 5.2476];
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -82,8 +83,8 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
     { 
         id: 1, 
         type: VehicleType.OKADA, 
-        lat: 6.528, 
-        lng: 3.385, 
+        lat: 13.0100, 
+        lng: 5.2500, 
         name: "Musa Ibrahim", 
         status: "BUSY",
         rating: 4.8,
@@ -91,14 +92,14 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
         currentRide: {
             id: 'RIDE-8821',
             passenger: 'Adebayo T.',
-            dest: 'Ikeja City Mall'
+            dest: 'Sokoto Market'
         }
     },
     { 
         id: 2, 
         type: VehicleType.KEKE, 
-        lat: 6.520, 
-        lng: 3.370, 
+        lat: 13.0020, 
+        lng: 5.2400, 
         name: "Chinedu Eze", 
         status: "IDLE",
         rating: 4.5,
@@ -108,8 +109,8 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
     { 
         id: 3, 
         type: VehicleType.MINIBUS, 
-        lat: 6.530, 
-        lng: 3.390, 
+        lat: 13.0080, 
+        lng: 5.2550, 
         name: "Sola Alabi", 
         status: "BUSY",
         rating: 4.9,
@@ -117,14 +118,14 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
          currentRide: {
             id: 'RIDE-9942',
             passenger: 'Grace O.',
-            dest: 'Victoria Island'
+            dest: 'Usman Danfodio Uni'
         }
     },
     { 
         id: 4, 
         type: VehicleType.TRUCK, 
-        lat: 6.522, 
-        lng: 3.382, 
+        lat: 13.0050, 
+        lng: 5.2450, 
         name: "Logistics Team A", 
         status: "IDLE",
         rating: 4.7,
@@ -152,11 +153,11 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
           const seed1 = activeRide.pickupAddress.length;
           const seed2 = activeRide.dropoffAddress.length;
           
-          const startLat = 6.5244 + (seed1 % 20 - 10) * 0.003;
-          const startLng = 3.3792 + (seed2 % 20 - 10) * 0.003;
+          const startLat = 13.0059 + (seed1 % 20 - 10) * 0.003;
+          const startLng = 5.2476 + (seed2 % 20 - 10) * 0.003;
           
-          const endLat = 6.5244 + (seed2 % 20 - 10) * 0.003;
-          const endLng = 3.3792 + (seed1 % 20 - 10) * 0.003;
+          const endLat = 13.0059 + (seed2 % 20 - 10) * 0.003;
+          const endLng = 5.2476 + (seed1 % 20 - 10) * 0.003;
 
           setRoute({ start: [startLat, startLng], end: [endLat, endLng] });
           

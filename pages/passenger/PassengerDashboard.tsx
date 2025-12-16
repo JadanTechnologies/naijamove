@@ -2,34 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { User, VehicleType, RideRequest, RideStatus } from '../../types';
 import { calculateFare, createRide, getActiveRides } from '../../services/mockService';
 import { Button } from '../../components/ui/Button';
-import { CURRENCY_SYMBOL, VEHICLE_PRICING } from '../../constants';
+import { CURRENCY_SYMBOL } from '../../constants';
 import MapMock from '../../components/MapMock';
-import { Bike, Car, Box, Truck, MapPin, Clock, ShieldAlert, MessageSquare } from 'lucide-react';
+import { Bike, Car, Box, Truck, MapPin, Phone, MessageSquare, History, Clock } from 'lucide-react';
 import { ChatWindow } from '../../components/ChatWindow';
+import { VoiceCallModal } from '../../components/VoiceCallModal';
 
 interface PassengerDashboardProps {
   user: User;
 }
 
 const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
+  const [view, setView] = useState<'BOOKING' | 'HISTORY'>('BOOKING');
   const [mode, setMode] = useState<'RIDE' | 'LOGISTICS'>('RIDE');
-  const [pickup, setPickup] = useState('Current Location');
+  const [pickup, setPickup] = useState('Sokoto Central Market');
   const [dropoff, setDropoff] = useState('');
   const [distance, setDistance] = useState(0);
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleType | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeRide, setActiveRide] = useState<RideRequest | null>(null);
+  const [history, setHistory] = useState<RideRequest[]>([]);
+  
+  // Modals
   const [showChat, setShowChat] = useState(false);
+  const [showCall, setShowCall] = useState(false);
 
   // Logistics Fields
   const [parcelDesc, setParcelDesc] = useState('');
   const [receiverPhone, setReceiverPhone] = useState('');
 
   useEffect(() => {
-    // Check for active rides on mount
+    // Check for active rides and history on mount
     getActiveRides(user.role, user.id).then(rides => {
         const active = rides.find(r => r.status !== RideStatus.COMPLETED && r.status !== RideStatus.CANCELLED);
+        const past = rides.filter(r => r.status === RideStatus.COMPLETED || r.status === RideStatus.CANCELLED).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setActiveRide(active || null);
+        setHistory(past);
     });
   }, [user.id, user.role]);
 
@@ -156,7 +164,7 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
                     <div className="absolute bottom-6 left-6 right-6 bg-white p-4 rounded-lg shadow-lg z-[1000] flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
-                                <img src="https://picsum.photos/id/2/200/200" alt="Driver" />
+                                <img src="https://ui-avatars.com/api/?name=Musa+Ibrahim&background=f97316&color=fff" alt="Driver" />
                             </div>
                             <div>
                                 <p className="font-bold">Musa Ibrahim</p>
@@ -164,6 +172,9 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
                             </div>
                         </div>
                         <div className="flex gap-2">
+                             <Button size="sm" variant="outline" onClick={() => setShowCall(true)} className="border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100">
+                                <Phone size={18} className="mr-2" /> Call
+                             </Button>
                              <Button size="sm" variant="outline" onClick={() => setShowChat(!showChat)} className="border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100">
                                 <MessageSquare size={18} className="mr-2" /> Chat
                              </Button>
@@ -184,8 +195,17 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
                       <ChatWindow 
                         rideId={activeRide.id} 
                         currentUser={user} 
-                        recipientName="Musa Ibrahim" // In real app, fetch driver name
+                        recipientName="Musa Ibrahim" 
                         onClose={() => setShowChat(false)} 
+                      />
+                  )}
+
+                  {/* Call Modal */}
+                  {showCall && activeRide.driverId && (
+                      <VoiceCallModal 
+                          recipientName="Musa Ibrahim"
+                          recipientRole="Driver"
+                          onEndCall={() => setShowCall(false)}
                       />
                   )}
               </div>
@@ -195,87 +215,140 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
 
   return (
     <div className="h-full flex flex-col lg:flex-row gap-6">
-      {/* Booking Form */}
+      {/* Sidebar / Form */}
       <div className="lg:w-1/3 bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col h-fit">
-        {/* Toggle Mode */}
+        {/* Toggle View */}
         <div className="flex p-1 bg-gray-100 rounded-lg mb-6">
-            <button 
-                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${mode === 'RIDE' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
-                onClick={() => setMode('RIDE')}
-            >
-                Ride
-            </button>
-            <button 
-                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${mode === 'LOGISTICS' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
-                onClick={() => setMode('LOGISTICS')}
-            >
-                Send Package
-            </button>
+             <button 
+                onClick={() => setView('BOOKING')}
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${view === 'BOOKING' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
+             >
+                 Book Ride
+             </button>
+             <button 
+                onClick={() => setView('HISTORY')}
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${view === 'HISTORY' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
+             >
+                 History
+             </button>
         </div>
 
-        <div className="space-y-4 mb-6">
-            <div className="relative">
-                <MapPin className="absolute left-3 top-3 text-emerald-500" size={20} />
-                <input 
-                    type="text" 
-                    value={pickup}
-                    onChange={(e) => setPickup(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm font-medium"
-                    placeholder="Pickup location"
-                />
-            </div>
-            <div className="relative">
-                <MapPin className="absolute left-3 top-3 text-gray-400" size={20} />
-                <input 
-                    type="text"
-                    value={dropoff}
-                    onChange={(e) => setDropoff(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm font-medium"
-                    placeholder="Where to?"
-                />
-            </div>
-
-            {mode === 'LOGISTICS' && (
-                <div className="p-4 border border-dashed border-gray-300 rounded-lg space-y-3 bg-orange-50/50">
-                    <h4 className="text-sm font-semibold text-gray-700">Parcel Details</h4>
-                    <input 
-                        type="text" 
-                        placeholder="What are you sending?"
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded"
-                        value={parcelDesc}
-                        onChange={e => setParcelDesc(e.target.value)}
-                    />
-                    <input 
-                        type="tel" 
-                        placeholder="Receiver's Phone Number"
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded"
-                        value={receiverPhone}
-                        onChange={e => setReceiverPhone(e.target.value)}
-                    />
+        {view === 'BOOKING' ? (
+            <>
+                {/* Toggle Mode */}
+                <div className="flex gap-4 mb-6">
+                    <button 
+                        onClick={() => setMode('RIDE')}
+                        className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold flex flex-col items-center gap-2 transition-all ${mode === 'RIDE' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                    >
+                        <Car size={20}/> Ride
+                    </button>
+                    <button 
+                        onClick={() => setMode('LOGISTICS')}
+                        className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold flex flex-col items-center gap-2 transition-all ${mode === 'LOGISTICS' ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                    >
+                        <Box size={20}/> Logistics
+                    </button>
                 </div>
-            )}
-        </div>
 
-        {distance > 0 && (
-            <div className="space-y-3 mb-6">
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Select Ride</h3>
-                <VehicleCard type={VehicleType.OKADA} icon={Bike} label="Okada" eta="3 min" />
-                <VehicleCard type={VehicleType.KEKE} icon={Box} label="Keke" eta="7 min" />
-                <VehicleCard type={VehicleType.MINIBUS} icon={Car} label="Mini Bus" eta="12 min" />
-                {mode === 'LOGISTICS' && (
-                    <VehicleCard type={VehicleType.TRUCK} icon={Truck} label="Cargo Truck" eta="45 min" />
+                <div className="space-y-4 mb-6">
+                    <div className="relative">
+                        <MapPin className="absolute left-3 top-3 text-emerald-500" size={20} />
+                        <input 
+                            type="text" 
+                            value={pickup}
+                            onChange={(e) => setPickup(e.target.value)}
+                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm font-medium"
+                            placeholder="Pickup location"
+                        />
+                    </div>
+                    <div className="relative">
+                        <MapPin className="absolute left-3 top-3 text-gray-400" size={20} />
+                        <input 
+                            type="text"
+                            value={dropoff}
+                            onChange={(e) => setDropoff(e.target.value)}
+                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm font-medium"
+                            placeholder="Where to?"
+                        />
+                    </div>
+
+                    {mode === 'LOGISTICS' && (
+                        <div className="p-4 border border-dashed border-gray-300 rounded-lg space-y-3 bg-orange-50/50 animate-in fade-in">
+                            <h4 className="text-sm font-semibold text-gray-700">Parcel Details</h4>
+                            <input 
+                                type="text" 
+                                placeholder="What are you sending?"
+                                className="w-full px-3 py-2 text-sm border border-gray-200 rounded"
+                                value={parcelDesc}
+                                onChange={e => setParcelDesc(e.target.value)}
+                            />
+                            <input 
+                                type="tel" 
+                                placeholder="Receiver's Phone Number"
+                                className="w-full px-3 py-2 text-sm border border-gray-200 rounded"
+                                value={receiverPhone}
+                                onChange={e => setReceiverPhone(e.target.value)}
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {distance > 0 && (
+                    <div className="space-y-3 mb-6">
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Select Vehicle</h3>
+                        <VehicleCard type={VehicleType.OKADA} icon={Bike} label="Okada" eta="3 min" />
+                        <VehicleCard type={VehicleType.KEKE} icon={Box} label="Keke" eta="7 min" />
+                        <VehicleCard type={VehicleType.MINIBUS} icon={Car} label="Mini Bus" eta="12 min" />
+                        {mode === 'LOGISTICS' && (
+                            <VehicleCard type={VehicleType.TRUCK} icon={Truck} label="Cargo Truck" eta="45 min" />
+                        )}
+                    </div>
+                )}
+
+                <Button 
+                    className="w-full py-4 text-lg mt-auto" 
+                    disabled={!selectedVehicle || !pickup || !dropoff || (mode === 'LOGISTICS' && (!parcelDesc || !receiverPhone))}
+                    onClick={handleBooking}
+                    isLoading={loading}
+                >
+                    {mode === 'RIDE' ? 'Confirm Ride' : 'Confirm Delivery'}
+                </Button>
+            </>
+        ) : (
+            <div className="space-y-4 overflow-y-auto max-h-[500px] pr-2">
+                {history.length === 0 ? (
+                    <div className="text-center py-10 text-gray-500">
+                        <History className="mx-auto mb-2 opacity-50" size={32}/>
+                        <p>No trip history yet.</p>
+                    </div>
+                ) : (
+                    history.map(trip => (
+                        <div key={trip.id} className="p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="flex items-center gap-2">
+                                    <span className={`p-1.5 rounded-lg ${trip.type === 'LOGISTICS' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
+                                        {trip.type === 'LOGISTICS' ? <Box size={14}/> : <Car size={14}/>}
+                                    </span>
+                                    <span className="font-bold text-sm">{new Date(trip.createdAt).toLocaleDateString()}</span>
+                                </div>
+                                <span className="font-bold text-gray-900">{CURRENCY_SYMBOL}{trip.price}</span>
+                            </div>
+                            <div className="space-y-1 ml-9 relative border-l-2 border-gray-100 pl-4 py-1">
+                                <div className="absolute top-1 -left-[5px] w-2 h-2 rounded-full bg-gray-400"></div>
+                                <div className="absolute bottom-1 -left-[5px] w-2 h-2 rounded-full bg-emerald-500"></div>
+                                <p className="text-xs text-gray-500 truncate">{trip.pickupAddress}</p>
+                                <p className="text-sm font-medium text-gray-800 truncate">{trip.dropoffAddress}</p>
+                            </div>
+                            <div className="mt-3 flex justify-between items-center pl-9">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${trip.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{trip.status}</span>
+                                <Button size="sm" variant="outline" className="text-xs h-7 py-0">Receipt</Button>
+                            </div>
+                        </div>
+                    ))
                 )}
             </div>
         )}
-
-        <Button 
-            className="w-full py-4 text-lg mt-auto" 
-            disabled={!selectedVehicle || !pickup || !dropoff}
-            onClick={handleBooking}
-            isLoading={loading}
-        >
-            {mode === 'RIDE' ? 'Confirm Ride' : 'Confirm Delivery'}
-        </Button>
       </div>
 
       {/* Map */}

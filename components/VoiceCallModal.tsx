@@ -1,0 +1,81 @@
+import React, { useState, useEffect } from 'react';
+import { Phone, Mic, MicOff, PhoneOff, User } from 'lucide-react';
+import { User as UserType } from '../types';
+
+interface VoiceCallModalProps {
+    recipientName: string;
+    recipientRole: string;
+    onEndCall: () => void;
+}
+
+export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ recipientName, recipientRole, onEndCall }) => {
+    const [status, setStatus] = useState<'CONNECTING' | 'RINGING' | 'CONNECTED'>('CONNECTING');
+    const [isMuted, setIsMuted] = useState(false);
+    const [duration, setDuration] = useState(0);
+
+    useEffect(() => {
+        const timer1 = setTimeout(() => setStatus('RINGING'), 1500);
+        const timer2 = setTimeout(() => setStatus('CONNECTED'), 4000);
+
+        return () => {
+            clearTimeout(timer1);
+            clearTimeout(timer2);
+        };
+    }, []);
+
+    useEffect(() => {
+        let interval: any;
+        if (status === 'CONNECTED') {
+            interval = setInterval(() => {
+                setDuration(prev => prev + 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [status]);
+
+    const formatDuration = (secs: number) => {
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-900/90 z-50 flex items-center justify-center animate-in fade-in backdrop-blur-sm">
+            <div className="bg-gray-800 w-full max-w-sm rounded-3xl p-8 flex flex-col items-center shadow-2xl border border-gray-700">
+                <div className="flex items-center gap-2 mb-8 bg-gray-700/50 px-3 py-1 rounded-full">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs text-gray-300 font-mono">SECURED BY ZEGOCLOUD</span>
+                </div>
+
+                <div className="w-24 h-24 bg-gradient-to-br from-emerald-500 to-blue-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20">
+                    <User size={40} className="text-white" />
+                </div>
+
+                <h2 className="text-2xl font-bold text-white mb-1">{recipientName}</h2>
+                <p className="text-emerald-400 text-sm font-medium mb-8 uppercase tracking-wider">{recipientRole}</p>
+
+                <div className="text-gray-400 text-lg font-mono mb-12">
+                    {status === 'CONNECTING' && <span className="animate-pulse">Connecting...</span>}
+                    {status === 'RINGING' && <span className="animate-pulse">Ringing...</span>}
+                    {status === 'CONNECTED' && <span className="text-white">{formatDuration(duration)}</span>}
+                </div>
+
+                <div className="flex gap-8 items-center">
+                    <button 
+                        onClick={() => setIsMuted(!isMuted)}
+                        className={`p-4 rounded-full transition-all ${isMuted ? 'bg-white text-gray-900' : 'bg-gray-700 text-white hover:bg-gray-600'}`}
+                    >
+                        {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
+                    </button>
+
+                    <button 
+                        onClick={onEndCall}
+                        className="p-6 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg shadow-red-500/30 transition-transform hover:scale-110"
+                    >
+                        <PhoneOff size={32} />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};

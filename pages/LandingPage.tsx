@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Bike, Box, Car, ChevronRight, ShieldCheck, Zap, Map, ChevronDown, Download, Phone, Mail, Key } from 'lucide-react';
-import { getSystemSettings } from '../services/mockService';
-import { SystemSettings } from '../types';
+import { Bike, Box, Car, ChevronRight, ShieldCheck, Zap, Map, ChevronDown, Download, Phone, Mail, Key, User, CreditCard, ScanLine, ArrowRight, Loader2 } from 'lucide-react';
+import { getSystemSettings, verifyNin, signup } from '../services/mockService';
+import { SystemSettings, UserRole } from '../types';
 
 interface LandingPageProps {
   onLogin: (identifier: string, isToken?: boolean) => void;
@@ -10,9 +10,23 @@ interface LandingPageProps {
 
 const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isSignupOpen, setIsSignupOpen] = useState(false);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [staffToken, setStaffToken] = useState('');
   const [showStaffInput, setShowStaffInput] = useState(false);
+
+  // Signup State
+  const [signupStep, setSignupStep] = useState(1);
+  const [signupData, setSignupData] = useState({
+      name: '',
+      email: '',
+      phone: '',
+      nin: '',
+      role: UserRole.PASSENGER
+  });
+  const [ninLoading, setNinLoading] = useState(false);
+  const [ninError, setNinError] = useState('');
+  const [verifiedNinData, setVerifiedNinData] = useState<any>(null);
 
   useEffect(() => {
     getSystemSettings().then(setSettings);
@@ -26,6 +40,41 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
   const handleStaffLogin = () => {
       if(staffToken) {
           onLogin(staffToken, true);
+      }
+  };
+
+  const handleVerifyNin = async () => {
+      if(!signupData.nin) return;
+      setNinLoading(true);
+      setNinError('');
+      try {
+          const result = await verifyNin(signupData.nin);
+          if(result.valid) {
+              setVerifiedNinData(result.data);
+              setSignupData(prev => ({
+                  ...prev,
+                  name: `${result.data.firstName} ${result.data.lastName}`
+              }));
+              setSignupStep(2);
+          }
+      } catch (e: any) {
+          setNinError(e.message || 'Verification failed');
+      } finally {
+          setNinLoading(false);
+      }
+  };
+
+  const handleSignupComplete = async () => {
+      setNinLoading(true);
+      try {
+          const user = await signup(signupData);
+          setIsSignupOpen(false);
+          // Auto login
+          onLogin(user.email);
+      } catch (e: any) {
+          setNinError(e.message);
+      } finally {
+          setNinLoading(false);
       }
   };
 
@@ -68,99 +117,240 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
           <a href="#contact" className="hover:text-emerald-400 transition-colors">Contact Us</a>
         </div>
 
-        {/* Login Dropdown */}
-        <div className="relative">
-           <button 
-             onClick={() => setIsLoginOpen(!isLoginOpen)}
-             className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold bg-white text-black rounded-full hover:bg-gray-100 transition-colors shadow-lg shadow-emerald-900/20"
-           >
-             Sign In <ChevronDown size={16} />
-           </button>
+        {/* Auth Buttons */}
+        <div className="flex gap-4">
+             <button 
+                onClick={() => setIsSignupOpen(true)}
+                className="hidden md:block px-5 py-2.5 text-sm font-bold text-white border border-white/20 rounded-full hover:bg-white/10 transition-colors"
+             >
+                Register
+             </button>
+             <div className="relative">
+                <button 
+                    onClick={() => setIsLoginOpen(!isLoginOpen)}
+                    className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold bg-white text-black rounded-full hover:bg-gray-100 transition-colors shadow-lg shadow-emerald-900/20"
+                >
+                    Sign In <ChevronDown size={16} />
+                </button>
 
-           {isLoginOpen && (
-             <div className="absolute right-0 top-full mt-3 w-80 bg-gray-900/95 backdrop-blur-xl border border-gray-700 rounded-2xl shadow-2xl p-2 z-50 animate-in slide-in-from-top-2 duration-200">
-                {!showStaffInput ? (
-                <>
-                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Select Portal</div>
-                    
-                    <button 
-                    onClick={() => handleLoginSelection('admin@naijamove.ng')}
-                    className="w-full flex items-center gap-3 px-3 py-3 hover:bg-emerald-500/20 rounded-xl text-left group transition-all"
-                    >
-                        <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                        <ShieldCheck size={16} />
-                        </div>
-                        <div>
-                        <div className="text-sm font-bold text-white">Super Admin</div>
-                        <div className="text-xs text-gray-400">Platform Control</div>
-                        </div>
-                    </button>
+                {isLoginOpen && (
+                    <div className="absolute right-0 top-full mt-3 w-80 bg-gray-900/95 backdrop-blur-xl border border-gray-700 rounded-2xl shadow-2xl p-2 z-50 animate-in slide-in-from-top-2 duration-200">
+                        {!showStaffInput ? (
+                        <>
+                            <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Select Portal</div>
+                            
+                            <button 
+                            onClick={() => handleLoginSelection('admin@naijamove.ng')}
+                            className="w-full flex items-center gap-3 px-3 py-3 hover:bg-emerald-500/20 rounded-xl text-left group transition-all"
+                            >
+                                <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                                <ShieldCheck size={16} />
+                                </div>
+                                <div>
+                                <div className="text-sm font-bold text-white">Super Admin</div>
+                                <div className="text-xs text-gray-400">Platform Control</div>
+                                </div>
+                            </button>
 
-                    <button 
-                    onClick={() => handleLoginSelection('musa@naijamove.ng')}
-                    className="w-full flex items-center gap-3 px-3 py-3 hover:bg-emerald-500/20 rounded-xl text-left group transition-all mt-1"
-                    >
-                        <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors">
-                        <Zap size={16} />
-                        </div>
-                        <div>
-                        <div className="text-sm font-bold text-white">Driver Partner</div>
-                        <div className="text-xs text-gray-400">Okada & Keke Riders</div>
-                        </div>
-                    </button>
+                            <button 
+                            onClick={() => handleLoginSelection('musa@naijamove.ng')}
+                            className="w-full flex items-center gap-3 px-3 py-3 hover:bg-emerald-500/20 rounded-xl text-left group transition-all mt-1"
+                            >
+                                <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                                <Zap size={16} />
+                                </div>
+                                <div>
+                                <div className="text-sm font-bold text-white">Driver Partner</div>
+                                <div className="text-xs text-gray-400">Okada & Keke Riders</div>
+                                </div>
+                            </button>
 
-                    <button 
-                    onClick={() => handleLoginSelection('tola@gmail.com')}
-                    className="w-full flex items-center gap-3 px-3 py-3 hover:bg-emerald-500/20 rounded-xl text-left group transition-all mt-1"
-                    >
-                        <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                        <Map size={16} />
-                        </div>
-                        <div>
-                        <div className="text-sm font-bold text-white">Passenger</div>
-                        <div className="text-xs text-gray-400">Ride & Logistics</div>
-                        </div>
-                    </button>
+                            <button 
+                            onClick={() => handleLoginSelection('tola@gmail.com')}
+                            className="w-full flex items-center gap-3 px-3 py-3 hover:bg-emerald-500/20 rounded-xl text-left group transition-all mt-1"
+                            >
+                                <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                                <Map size={16} />
+                                </div>
+                                <div>
+                                <div className="text-sm font-bold text-white">Passenger</div>
+                                <div className="text-xs text-gray-400">Ride & Logistics</div>
+                                </div>
+                            </button>
 
-                    <button 
-                    onClick={() => setShowStaffInput(true)}
-                    className="w-full flex items-center gap-3 px-3 py-3 hover:bg-purple-500/20 rounded-xl text-left group transition-all mt-1 border-t border-gray-700"
-                    >
-                        <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-                        <Key size={16} />
-                        </div>
-                        <div>
-                        <div className="text-sm font-bold text-white">Staff Portal</div>
-                        <div className="text-xs text-gray-400">Token Access Only</div>
-                        </div>
-                    </button>
-                </>
-                ) : (
-                    <div className="p-4">
-                        <div className="flex justify-between items-center mb-4">
-                            <span className="text-sm font-bold">Staff Access</span>
-                            <button onClick={() => setShowStaffInput(false)} className="text-xs text-gray-400 hover:text-white">Cancel</button>
-                        </div>
-                        <input 
-                            type="text" 
-                            placeholder="Enter Security Token" 
-                            className="w-full bg-gray-800 border border-gray-600 rounded p-2 text-white mb-3"
-                            value={staffToken}
-                            onChange={(e) => setStaffToken(e.target.value)}
-                        />
-                        <button 
-                            onClick={handleStaffLogin}
-                            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded"
-                        >
-                            Authenticate
-                        </button>
-                        <p className="text-[10px] text-gray-500 mt-2 text-center">Use 'STAFF-TOKEN-123' for demo</p>
+                            <button 
+                            onClick={() => setShowStaffInput(true)}
+                            className="w-full flex items-center gap-3 px-3 py-3 hover:bg-purple-500/20 rounded-xl text-left group transition-all mt-1 border-t border-gray-700"
+                            >
+                                <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                                <Key size={16} />
+                                </div>
+                                <div>
+                                <div className="text-sm font-bold text-white">Staff Portal</div>
+                                <div className="text-xs text-gray-400">Token Access Only</div>
+                                </div>
+                            </button>
+                        </>
+                        ) : (
+                            <div className="p-4">
+                                <div className="flex justify-between items-center mb-4">
+                                    <span className="text-sm font-bold">Staff Access</span>
+                                    <button onClick={() => setShowStaffInput(false)} className="text-xs text-gray-400 hover:text-white">Cancel</button>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    placeholder="Enter Security Token" 
+                                    className="w-full bg-gray-800 border border-gray-600 rounded p-2 text-white mb-3"
+                                    value={staffToken}
+                                    onChange={(e) => setStaffToken(e.target.value)}
+                                />
+                                <button 
+                                    onClick={handleStaffLogin}
+                                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded"
+                                >
+                                    Authenticate
+                                </button>
+                                <p className="text-[10px] text-gray-500 mt-2 text-center">Use 'STAFF-TOKEN-123' for demo</p>
+                            </div>
+                        )}
                     </div>
                 )}
              </div>
-           )}
         </div>
       </nav>
+
+      {/* --- Signup Modal --- */}
+      {isSignupOpen && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+              <div className="bg-white text-gray-900 w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
+                  <div className="bg-emerald-600 p-6 text-white flex justify-between items-start">
+                      <div>
+                          <h2 className="text-2xl font-bold">Create Account</h2>
+                          <p className="text-emerald-100 text-sm mt-1">Join Nigeria's smartest logistics network</p>
+                      </div>
+                      <button onClick={() => setIsSignupOpen(false)} className="bg-white/20 p-1 rounded hover:bg-white/30"><ChevronDown size={20} className="rotate-180"/></button>
+                  </div>
+                  
+                  <div className="p-8">
+                      {/* Progress Steps */}
+                      <div className="flex items-center mb-8 text-sm">
+                          <div className={`flex items-center gap-2 ${signupStep >= 1 ? 'text-emerald-600 font-bold' : 'text-gray-400'}`}>
+                              <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center">1</span>
+                              Verification
+                          </div>
+                          <div className="h-px bg-gray-300 w-12 mx-2"></div>
+                          <div className={`flex items-center gap-2 ${signupStep >= 2 ? 'text-emerald-600 font-bold' : 'text-gray-400'}`}>
+                              <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center">2</span>
+                              Details
+                          </div>
+                      </div>
+
+                      {signupStep === 1 ? (
+                          <div className="space-y-4">
+                              <p className="text-sm text-gray-600 mb-4">Please enter your National Identity Number (NIN) to verify your identity. We will automatically fetch your details.</p>
+                              
+                              <div>
+                                  <label className="block text-sm font-bold text-gray-700 mb-1">NIN Number</label>
+                                  <div className="relative">
+                                    <ScanLine className="absolute left-3 top-3 text-gray-400" size={18}/>
+                                    <input 
+                                        type="text"
+                                        maxLength={11}
+                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none font-mono text-lg tracking-widest"
+                                        placeholder="12345678901"
+                                        value={signupData.nin}
+                                        onChange={e => setSignupData({...signupData, nin: e.target.value.replace(/\D/g, '')})}
+                                    />
+                                  </div>
+                                  <p className="text-xs text-gray-500 mt-1">Must be 11 digits.</p>
+                              </div>
+
+                              {ninError && (
+                                  <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2">
+                                      <ShieldCheck size={16}/> {ninError}
+                                  </div>
+                              )}
+
+                              <button 
+                                disabled={signupData.nin.length !== 11 || ninLoading}
+                                onClick={handleVerifyNin}
+                                className="w-full py-3 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                              >
+                                {ninLoading ? <Loader2 className="animate-spin" /> : 'Verify Identity'}
+                              </button>
+                          </div>
+                      ) : (
+                          <div className="space-y-4">
+                              <div className="flex items-center gap-4 bg-emerald-50 p-4 rounded-xl border border-emerald-100 mb-4">
+                                  <img src={verifiedNinData?.photo} className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm" />
+                                  <div>
+                                      <p className="text-xs text-emerald-600 font-bold uppercase tracking-wider">Identity Verified</p>
+                                      <h3 className="font-bold text-gray-900 text-lg">{signupData.name}</h3>
+                                      <p className="text-xs text-gray-500">NIN: {signupData.nin}</p>
+                                  </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                      <label className="block text-xs font-bold text-gray-700 mb-1">Email</label>
+                                      <input 
+                                          type="email"
+                                          className="w-full p-3 border border-gray-300 rounded-lg text-sm"
+                                          value={signupData.email}
+                                          onChange={e => setSignupData({...signupData, email: e.target.value})}
+                                      />
+                                  </div>
+                                  <div>
+                                      <label className="block text-xs font-bold text-gray-700 mb-1">Phone</label>
+                                      <input 
+                                          type="tel"
+                                          className="w-full p-3 border border-gray-300 rounded-lg text-sm"
+                                          value={signupData.phone}
+                                          onChange={e => setSignupData({...signupData, phone: e.target.value})}
+                                      />
+                                  </div>
+                              </div>
+
+                              <div>
+                                  <label className="block text-xs font-bold text-gray-700 mb-1">I want to</label>
+                                  <div className="flex gap-2">
+                                      <button 
+                                        onClick={() => setSignupData({...signupData, role: UserRole.PASSENGER})}
+                                        className={`flex-1 py-3 rounded-lg border font-medium text-sm flex flex-col items-center gap-1 ${signupData.role === UserRole.PASSENGER ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-gray-600'}`}
+                                      >
+                                          <User size={18}/> Request Rides
+                                      </button>
+                                      <button 
+                                        onClick={() => setSignupData({...signupData, role: UserRole.DRIVER})}
+                                        className={`flex-1 py-3 rounded-lg border font-medium text-sm flex flex-col items-center gap-1 ${signupData.role === UserRole.DRIVER ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-gray-600'}`}
+                                      >
+                                          <Bike size={18}/> Drive
+                                      </button>
+                                  </div>
+                              </div>
+
+                              <div className="bg-gray-50 p-3 rounded-lg text-xs text-gray-500 flex gap-2">
+                                  <CreditCard size={16} className="text-gray-400 flex-shrink-0"/>
+                                  <p>A virtual Wema Bank account will be automatically created for your wallet funding upon completion.</p>
+                              </div>
+                              
+                              {ninError && (
+                                  <div className="text-red-600 text-xs text-center">{ninError}</div>
+                              )}
+
+                              <button 
+                                onClick={handleSignupComplete}
+                                disabled={ninLoading || !signupData.email || !signupData.phone}
+                                className="w-full py-3 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                              >
+                                {ninLoading ? <Loader2 className="animate-spin" /> : 'Complete Registration'} <ArrowRight size={18} />
+                              </button>
+                          </div>
+                      )}
+                  </div>
+              </div>
+          </div>
+      )}
 
       {/* --- Main Content --- */}
       <main className="relative z-10 flex flex-col md:flex-row items-center justify-between px-6 md:px-12 max-w-7xl mx-auto mt-8 md:mt-16 gap-12 flex-grow">
@@ -169,7 +359,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
         <div className="flex-1 space-y-8 text-center md:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 text-xs font-medium mb-4 animate-pulse">
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            LIVE IN LAGOS & ABUJA
+            LIVE IN SOKOTO & NIGERIA
           </div>
           
           <h1 className="text-5xl md:text-7xl font-bold leading-tight tracking-tight">
@@ -185,7 +375,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start pt-4">
              <button 
-                onClick={() => setIsLoginOpen(true)}
+                onClick={() => setIsSignupOpen(true)}
                 className="px-8 py-4 bg-emerald-600 text-white rounded-full font-bold text-lg hover:bg-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all transform hover:scale-105 flex items-center justify-center gap-2"
              >
                 Get Started <ChevronRight size={20} />

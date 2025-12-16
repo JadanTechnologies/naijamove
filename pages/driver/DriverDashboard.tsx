@@ -6,6 +6,7 @@ import { CURRENCY_SYMBOL } from '../../constants';
 import { MapPin, Navigation, Package, Phone, CheckCircle, XCircle, MessageSquare } from 'lucide-react';
 import MapMock from '../../components/MapMock';
 import { ChatWindow } from '../../components/ChatWindow';
+import { VoiceCallModal } from '../../components/VoiceCallModal';
 
 interface DriverDashboardProps {
   user: User;
@@ -16,6 +17,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user }) => {
   const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
   const [isOnline, setIsOnline] = useState(user.isOnline || false);
   const [showChat, setShowChat] = useState(false);
+  const [showCall, setShowCall] = useState(false);
 
   useEffect(() => {
     // Poll for rides
@@ -139,7 +141,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user }) => {
                                 Complete Trip
                              </Button>
                         )}
-                        <Button variant="outline" className="w-full">
+                        <Button variant="outline" className="w-full" onClick={() => setShowCall(true)}>
                             <Phone size={18} className="mr-2"/> Call
                         </Button>
                         <Button variant="outline" className="w-full bg-emerald-50 text-emerald-700 border-emerald-200" onClick={() => setShowChat(!showChat)}>
@@ -160,6 +162,14 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user }) => {
                       currentUser={user}
                       recipientName="Passenger" // In real app, fetch passenger name
                       onClose={() => setShowChat(false)}
+                  />
+              )}
+
+              {showCall && (
+                  <VoiceCallModal 
+                      recipientName="Passenger"
+                      recipientRole="Rider"
+                      onEndCall={() => setShowCall(false)}
                   />
               )}
           </div>

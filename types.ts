@@ -28,6 +28,13 @@ export interface User {
   role: UserRole;
   walletBalance: number;
   phone?: string;
+  nin?: string; // National Identity Number
+  isNinVerified?: boolean;
+  bankAccount?: {
+      bankName: string;
+      accountNumber: string;
+      accountName: string;
+  };
   avatar?: string;
   status?: 'ACTIVE' | 'BANNED' | 'SUSPENDED';
   ip?: string;
@@ -47,7 +54,7 @@ export interface User {
 export interface UserActivity {
     id: string;
     userId: string;
-    action: string; // e.g., "LOGIN", "BOOK_RIDE", "UPDATE_PROFILE"
+    action: string;
     timestamp: string;
     details: string;
     ip: string;
@@ -73,14 +80,14 @@ export interface KnowledgeBaseItem {
 
 export interface ChatMessage {
   id: string;
-  rideId?: string; // Optional now, as support chat might not have rideId
-  ticketId?: string; // For support tickets
+  rideId?: string;
+  ticketId?: string;
   senderId: string;
   senderName: string;
   content: string;
   timestamp: string;
   isRead: boolean;
-  isAi?: boolean; // If message is from AI Agent
+  isAi?: boolean;
 }
 
 export interface RideRequest {
@@ -117,9 +124,9 @@ export interface NotificationTemplate {
     id: string;
     type: 'EMAIL' | 'SMS' | 'PUSH';
     name: string;
-    subject?: string; // Only for email
+    subject?: string;
     body: string;
-    variables: string[]; // e.g. {{name}}, {{otp}}
+    variables: string[];
 }
 
 export interface Announcement {
@@ -154,6 +161,12 @@ export interface MobileAppConfig {
     lastUpdated: string;
 }
 
+// New Configs
+export interface VehiclePricingConfig {
+    base: number;
+    perKm: number;
+}
+
 export interface SystemSettings {
   branding: {
     appName: string;
@@ -180,7 +193,7 @@ export interface SystemSettings {
     pushApiKey?: string;
   };
   ai: {
-    geminiEnabled: boolean; // For auto-reply & fraud detection
+    geminiEnabled: boolean;
   };
   trackers: {
       enabled: boolean;
@@ -194,6 +207,16 @@ export interface SystemSettings {
     blockedDevices: string[];
     blockedOs: string[];
     blockedBrowsers: string[];
+  };
+  // New Settings
+  pricing: {
+      [key in VehicleType]: VehiclePricingConfig;
+  };
+  integrations: {
+      ninApiKey: string; // For Verification
+      voiceProvider: 'ZEGOCLOUD' | 'AGORA';
+      voiceAppId: string;
+      voiceAppSign: string;
   };
 }
 

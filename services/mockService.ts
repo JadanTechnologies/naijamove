@@ -1,5 +1,4 @@
 import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement, ChatMessage, SystemHealth, SupportTicket, KnowledgeBaseItem, UserActivity } from '../types';
-import { VEHICLE_PRICING } from '../constants';
 
 // --- Local Storage Helpers ---
 const STORAGE_KEYS = {
@@ -42,8 +41,8 @@ const DEFAULT_SETTINGS: SystemSettings = {
   },
   landingPage: {
     heroTitle: "The Future of Logistics & Rides",
-    heroSubtitle: "Logistics & Rides",
-    heroDescription: "Move parcels, people, and cargo with Nigeria's most advanced AI-powered fleet. Real-time tracking for Okada, Keke, and Mini-bus.",
+    heroSubtitle: "Moving Sokoto & Nigeria Forward",
+    heroDescription: "Move parcels, people, and cargo with Nigeria's most advanced AI-powered fleet. Real-time tracking for Okada, Keke, and Mini-bus in Sokoto and beyond.",
     stats: {
         rides: "2.5M+",
         drivers: "50k+",
@@ -102,6 +101,18 @@ const DEFAULT_SETTINGS: SystemSettings = {
     blockedDevices: [],
     blockedOs: [],
     blockedBrowsers: []
+  },
+  pricing: {
+      [VehicleType.OKADA]: { base: 200, perKm: 50 },
+      [VehicleType.KEKE]: { base: 300, perKm: 80 },
+      [VehicleType.MINIBUS]: { base: 500, perKm: 120 },
+      [VehicleType.TRUCK]: { base: 2000, perKm: 500 }
+  },
+  integrations: {
+      ninApiKey: "nin_live_xxxxxxxx",
+      voiceProvider: 'ZEGOCLOUD',
+      voiceAppId: "1234567890",
+      voiceAppSign: "abcdef1234567890"
   }
 };
 
@@ -117,7 +128,7 @@ const DEFAULT_USERS: User[] = [
     ip: '102.134.1.20',
     device: 'MacBook Pro 16"',
     isp: 'Starlink Nigeria',
-    location: { lat: 6.5244, lng: 3.3792 }
+    location: { lat: 13.0059, lng: 5.2476 } // Sokoto
   },
   {
     id: 'driver-1',
@@ -134,7 +145,7 @@ const DEFAULT_USERS: User[] = [
     ip: '197.210.1.1',
     device: 'Samsung A54',
     isp: 'MTN Nigeria',
-    location: { lat: 6.528, lng: 3.385 }
+    location: { lat: 13.0100, lng: 5.2500 }
   },
   {
     id: 'driver-2',
@@ -151,7 +162,7 @@ const DEFAULT_USERS: User[] = [
     device: 'Infinix Hot 10',
     ip: '105.112.44.12',
     isp: 'Airtel Nigeria',
-    location: { lat: 6.520, lng: 3.370 }
+    location: { lat: 13.0020, lng: 5.2400 }
   },
   {
     id: 'passenger-1',
@@ -164,14 +175,19 @@ const DEFAULT_USERS: User[] = [
     ip: '102.12.33.1',
     device: 'iPhone 13',
     isp: 'Glo Mobile',
-    location: { lat: 6.530, lng: 3.390 }
+    location: { lat: 13.0080, lng: 5.2450 },
+    bankAccount: {
+        bankName: "Wema Bank",
+        accountNumber: "0234567891",
+        accountName: "NaijaMove - Tola Adebayo"
+    }
   },
 ];
 
 const DEFAULT_KB: KnowledgeBaseItem[] = [
     { id: 'kb-1', question: 'How do I fund my wallet?', answer: 'You can fund your wallet via Bank Transfer or Paystack. Go to the Wallet section in the app.', tags: ['wallet', 'payment'] },
     { id: 'kb-2', question: 'What is the base fare for Okada?', answer: 'The base fare for Okada rides is ₦200, plus ₦50 per km.', tags: ['pricing', 'okada'] },
-    { id: 'kb-3', question: 'Do you do interstate delivery?', answer: 'Currently, we only support logistics within Lagos and Abuja. Interstate is coming soon.', tags: ['logistics', 'delivery'] }
+    { id: 'kb-3', question: 'Do you do interstate delivery?', answer: 'Currently, we only support logistics within Sokoto. Interstate is coming soon.', tags: ['logistics', 'delivery'] }
 ];
 
 // --- Initialize State from Storage ---
@@ -208,11 +224,73 @@ const logActivity = (userId: string, action: string, details: string) => {
     save(STORAGE_KEYS.ACTIVITIES, ACTIVITIES);
 };
 
+const generateVirtualAccount = (name: string) => {
+    return {
+        bankName: "Wema Bank",
+        accountNumber: "9" + Math.floor(100000000 + Math.random() * 900000000), // Random 10 digit starting with 9
+        accountName: `NaijaMove - ${name}`
+    };
+};
+
 // --- Service Methods ---
+
+export const verifyNin = async (nin: string) => {
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Mock API delay
+    // Mock NIN Verification
+    if (nin.length === 11 && !isNaN(Number(nin))) {
+        return {
+            valid: true,
+            data: {
+                firstName: "Aminu",
+                lastName: "Sadiq",
+                dob: "1990-05-12",
+                gender: "M",
+                photo: "https://ui-avatars.com/api/?name=Aminu+Sadiq&background=0D8ABC&color=fff"
+            }
+        };
+    }
+    throw new Error("Invalid NIN. Please check the number.");
+};
+
+export const signup = async (data: { name: string, email: string, phone: string, nin: string, role: UserRole }) => {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Check existing
+    if (USERS.find(u => u.email === data.email || u.nin === data.nin)) {
+        throw new Error("User with this Email or NIN already exists.");
+    }
+
+    const newUser: User = {
+        id: `user-${Date.now()}`,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        nin: data.nin,
+        role: data.role,
+        walletBalance: 0,
+        status: 'ACTIVE',
+        isNinVerified: true,
+        bankAccount: generateVirtualAccount(data.name),
+        avatar: `https://ui-avatars.com/api/?name=${data.name.replace(' ', '+')}&background=random`,
+        location: { lat: 13.0059, lng: 5.2476 } // Default Sokoto
+    };
+
+    USERS = [...USERS, newUser];
+    save(STORAGE_KEYS.USERS, USERS);
+    logActivity(newUser.id, 'SIGNUP', 'New user registration via Web');
+    return newUser;
+};
 
 export const login = async (identifier: string, isToken = false): Promise<User> => {
   await new Promise(resolve => setTimeout(resolve, 800)); 
   
+  if (SETTINGS.maintenanceMode) {
+      // Allow admin bypass
+      if (identifier !== 'admin@naijamove.ng' && !isToken) {
+          throw new Error("System is currently under maintenance. Please try again later.");
+      }
+  }
+
   if (isToken) {
     const user = USERS.find(u => u.token === identifier);
     if (!user) throw new Error('Invalid Staff Token');
@@ -228,7 +306,7 @@ export const login = async (identifier: string, isToken = false): Promise<User> 
       throw new Error(`Access Denied: Your IP (${user.ip}) is blocked.`);
   }
   
-  logActivity(user.id, 'LOGIN', `Logged in via ${user.device}`);
+  logActivity(user.id, 'LOGIN', `Logged in via ${user.device || 'Web'}`);
   return user;
 };
 
@@ -249,7 +327,7 @@ export const getAllUsers = async (): Promise<User[]> => {
 };
 
 export const getUserActivity = async (userId: string): Promise<UserActivity[]> => {
-    return ACTIVITIES.filter(a => a.userId === userId);
+    return ACTIVITIES.filter(a => a.userId === userId).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 };
 
 export const updateUserStatus = async (userId: string, status: 'ACTIVE' | 'BANNED' | 'SUSPENDED') => {
@@ -275,6 +353,14 @@ export const getActiveRides = async (role: UserRole, userId: string): Promise<Ri
 
 export const createRide = async (ride: Omit<RideRequest, 'id' | 'status' | 'createdAt'>): Promise<RideRequest> => {
   await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Debit check
+  const user = USERS.find(u => u.id === ride.passengerId);
+  if (!user) throw new Error("User not found");
+  
+  // For demo, we just assume they have funds or pay cash. 
+  // Real implementation would check walletBalance >= price
+  
   const newRide: RideRequest = {
     ...ride,
     id: `ride-${Date.now()}`,
@@ -283,7 +369,7 @@ export const createRide = async (ride: Omit<RideRequest, 'id' | 'status' | 'crea
   };
   RIDES = [newRide, ...RIDES];
   save(STORAGE_KEYS.RIDES, RIDES);
-  logActivity(ride.passengerId, 'BOOK_RIDE', `Booked ${ride.vehicleType} trip`);
+  logActivity(ride.passengerId, 'BOOK_RIDE', `Booked ${ride.vehicleType} trip. Cost: ${ride.price}`);
   return newRide;
 };
 
@@ -292,10 +378,25 @@ export const updateRideStatus = async (rideId: string, status: RideStatus, drive
   const rideIndex = RIDES.findIndex(r => r.id === rideId);
   if (rideIndex === -1) throw new Error("Ride not found");
   
-  const updatedRide = { ...RIDES[rideIndex], status };
+  const ride = RIDES[rideIndex];
+  let updatedRide = { ...ride, status };
+  
   if (driverId) {
       updatedRide.driverId = driverId;
       logActivity(driverId, 'RIDE_UPDATE', `Updated ride ${rideId} to ${status}`);
+  }
+  
+  // Handle Wallet Debit on Completion
+  if (status === RideStatus.COMPLETED) {
+      const passengerIdx = USERS.findIndex(u => u.id === ride.passengerId);
+      if (passengerIdx !== -1) {
+          USERS[passengerIdx].walletBalance -= ride.price;
+      }
+      const driverIdx = USERS.findIndex(u => u.id === (driverId || ride.driverId));
+      if (driverIdx !== -1) {
+          USERS[driverIdx].walletBalance += (ride.price * 0.8); // 80% to driver
+      }
+      save(STORAGE_KEYS.USERS, USERS);
   }
   
   RIDES[rideIndex] = updatedRide;
@@ -330,7 +431,8 @@ export const getDashboardStats = async () => {
 };
 
 export const calculateFare = (vehicleType: VehicleType, distanceKm: number): number => {
-  const pricing = VEHICLE_PRICING[vehicleType];
+  // Use settings pricing
+  const pricing = SETTINGS.pricing[vehicleType];
   return Math.ceil(pricing.base + (pricing.perKm * distanceKm));
 };
 

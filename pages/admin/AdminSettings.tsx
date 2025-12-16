@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { getSystemSettings, updateSystemSettings, getTemplates, saveTemplate, deleteTemplate, getAnnouncements, createAnnouncement } from '../../services/mockService';
-import { SystemSettings, TrackerConfig, NotificationTemplate, Announcement } from '../../types';
+import { SystemSettings, TrackerConfig, NotificationTemplate, Announcement, VehicleType } from '../../types';
 import { Button } from '../../components/ui/Button';
-import { Shield, CreditCard, Bell, Sparkles, Smartphone, Globe, Activity, Router, Plus, Trash2, FileText, Megaphone, Edit, Send, Eye, EyeOff, X, Monitor, Map, Globe2, ShieldAlert, LayoutTemplate, Download } from 'lucide-react';
+import { Shield, CreditCard, Bell, Sparkles, Smartphone, Globe, Activity, Router, Plus, Trash2, FileText, Megaphone, Edit, Send, Eye, EyeOff, X, Monitor, Map, Globe2, ShieldAlert, LayoutTemplate, Download, Coins, Plug, AlertTriangle } from 'lucide-react';
+import { CURRENCY_SYMBOL } from '../../constants';
 
 const PasswordInput = ({ value, onChange, placeholder }: { value?: string, onChange: (val: string) => void, placeholder?: string }) => {
     const [show, setShow] = useState(false);
@@ -127,6 +128,20 @@ const AdminSettings: React.FC = () => {
         [key]: value
       }
     });
+  };
+
+  const updatePricing = (type: VehicleType, key: 'base' | 'perKm', value: number) => {
+      if(!settings) return;
+      setSettings({
+          ...settings,
+          pricing: {
+              ...settings.pricing,
+              [type]: {
+                  ...settings.pricing[type],
+                  [key]: value
+              }
+          }
+      });
   };
   
   const updateLandingPageField = (key: string, value: any) => {
@@ -255,6 +270,114 @@ const AdminSettings: React.FC = () => {
 
   const renderTabContent = () => {
     switch(activeTab) {
+        case 'maintenance':
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                    <div className="bg-yellow-50 border border-yellow-100 p-6 rounded-xl flex items-start gap-4">
+                        <AlertTriangle className="text-yellow-600 flex-shrink-0" size={32} />
+                        <div className="flex-1">
+                            <h3 className="text-lg font-bold text-yellow-900 mb-2">System Maintenance Mode</h3>
+                            <p className="text-sm text-yellow-800 mb-4">
+                                When enabled, only Admins will be able to log in. Passengers and Drivers will see a maintenance message. Use this for major updates.
+                            </p>
+                            <label className="flex items-center gap-3 cursor-pointer">
+                                <div className="relative">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={settings.maintenanceMode}
+                                        onChange={e => setSettings({...settings, maintenanceMode: e.target.checked})}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+                                </div>
+                                <span className="font-bold text-gray-700">{settings.maintenanceMode ? 'ENABLED' : 'DISABLED'}</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            );
+        case 'pricing':
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                    <h3 className="text-lg font-bold flex items-center gap-2"><Coins size={20}/> Dynamic Pricing</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {Object.keys(settings.pricing).map((type) => (
+                            <div key={type} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                <h4 className="font-bold text-gray-900 mb-4">{type}</h4>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Base Fare ({CURRENCY_SYMBOL})</label>
+                                        <input 
+                                            type="number"
+                                            className="w-full p-2 border rounded font-mono font-bold"
+                                            value={settings.pricing[type as VehicleType].base}
+                                            onChange={(e) => updatePricing(type as VehicleType, 'base', parseInt(e.target.value))}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Per KM Rate ({CURRENCY_SYMBOL})</label>
+                                        <input 
+                                            type="number"
+                                            className="w-full p-2 border rounded font-mono font-bold"
+                                            value={settings.pricing[type as VehicleType].perKm}
+                                            onChange={(e) => updatePricing(type as VehicleType, 'perKm', parseInt(e.target.value))}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        case 'integrations':
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                    <h3 className="text-lg font-bold flex items-center gap-2"><Plug size={20}/> External APIs</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white p-6 rounded-xl border border-gray-200">
+                             <h4 className="font-bold text-gray-900 mb-4">NIN Verification (NIMC)</h4>
+                             <label className="block text-xs font-bold text-gray-500 mb-1">API Key</label>
+                             <PasswordInput 
+                                value={settings.integrations.ninApiKey}
+                                onChange={(v) => updateField('integrations', 'ninApiKey', v)}
+                             />
+                        </div>
+
+                        <div className="bg-white p-6 rounded-xl border border-gray-200">
+                             <h4 className="font-bold text-gray-900 mb-4">Voice Call Provider</h4>
+                             <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Provider</label>
+                                    <select 
+                                        className="w-full p-2 border rounded"
+                                        value={settings.integrations.voiceProvider}
+                                        onChange={e => updateField('integrations', 'voiceProvider', e.target.value)}
+                                    >
+                                        <option value="ZEGOCLOUD">ZegoCloud</option>
+                                        <option value="AGORA">Agora</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">App ID</label>
+                                    <input 
+                                        className="w-full p-2 border rounded"
+                                        value={settings.integrations.voiceAppId}
+                                        onChange={e => updateField('integrations', 'voiceAppId', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">App Sign / Token</label>
+                                    <PasswordInput 
+                                        value={settings.integrations.voiceAppSign}
+                                        onChange={(v) => updateField('integrations', 'voiceAppSign', v)}
+                                    />
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            );
         case 'cms':
             return (
                  <div className="space-y-6 animate-in fade-in">
@@ -993,6 +1116,8 @@ const AdminSettings: React.FC = () => {
   const tabs = [
     { id: 'branding', icon: Globe, label: 'Branding' },
     { id: 'cms', icon: LayoutTemplate, label: 'Landing Page' },
+    { id: 'pricing', icon: Coins, label: 'Pricing Control' },
+    { id: 'integrations', icon: Plug, label: 'API Integrations' },
     { id: 'security', icon: Shield, label: 'Security' },
     { id: 'trackers', icon: Router, label: 'Trackers' },
     { id: 'payments', icon: CreditCard, label: 'Payments' },
@@ -1000,6 +1125,7 @@ const AdminSettings: React.FC = () => {
     { id: 'templates', icon: FileText, label: 'Templates' },
     { id: 'announcements', icon: Megaphone, label: 'Announcements' },
     { id: 'ai', icon: Sparkles, label: 'AI & Fraud' },
+    { id: 'maintenance', icon: AlertTriangle, label: 'Maintenance' },
   ];
 
   return (
