@@ -73,7 +73,11 @@ const DEFAULT_SETTINGS: SystemSettings = {
   maintenanceMode: false,
   security: {
     blockedIps: [],
-    blockedCountries: []
+    blockedCountries: [],
+    blockedRegions: [],
+    blockedDevices: [],
+    blockedOs: [],
+    blockedBrowsers: []
   }
 };
 
@@ -109,7 +113,8 @@ const DEFAULT_USERS: User[] = [
     totalTrips: 142,
     avatar: 'https://ui-avatars.com/api/?name=Musa+Ibrahim&background=f97316&color=fff',
     status: 'ACTIVE',
-    ip: '197.210.1.1'
+    ip: '197.210.1.1',
+    device: 'Android'
   },
   {
     id: 'driver-2',
@@ -122,7 +127,8 @@ const DEFAULT_USERS: User[] = [
     rating: 4.5,
     totalTrips: 89,
     avatar: 'https://ui-avatars.com/api/?name=Chinedu+Eze&background=3b82f6&color=fff',
-    status: 'ACTIVE'
+    status: 'ACTIVE',
+    device: 'Android'
   },
   {
     id: 'passenger-1',
@@ -132,7 +138,8 @@ const DEFAULT_USERS: User[] = [
     walletBalance: 5000,
     avatar: 'https://ui-avatars.com/api/?name=Tola+Adebayo&background=8b5cf6&color=fff',
     status: 'ACTIVE',
-    ip: '102.12.33.1'
+    ip: '102.12.33.1',
+    device: 'iPhone'
   },
 ];
 
@@ -210,6 +217,14 @@ export const login = async (identifier: string, isToken = false): Promise<User> 
   const user = USERS.find(u => u.email === identifier);
   if (!user) throw new Error('User not found');
   if (user.status !== 'ACTIVE') throw new Error(`Account is ${user.status}`);
+
+  // SECURITY CHECKS
+  if (user.ip && SETTINGS.security.blockedIps.includes(user.ip)) {
+      throw new Error(`Access Denied: Your IP (${user.ip}) is blocked.`);
+  }
+  if (user.device && SETTINGS.security.blockedDevices.includes(user.device)) {
+      throw new Error(`Access Denied: Your device (${user.device}) is restricted.`);
+  }
   
   return user;
 };

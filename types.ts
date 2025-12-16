@@ -125,6 +125,10 @@ export interface SystemSettings {
   security: {
     blockedIps: string[];
     blockedCountries: string[];
+    blockedRegions: string[];
+    blockedDevices: string[];
+    blockedOs: string[];
+    blockedBrowsers: string[];
   };
 }
 

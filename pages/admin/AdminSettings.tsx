@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getSystemSettings, updateSystemSettings, getTemplates, saveTemplate, deleteTemplate, getAnnouncements, createAnnouncement } from '../../services/mockService';
 import { SystemSettings, TrackerConfig, NotificationTemplate, Announcement } from '../../types';
 import { Button } from '../../components/ui/Button';
-import { Shield, CreditCard, Bell, Sparkles, Smartphone, Globe, Lock, Activity, Radio, Router, Plus, Trash2, FileText, Megaphone, Edit, Send, Eye, EyeOff } from 'lucide-react';
+import { Shield, CreditCard, Bell, Sparkles, Smartphone, Globe, Lock, Activity, Radio, Router, Plus, Trash2, FileText, Megaphone, Edit, Send, Eye, EyeOff, X, Monitor, Map, Globe2, ShieldAlert } from 'lucide-react';
 
 const PasswordInput = ({ value, onChange, placeholder }: { value?: string, onChange: (val: string) => void, placeholder?: string }) => {
     const [show, setShow] = useState(false);
@@ -25,6 +25,59 @@ const PasswordInput = ({ value, onChange, placeholder }: { value?: string, onCha
         </div>
     )
 }
+
+const BlockListManager = ({ 
+    title, 
+    items, 
+    onAdd, 
+    onRemove, 
+    icon: Icon, 
+    placeholder 
+}: { 
+    title: string, 
+    items: string[], 
+    onAdd: (val: string) => void, 
+    onRemove: (val: string) => void, 
+    icon: any, 
+    placeholder: string 
+}) => {
+    const [inputValue, setInputValue] = useState('');
+
+    const handleAdd = () => {
+        if(inputValue && !items.includes(inputValue)) {
+            onAdd(inputValue);
+            setInputValue('');
+        }
+    };
+
+    return (
+        <div className="bg-white p-4 rounded-xl border border-gray-200">
+            <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <Icon size={18} className="text-gray-500" />
+                {title}
+            </h4>
+            <div className="flex gap-2 mb-4">
+                <input 
+                    className="flex-1 p-2 border rounded text-sm"
+                    placeholder={placeholder}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+                />
+                <Button size="sm" onClick={handleAdd} disabled={!inputValue}>Block</Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+                {items.length === 0 && <span className="text-xs text-gray-400 italic">No restrictions active.</span>}
+                {items.map(item => (
+                    <div key={item} className="flex items-center gap-1 bg-red-50 text-red-700 px-2 py-1 rounded text-sm border border-red-100">
+                        <span>{item}</span>
+                        <button onClick={() => onRemove(item)} className="hover:text-red-900"><X size={14}/></button>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
 
 const AdminSettings: React.FC = () => {
   const [settings, setSettings] = useState<SystemSettings | null>(null);
@@ -74,6 +127,23 @@ const AdminSettings: React.FC = () => {
         [key]: value
       }
     });
+  };
+
+  // Security Helper to update array fields
+  const updateSecurityList = (listKey: keyof SystemSettings['security'], action: 'ADD' | 'REMOVE', value: string) => {
+      if(!settings) return;
+      const list = settings.security[listKey];
+      let newList = [...list];
+      if(action === 'ADD' && !list.includes(value)) newList.push(value);
+      if(action === 'REMOVE') newList = list.filter(i => i !== value);
+      
+      setSettings({
+          ...settings,
+          security: {
+              ...settings.security,
+              [listKey]: newList
+          }
+      });
   };
 
   // --- Tracker Handlers ---
@@ -152,6 +222,84 @@ const AdminSettings: React.FC = () => {
 
   const renderTabContent = () => {
     switch(activeTab) {
+        case 'security':
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                    <div className="bg-red-50 border border-red-100 p-4 rounded-xl mb-6">
+                        <h3 className="text-red-900 font-bold flex items-center gap-2"><ShieldAlert size={20}/> Access Control & Blacklists</h3>
+                        <p className="text-sm text-red-700 mt-1">
+                            Entities added here will be immediately blocked from accessing the platform. Changes take effect instantly.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Network */}
+                        <div className="space-y-4">
+                             <h3 className="font-bold text-gray-700 border-b pb-2">Network Layer</h3>
+                             <BlockListManager 
+                                title="Blocked IP Addresses"
+                                items={settings.security.blockedIps}
+                                onAdd={(v) => updateSecurityList('blockedIps', 'ADD', v)}
+                                onRemove={(v) => updateSecurityList('blockedIps', 'REMOVE', v)}
+                                icon={Activity}
+                                placeholder="e.g. 192.168.1.1"
+                             />
+                        </div>
+
+                        {/* Geolocation */}
+                        <div className="space-y-4">
+                             <h3 className="font-bold text-gray-700 border-b pb-2">Geolocation</h3>
+                             <BlockListManager 
+                                title="Blocked Countries"
+                                items={settings.security.blockedCountries}
+                                onAdd={(v) => updateSecurityList('blockedCountries', 'ADD', v)}
+                                onRemove={(v) => updateSecurityList('blockedCountries', 'REMOVE', v)}
+                                icon={Globe2}
+                                placeholder="e.g. Russia, North Korea"
+                             />
+                             <BlockListManager 
+                                title="Blocked Regions"
+                                items={settings.security.blockedRegions}
+                                onAdd={(v) => updateSecurityList('blockedRegions', 'ADD', v)}
+                                onRemove={(v) => updateSecurityList('blockedRegions', 'REMOVE', v)}
+                                icon={Map}
+                                placeholder="e.g. Texas, London"
+                             />
+                        </div>
+
+                        {/* Device Fingerprint */}
+                        <div className="space-y-4 md:col-span-2">
+                             <h3 className="font-bold text-gray-700 border-b pb-2">Device & Environment</h3>
+                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <BlockListManager 
+                                    title="Blocked Devices"
+                                    items={settings.security.blockedDevices}
+                                    onAdd={(v) => updateSecurityList('blockedDevices', 'ADD', v)}
+                                    onRemove={(v) => updateSecurityList('blockedDevices', 'REMOVE', v)}
+                                    icon={Smartphone}
+                                    placeholder="e.g. iPhone 6, Tecno Y2"
+                                />
+                                <BlockListManager 
+                                    title="Blocked OS"
+                                    items={settings.security.blockedOs}
+                                    onAdd={(v) => updateSecurityList('blockedOs', 'ADD', v)}
+                                    onRemove={(v) => updateSecurityList('blockedOs', 'REMOVE', v)}
+                                    icon={Monitor}
+                                    placeholder="e.g. Windows XP, Android 4.4"
+                                />
+                                <BlockListManager 
+                                    title="Blocked Browsers"
+                                    items={settings.security.blockedBrowsers}
+                                    onAdd={(v) => updateSecurityList('blockedBrowsers', 'ADD', v)}
+                                    onRemove={(v) => updateSecurityList('blockedBrowsers', 'REMOVE', v)}
+                                    icon={Globe}
+                                    placeholder="e.g. IE 11, Opera Mini"
+                                />
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            );
         case 'branding':
             return (
                 <div className="space-y-6 animate-in fade-in">
@@ -651,6 +799,7 @@ const AdminSettings: React.FC = () => {
 
   const tabs = [
     { id: 'branding', icon: Globe, label: 'Branding' },
+    { id: 'security', icon: Shield, label: 'Security' },
     { id: 'trackers', icon: Router, label: 'Trackers' },
     { id: 'payments', icon: CreditCard, label: 'Payments' },
     { id: 'communication', icon: Bell, label: 'Communication' },
