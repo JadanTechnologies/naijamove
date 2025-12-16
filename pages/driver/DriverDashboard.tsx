@@ -125,7 +125,8 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user }) => {
                   </div>
                   
                   <div className="h-64 rounded-lg overflow-hidden border border-gray-200">
-                      <MapMock showDrivers={false} />
+                      {/* Pass currentRide to map for route navigation */}
+                      <MapMock activeRide={currentRide} showDrivers={false} />
                   </div>
               </div>
           </div>

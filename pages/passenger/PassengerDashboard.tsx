@@ -101,7 +101,7 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
               <div className="lg:w-1/3 space-y-6">
                   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                       <div className="flex items-center gap-3 mb-6">
-                          <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                          <div className={`w-3 h-3 rounded-full ${activeRide.status === RideStatus.IN_PROGRESS ? 'bg-emerald-500 animate-ping' : 'bg-yellow-500'}`}></div>
                           <h2 className="text-xl font-bold text-gray-900">
                               {activeRide.status === RideStatus.PENDING ? 'Looking for Driver...' : 
                                activeRide.status === RideStatus.ACCEPTED ? 'Driver is coming' : 'Trip in Progress'}
@@ -128,27 +128,40 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
                                   <span className="text-gray-600">Total Fare</span>
                                   <span className="text-xl font-bold">{CURRENCY_SYMBOL}{activeRide.price}</span>
                               </div>
-                              <Button variant="danger" className="w-full" onClick={() => setActiveRide(null)}>Cancel Ride</Button>
+                              {activeRide.status === RideStatus.PENDING && (
+                                <Button variant="danger" className="w-full" onClick={() => setActiveRide(null)}>Cancel Request</Button>
+                              )}
+                              {activeRide.status === RideStatus.IN_PROGRESS && (
+                                <div className="p-3 bg-emerald-50 text-emerald-800 rounded-lg text-sm text-center font-medium">
+                                    Ride in progress. Enjoy your trip!
+                                </div>
+                              )}
                           </div>
                       </div>
                   </div>
               </div>
               <div className="flex-1 h-[500px] lg:h-auto bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative">
-                  <MapMock />
-                  <div className="absolute bottom-6 left-6 right-6 bg-white p-4 rounded-lg shadow-lg">
-                      <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
-                             <img src="https://picsum.photos/id/2/200/200" alt="Driver" />
-                          </div>
-                          <div>
-                              <p className="font-bold">Musa Ibrahim</p>
-                              <p className="text-sm text-gray-500">Okada • 4.8★</p>
-                          </div>
-                          <div className="ml-auto">
-                              <span className="text-2xl font-bold text-emerald-600">5 min</span>
-                          </div>
-                      </div>
-                  </div>
+                  {/* Pass activeRide to Map for real-time tracking */}
+                  <MapMock activeRide={activeRide} />
+                  
+                  {activeRide.driverId && (
+                    <div className="absolute bottom-6 left-6 right-6 bg-white p-4 rounded-lg shadow-lg z-[1000]">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
+                                <img src="https://picsum.photos/id/2/200/200" alt="Driver" />
+                            </div>
+                            <div>
+                                <p className="font-bold">Musa Ibrahim</p>
+                                <p className="text-sm text-gray-500">{activeRide.vehicleType} • 4.8★</p>
+                            </div>
+                            <div className="ml-auto">
+                                <span className="text-2xl font-bold text-emerald-600">
+                                    {activeRide.status === RideStatus.IN_PROGRESS ? 'Live' : '5 min'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                  )}
               </div>
           </div>
       );
