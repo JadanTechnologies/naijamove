@@ -12,6 +12,28 @@ interface AdminDashboardProps {
     view: string;
 }
 
+// Helper Components defined outside main component to prevent re-declaration on render
+const StatusDot = ({ status }: { status: string }) => {
+    let color = 'bg-gray-300';
+    if (['OPTIMAL', 'OPERATIONAL', 'CONNECTED', 'UP'].includes(status)) color = 'bg-emerald-500';
+    else if (['DEGRADED', 'ISSUES'].includes(status)) color = 'bg-yellow-500';
+    else if (['DOWN', 'DISCONNECTED'].includes(status)) color = 'bg-red-500';
+
+    return <span className={`w-3 h-3 rounded-full ${color} inline-block`}></span>;
+};
+
+const ProgressBar = ({ value, label, color = 'bg-blue-600' }: any) => (
+    <div className="mb-2">
+        <div className="flex justify-between text-xs font-medium mb-1">
+            <span>{label}</span>
+            <span>{value}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className={`${color} h-2 rounded-full transition-all duration-500`} style={{ width: `${value}%` }}></div>
+        </div>
+    </div>
+);
+
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   const [stats, setStats] = useState<any>(null);
   const [allRides, setAllRides] = useState<RideRequest[]>([]);
@@ -133,7 +155,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
       );
   }
 
-  // Active Trips View - Add dedicated view to prevent crash
+  // Active Trips View
   if (view === 'trips') {
     return (
         <div className="space-y-6 animate-in fade-in">
@@ -180,27 +202,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
 
   // System Health View
   if (view === 'health') {
-      const StatusDot = ({ status }: { status: string }) => {
-          let color = 'bg-gray-300';
-          if (['OPTIMAL', 'OPERATIONAL', 'CONNECTED', 'UP'].includes(status)) color = 'bg-emerald-500';
-          else if (['DEGRADED', 'ISSUES'].includes(status)) color = 'bg-yellow-500';
-          else if (['DOWN', 'DISCONNECTED'].includes(status)) color = 'bg-red-500';
-
-          return <span className={`w-3 h-3 rounded-full ${color} inline-block`}></span>;
-      };
-
-      const ProgressBar = ({ value, label, color = 'bg-blue-600' }: any) => (
-          <div className="mb-2">
-              <div className="flex justify-between text-xs font-medium mb-1">
-                  <span>{label}</span>
-                  <span>{value}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className={`${color} h-2 rounded-full transition-all duration-500`} style={{ width: `${value}%` }}></div>
-              </div>
-          </div>
-      );
-
       if (!healthData) return <div className="p-8 text-center animate-pulse">Scanning system health...</div>;
 
       return (
