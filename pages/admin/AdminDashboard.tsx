@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { getDashboardStats, getActiveRides } from '../../services/mockService';
 import { CURRENCY_SYMBOL } from '../../constants';
 import MapMock from '../../components/MapMock';
-import { Users, TrendingUp, AlertTriangle, ShieldCheck, Truck, CreditCard, Download, Search } from 'lucide-react';
+import { Users, TrendingUp, AlertTriangle, ShieldCheck, Truck, CreditCard, Download, Search, Car } from 'lucide-react';
 import AdminSettings from './AdminSettings';
 import UserManagement from './UserManagement';
 import { RideRequest, UserRole } from '../../types';
@@ -15,11 +15,24 @@ interface AdminDashboardProps {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   const [stats, setStats] = useState<any>(null);
   const [allRides, setAllRides] = useState<RideRequest[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getDashboardStats().then(setStats);
-    // Fetch all rides for admin views
-    getActiveRides(UserRole.ADMIN, 'admin-1').then(setAllRides);
+    const loadData = async () => {
+        try {
+            const [s, r] = await Promise.all([
+                getDashboardStats(),
+                getActiveRides(UserRole.ADMIN, 'admin-1')
+            ]);
+            setStats(s);
+            setAllRides(r);
+        } catch(e) {
+            console.error("Failed to load admin data", e);
+        } finally {
+            setLoading(false);
+        }
+    };
+    loadData();
   }, []);
 
   const data = [
@@ -35,6 +48,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   if (view === 'settings') return <AdminSettings />;
   if (view === 'users') return <UserManagement />;
   
+  // Logistics View
   if (view === 'logistics') {
       const logisticsRides = allRides.filter(r => r.type === 'LOGISTICS');
       return (
@@ -108,6 +122,52 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
       );
   }
 
+  // Active Trips View - Add dedicated view to prevent crash
+  if (view === 'trips') {
+    return (
+        <div className="space-y-6 animate-in fade-in">
+             <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-gray-900">Active Ride Monitoring</h1>
+             </div>
+             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-semibold">
+                        <tr>
+                            <th className="px-6 py-4">Ride ID</th>
+                            <th className="px-6 py-4">Type</th>
+                            <th className="px-6 py-4">Route</th>
+                            <th className="px-6 py-4">Driver</th>
+                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4">Price</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {allRides.filter(r => r.type === 'RIDE').map(ride => (
+                            <tr key={ride.id} className="hover:bg-gray-50">
+                                <td className="px-6 py-4 font-mono text-xs font-medium text-gray-600">#{ride.id.slice(-6)}</td>
+                                <td className="px-6 py-4 text-sm"><Car size={16} className="inline mr-1"/>{ride.vehicleType}</td>
+                                <td className="px-6 py-4 text-xs max-w-xs truncate">{ride.pickupAddress} → {ride.dropoffAddress}</td>
+                                <td className="px-6 py-4 text-sm text-gray-600">{ride.driverId ? 'Assigned' : 'Searching...'}</td>
+                                <td className="px-6 py-4">
+                                     <span className={`px-2 py-1 rounded text-xs font-bold ${
+                                        ride.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' :
+                                        ride.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
+                                        'bg-gray-100 text-gray-700'
+                                    }`}>
+                                        {ride.status}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 font-bold">{CURRENCY_SYMBOL}{ride.price}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+             </div>
+        </div>
+    );
+  }
+
+  // Finance View
   if (view === 'finance') {
     return (
       <div className="space-y-6 animate-in fade-in">
@@ -159,8 +219,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
     );
   }
 
-  if (!stats) return <div className="p-10 text-center animate-pulse text-gray-500">Connecting to NaijaMove Servers...</div>;
+  if (loading || !stats) return <div className="p-10 text-center animate-pulse text-gray-500">Connecting to NaijaMove Servers...</div>;
 
+  // Default Dashboard View (view === 'dashboard' or fallback)
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -218,6 +279,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                 <span className="text-xs font-mono bg-emerald-100 text-emerald-800 px-2 py-1 rounded">LIVE UPDATES</span>
             </div>
             <div className="flex-1">
+                {/* Only render MapMock when explicitly on dashboard view to avoid remount issues */}
                 <MapMock />
             </div>
         </div>

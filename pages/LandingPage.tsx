@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bike, Box, Car, Truck, ChevronRight, ShieldCheck, Zap, Map, ChevronDown, Download, Phone, Mail, Key } from 'lucide-react';
+import { Bike, Box, Car, ChevronRight, ShieldCheck, Zap, Map, ChevronDown, Download, Phone, Mail, Key } from 'lucide-react';
 import { getSystemSettings } from '../services/mockService';
 import { SystemSettings } from '../types';
 
@@ -46,11 +46,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
       {/* --- Navbar --- */}
       <nav className="relative z-50 flex items-center justify-between px-6 py-6 md:px-12 max-w-7xl mx-auto w-full">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.5)] overflow-hidden">
+          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.5)] overflow-hidden">
             <img 
-                src="https://cdn-icons-png.flaticon.com/512/5716/5716364.png" 
-                alt="Logo" 
-                className="w-8 h-8 object-contain filter drop-shadow-md" 
+                src="https://cdn-icons-png.flaticon.com/512/2972/2972185.png" 
+                alt="NaijaMove Logo" 
+                className="w-8 h-8 object-contain" 
             />
           </div>
           <span className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
@@ -206,8 +206,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
                   <div className="absolute inset-12 border border-emerald-500/40 rounded-full border-dashed animate-spin-slow"></div>
                   
                   {/* Central Logo */}
-                  <div className="w-24 h-24 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-2xl flex items-center justify-center shadow-2xl z-20">
-                    <img src="https://cdn-icons-png.flaticon.com/512/5716/5716364.png" alt="Logo" className="w-16 h-16 object-contain filter drop-shadow-lg" />
+                  <div className="w-24 h-24 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-2xl flex items-center justify-center shadow-2xl z-20 overflow-hidden bg-white">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2972/2972185.png" alt="Logo" className="w-16 h-16 object-contain filter drop-shadow-lg" />
                   </div>
 
                   {/* Orbiting Vehicles */}
@@ -266,8 +266,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
                   <div className="space-y-4">
                       <div className="flex items-center gap-2 mb-4">
-                          <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center font-bold text-white overflow-hidden">
-                            <img src="https://cdn-icons-png.flaticon.com/512/5716/5716364.png" alt="Logo" className="w-6 h-6 object-contain filter brightness-0 invert" />
+                          <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center font-bold text-white overflow-hidden p-1">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2972/2972185.png" alt="Logo" className="w-full h-full object-contain filter brightness-0 invert" />
                           </div>
                           <span className="text-xl font-bold text-white">{appName}</span>
                       </div>
@@ -316,8 +316,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
               </div>
           </div>
       </footer>
-
-      <style>{`
+       <style>{`
         .perspective-grid {
           perspective: 1000px;
           overflow: hidden;

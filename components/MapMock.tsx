@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, LayersControl, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { UserRole, VehicleType, RideRequest, RideStatus } from '../types';
-import { Bike, Car, Truck, MapPin } from 'lucide-react';
 
 // NOTE: CSS is imported in index.html to prevent ESM loader errors
 
@@ -121,7 +120,7 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
   if (!isMounted) return <div className="w-full h-full bg-gray-100 animate-pulse rounded-lg"></div>;
 
   return (
-    <div className="w-full h-full rounded-lg overflow-hidden border border-gray-200 z-0 relative">
+    <div className="w-full h-full rounded-lg overflow-hidden border border-gray-200 z-0 relative isolate">
       <MapContainer center={defaultPosition} zoom={13} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
         <LayersControl position="topright">
             <LayersControl.BaseLayer checked name="Street View">
@@ -131,19 +130,19 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
                 />
             </LayersControl.BaseLayer>
             
-            <LayersControl.BaseLayer name="Traffic View (Google)">
+            <LayersControl.BaseLayer name="Satellite">
                 <TileLayer
-                    url="https://mt0.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}"
-                    attribution="Google Maps"
-                />
-            </LayersControl.BaseLayer>
-
-            <LayersControl.BaseLayer name="Satellite (Esri)">
-                <TileLayer
-                attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                attribution='Tiles &copy; Esri'
                 url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                 />
             </LayersControl.BaseLayer>
+
+            <LayersControl.Overlay name="Live Traffic" checked>
+                <TileLayer
+                    url="https://mt0.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}"
+                    attribution="Google Traffic"
+                />
+            </LayersControl.Overlay>
         </LayersControl>
 
         {/* --- Background Fleet --- */}
