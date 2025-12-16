@@ -186,7 +186,9 @@ const DEFAULT_USERS: User[] = [
     ip: '102.134.1.20',
     device: 'MacBook Pro 16"',
     isp: 'Starlink Nigeria',
-    location: { lat: 13.0059, lng: 5.2476 } // Sokoto
+    location: { lat: 13.0059, lng: 5.2476 }, // Sokoto
+    isTotpSetup: true, // Pre-setup for easier login
+    totpSecret: 'ADMINSECRET'
   },
   {
     id: 'staff-1',

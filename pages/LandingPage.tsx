@@ -319,6 +319,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
                                           {isAuthLoading ? <Loader2 className="animate-spin"/> : 'Authenticate'}
                                       </button>
                                       <button onClick={() => setLoginMode('USER')} className="w-full text-xs text-gray-500 hover:text-white">Cancel</button>
+                                      
+                                      {/* Quick Fill Admin Button */}
+                                      <div className="pt-4 border-t border-gray-800 text-center">
+                                          <button 
+                                              type="button"
+                                              onClick={() => setLoginData({ email: 'admin@naijamove.ng', password: 'password', token: '' })}
+                                              className="text-xs text-emerald-600 font-bold hover:text-emerald-500 underline"
+                                          >
+                                              Auto-fill Super Admin
+                                          </button>
+                                      </div>
                                   </div>
                               )}
 
