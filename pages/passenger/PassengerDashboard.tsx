@@ -5,7 +5,7 @@ import { calculateFare, createRide, getActiveRides, updateRideStatus } from '../
 import { Button } from '../../components/ui/Button';
 import { CURRENCY_SYMBOL } from '../../constants';
 import MapMock from '../../components/MapMock';
-import { Bike, Car, Box, Truck, MapPin, Phone, MessageSquare, History, Clock, Bell, X, Star, CheckCircle } from 'lucide-react';
+import { Bike, Car, Box, Truck, MapPin, Phone, MessageSquare, History, Clock, Bell, X, Star, CheckCircle, Navigation } from 'lucide-react';
 import { ChatWindow } from '../../components/ChatWindow';
 import { VoiceCallModal } from '../../components/VoiceCallModal';
 import { useToast } from '../../components/ui/Toast';
@@ -39,6 +39,9 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
   // Notification State
   const [notification, setNotification] = useState<string | null>(null);
   const [hasNotifiedArrival, setHasNotifiedArrival] = useState(false);
+  
+  // Progress State
+  const [rideProgress, setRideProgress] = useState(0);
 
   useEffect(() => {
     // Check for active rides and history on mount
@@ -91,6 +94,7 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
             });
             setActiveRide(ride);
             setHasNotifiedArrival(false); 
+            setRideProgress(0);
             addToast('Ride requested successfully! Searching for drivers...', 'success');
         } catch (e) {
             addToast("Booking failed. Try again.", 'error');
@@ -107,6 +111,8 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
   };
 
   const handleProgressUpdate = (progress: number) => {
+      setRideProgress(progress);
+
       // Trigger notification when driver is 90% of the way there (approaching)
       if (progress > 0.9 && !hasNotifiedArrival && activeRide?.status === RideStatus.IN_PROGRESS) {
           setNotification(`Your driver is approaching ${activeRide.dropoffAddress}. Please get ready.`);
@@ -231,12 +237,53 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
 
               <div className="lg:w-1/3 space-y-6">
                   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                      <div className="flex items-center gap-3 mb-6">
+                      <div className="flex items-center gap-3 mb-4">
                           <div className={`w-3 h-3 rounded-full ${activeRide.status === RideStatus.IN_PROGRESS ? 'bg-emerald-500 animate-ping' : 'bg-yellow-500'}`}></div>
                           <h2 className="text-xl font-bold text-gray-900">
                               {activeRide.status === RideStatus.PENDING ? 'Looking for Driver...' : 
-                               activeRide.status === RideStatus.ACCEPTED ? 'Driver is coming' : 'Trip in Progress'}
+                               activeRide.status === RideStatus.ACCEPTED ? 'Driver En Route' : 'Trip in Progress'}
                           </h2>
+                      </div>
+
+                      {/* Visual Progress Indicator */}
+                      <div className="mb-6">
+                          {activeRide.status === RideStatus.IN_PROGRESS && (
+                              <>
+                                <div className="flex justify-between text-xs font-semibold text-gray-500 mb-2">
+                                    <span>Pickup</span>
+                                    <span>{Math.round(rideProgress * 100)}%</span>
+                                    <span>Dropoff</span>
+                                </div>
+                                <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full bg-emerald-500 rounded-full transition-all duration-300 ease-out flex items-center justify-end pr-1" 
+                                        style={{ width: `${Math.max(5, rideProgress * 100)}%` }}
+                                    >
+                                        {/* Little car icon on the bar */}
+                                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                                    </div>
+                                </div>
+                              </>
+                          )}
+                          {activeRide.status === RideStatus.ACCEPTED && (
+                              <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700 font-medium flex items-center gap-2">
+                                  <Clock size={14} />
+                                  Driver is on the way to your pickup location.
+                              </div>
+                          )}
+                          {activeRide.status === RideStatus.PENDING && (
+                              <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                  <div className="h-full bg-yellow-400 rounded-full w-1/3 animate-indeterminate"></div>
+                              </div>
+                          )}
+                          <style>{`
+                            @keyframes indeterminate {
+                                0% { margin-left: -30%; width: 30%; }
+                                50% { width: 60%; }
+                                100% { margin-left: 100%; width: 30%; }
+                            }
+                            .animate-indeterminate { animation: indeterminate 1.5s infinite linear; }
+                          `}</style>
                       </div>
                       
                       <div className="space-y-6">
