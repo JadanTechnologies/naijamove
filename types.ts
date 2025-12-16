@@ -111,6 +111,32 @@ export interface RideRequest {
   rejectedBy?: string[];
 }
 
+export interface PaymentTransaction {
+    id: string;
+    rideId: string;
+    passengerId: string;
+    passengerName: string;
+    driverId?: string;
+    driverName?: string;
+    amount: number;
+    channel: 'PAYSTACK' | 'WALLET' | 'CASH' | 'TRANSFER';
+    status: 'SUCCESS' | 'PENDING' | 'FAILED';
+    date: string;
+    reference: string;
+}
+
+export interface DashboardStats {
+    totalRevenue: number;
+    platformCommission: number;
+    totalUsers: number;
+    activeUsers: number;
+    totalTrips: number;
+    liveTrips: number;
+    totalDrivers: number;
+    totalStaff: number;
+    totalRegions: number;
+}
+
 export interface TrackerConfig {
     id: string;
     provider: 'TELTONIKA' | 'RUPTELA' | 'CONCOX' | 'CALAMP' | 'QUECLINK' | 'MEITRACK' | 'COBAN' | 'SUNTECH' | 'GOSAFE' | 'TRAMIGO';

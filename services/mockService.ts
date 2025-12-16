@@ -1,4 +1,5 @@
-import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement, ChatMessage, SystemHealth, SupportTicket, KnowledgeBaseItem, UserActivity } from '../types';
+import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement, ChatMessage, SystemHealth, SupportTicket, KnowledgeBaseItem, UserActivity, DashboardStats, PaymentTransaction } from '../types';
+import { CITIES } from '../constants';
 
 // --- Local Storage Helpers ---
 const STORAGE_KEYS = {
@@ -129,6 +130,19 @@ const DEFAULT_USERS: User[] = [
     device: 'MacBook Pro 16"',
     isp: 'Starlink Nigeria',
     location: { lat: 13.0059, lng: 5.2476 } // Sokoto
+  },
+  {
+    id: 'staff-1',
+    name: 'Support Agent',
+    email: 'staff@naijamove.ng',
+    role: UserRole.STAFF,
+    token: 'STAFF-TOKEN-123',
+    walletBalance: 0,
+    status: 'ACTIVE',
+    ip: '102.134.1.22',
+    device: 'Dell Latitude',
+    isp: 'MTN',
+    location: { lat: 13.0060, lng: 5.2470 }
   },
   {
     id: 'driver-1',
@@ -445,18 +459,46 @@ export const withdrawFunds = async (userId: string, amount: number) => {
     return USERS[userIdx];
 };
 
-export const getDashboardStats = async () => {
+export const getDashboardStats = async (): Promise<DashboardStats> => {
   await new Promise(resolve => setTimeout(resolve, 600));
   const totalRevenue = RIDES.filter(r => r.status === RideStatus.COMPLETED).reduce((acc, r) => acc + r.price, 0);
-  const activeDrivers = USERS.filter(u => u.role === UserRole.DRIVER && u.isOnline).length;
-  const completedTrips = RIDES.filter(r => r.status === RideStatus.COMPLETED).length;
   
   return {
     totalRevenue,
-    activeDrivers,
-    completedTrips,
-    platformCommission: totalRevenue * 0.2
+    platformCommission: totalRevenue * 0.2,
+    totalUsers: USERS.length,
+    activeUsers: USERS.filter(u => u.status === 'ACTIVE').length,
+    totalTrips: RIDES.length,
+    liveTrips: RIDES.filter(r => r.status === RideStatus.IN_PROGRESS).length,
+    totalDrivers: USERS.filter(u => u.role === UserRole.DRIVER).length,
+    totalStaff: USERS.filter(u => u.role === UserRole.STAFF).length,
+    totalRegions: CITIES.length
   };
+};
+
+export const getTransactions = async (): Promise<PaymentTransaction[]> => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    // Simulate transactions from completed rides
+    return RIDES.map((ride) => {
+        const passenger = USERS.find(u => u.id === ride.passengerId);
+        const driver = USERS.find(u => u.id === ride.driverId);
+        // Mock channel logic
+        const channel: 'PAYSTACK' | 'WALLET' = parseInt(ride.id.split('-')[1]) % 2 === 0 ? 'PAYSTACK' : 'WALLET';
+        
+        return {
+            id: `TXN-${ride.id.split('-')[1]}`,
+            rideId: ride.id,
+            passengerId: ride.passengerId,
+            passengerName: passenger?.name || 'Unknown',
+            driverId: ride.driverId,
+            driverName: driver?.name || 'Not Assigned',
+            amount: ride.price,
+            channel: channel,
+            status: (ride.status === RideStatus.COMPLETED ? 'SUCCESS' : ride.status === RideStatus.CANCELLED ? 'FAILED' : 'PENDING') as 'SUCCESS' | 'FAILED' | 'PENDING',
+            date: ride.createdAt,
+            reference: `REF-${Math.random().toString(36).substring(7).toUpperCase()}`
+        };
+    }).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
 export const calculateFare = (vehicleType: VehicleType, distanceKm: number): number => {

@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { getDashboardStats, getActiveRides, getSystemHealth } from '../../services/mockService';
+import { getDashboardStats, getActiveRides, getSystemHealth, getTransactions } from '../../services/mockService';
 import { CURRENCY_SYMBOL } from '../../constants';
 import MapMock from '../../components/MapMock';
 import { 
   Users, TrendingUp, AlertTriangle, ShieldCheck, Truck, CreditCard, 
   Download, Search, Car, Activity, Server, Database, Radio, 
-  CheckCircle, AlertCircle, XCircle, Cpu, RefreshCw 
+  CheckCircle, AlertCircle, XCircle, Cpu, RefreshCw, Briefcase, Map, Phone, Wallet
 } from 'lucide-react';
 import AdminSettings from './AdminSettings';
 import UserManagement from './UserManagement';
 import SupportManagement from './SupportManagement';
-import { RideRequest, UserRole, SystemHealth } from '../../types';
+import { RideRequest, UserRole, SystemHealth, DashboardStats, PaymentTransaction } from '../../types';
+import { VoiceCallModal } from '../../components/VoiceCallModal';
 
 interface AdminDashboardProps {
     view: string;
@@ -20,9 +21,9 @@ interface AdminDashboardProps {
 // Helper Components
 const StatusDot = ({ status }: { status: string }) => {
     let color = 'bg-gray-300';
-    if (['OPTIMAL', 'OPERATIONAL', 'CONNECTED', 'UP'].includes(status)) color = 'bg-emerald-500';
-    else if (['DEGRADED', 'ISSUES'].includes(status)) color = 'bg-yellow-500';
-    else if (['DOWN', 'DISCONNECTED'].includes(status)) color = 'bg-red-500';
+    if (['OPTIMAL', 'OPERATIONAL', 'CONNECTED', 'UP', 'SUCCESS', 'ACTIVE'].includes(status)) color = 'bg-emerald-500';
+    else if (['DEGRADED', 'ISSUES', 'PENDING'].includes(status)) color = 'bg-yellow-500';
+    else if (['DOWN', 'DISCONNECTED', 'FAILED', 'BANNED'].includes(status)) color = 'bg-red-500';
 
     return <span className={`w-3 h-3 rounded-full ${color} inline-block`}></span>;
 };
@@ -40,10 +41,14 @@ const ProgressBar = ({ value, label, color = 'bg-blue-600' }: any) => (
 );
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [allRides, setAllRides] = useState<RideRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [healthData, setHealthData] = useState<SystemHealth | null>(null);
+  
+  // Payment View State
+  const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
+  const [callRecipient, setCallRecipient] = useState<{name: string, role: string} | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -74,6 +79,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
       return () => {
           if (interval) clearInterval(interval);
       };
+  }, [view]);
+
+  // Load transactions when in finance view
+  useEffect(() => {
+      if (view === 'finance') {
+          getTransactions().then(setTransactions);
+      }
   }, [view]);
 
   const data = [
@@ -342,54 +354,126 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
       );
   }
 
-  // Finance View
+  // Finance / Payment Management View
   if (view === 'finance') {
     return (
-      <div className="space-y-6 animate-in fade-in">
-          <h1 className="text-2xl font-bold text-gray-900">Financial Reports</h1>
+      <div className="space-y-6 animate-in fade-in relative">
+          <h1 className="text-2xl font-bold text-gray-900">Payment Management</h1>
           
+          {/* Revenue Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                  <p className="text-sm text-gray-500 font-medium mb-2">Total Platform Revenue</p>
-                  <h3 className="text-3xl font-bold text-emerald-600">{CURRENCY_SYMBOL}{stats?.totalRevenue.toLocaleString()}</h3>
+                  <div className="flex justify-between items-start">
+                    <div>
+                        <p className="text-sm text-gray-500 font-medium mb-1">Total Platform Revenue</p>
+                        <h3 className="text-3xl font-bold text-emerald-600">{CURRENCY_SYMBOL}{stats?.totalRevenue.toLocaleString()}</h3>
+                    </div>
+                    <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600"><TrendingUp size={24}/></div>
+                  </div>
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                  <p className="text-sm text-gray-500 font-medium mb-2">Admin Commission (20%)</p>
-                  <h3 className="text-3xl font-bold text-purple-600">{CURRENCY_SYMBOL}{stats?.platformCommission.toLocaleString()}</h3>
+                   <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium mb-1">Admin Commission (20%)</p>
+                        <h3 className="text-3xl font-bold text-purple-600">{CURRENCY_SYMBOL}{stats?.platformCommission.toLocaleString()}</h3>
+                      </div>
+                      <div className="p-2 bg-purple-50 rounded-lg text-purple-600"><Briefcase size={24}/></div>
+                  </div>
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                  <p className="text-sm text-gray-500 font-medium mb-2">Pending Driver Payouts</p>
-                  <h3 className="text-3xl font-bold text-orange-600">{CURRENCY_SYMBOL}{(stats?.totalRevenue * 0.8).toLocaleString()}</h3>
+                  <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium mb-1">Pending Driver Payouts</p>
+                        <h3 className="text-3xl font-bold text-orange-600">{CURRENCY_SYMBOL}{(stats ? stats.totalRevenue * 0.8 : 0).toLocaleString()}</h3>
+                      </div>
+                      <div className="p-2 bg-orange-50 rounded-lg text-orange-600"><Wallet size={24}/></div>
+                  </div>
               </div>
           </div>
 
+          {/* Transactions Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-              <div className="p-4 border-b border-gray-100">
+              <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 justify-between items-center">
                   <h3 className="font-bold text-gray-800">Recent Transactions</h3>
+                  <div className="flex gap-2">
+                       <select className="px-3 py-2 border rounded-lg text-sm bg-white outline-none">
+                           <option>All Channels</option>
+                           <option>Paystack</option>
+                           <option>Wallet</option>
+                           <option>Cash</option>
+                       </select>
+                       <input placeholder="Search Reference..." className="px-3 py-2 border rounded-lg text-sm outline-none" />
+                  </div>
               </div>
-              <table className="w-full text-left">
-                  <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-semibold">
-                      <tr>
-                          <th className="px-6 py-4">Transaction Ref</th>
-                          <th className="px-6 py-4">Type</th>
-                          <th className="px-6 py-4">Amount</th>
-                          <th className="px-6 py-4">Commission</th>
-                          <th className="px-6 py-4">Date</th>
-                      </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                      {allRides.slice(0, 10).map(ride => (
-                          <tr key={ride.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 font-mono text-xs text-gray-500">#{ride.id.replace('ride-', 'TRX-').toUpperCase()}</td>
-                              <td className="px-6 py-4 text-sm font-medium">{ride.type}</td>
-                              <td className="px-6 py-4 font-bold text-gray-900">{CURRENCY_SYMBOL}{ride.price.toLocaleString()}</td>
-                              <td className="px-6 py-4 text-red-600 text-sm">-{CURRENCY_SYMBOL}{(ride.price * 0.2).toLocaleString()}</td>
-                              <td className="px-6 py-4 text-xs text-gray-500">{new Date(ride.createdAt).toLocaleDateString()}</td>
-                          </tr>
-                      ))}
-                  </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-semibold">
+                        <tr>
+                            <th className="px-6 py-4">Reference</th>
+                            <th className="px-6 py-4">Passenger</th>
+                            <th className="px-6 py-4">Driver</th>
+                            <th className="px-6 py-4">Channel</th>
+                            <th className="px-6 py-4">Amount</th>
+                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {transactions.map(txn => (
+                            <tr key={txn.id} className="hover:bg-gray-50">
+                                <td className="px-6 py-4 font-mono text-xs text-gray-500">{txn.reference}</td>
+                                <td className="px-6 py-4 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium text-gray-900">{txn.passengerName}</span>
+                                        <button 
+                                            onClick={() => setCallRecipient({name: txn.passengerName, role: 'Passenger'})}
+                                            className="text-gray-400 hover:text-emerald-600 p-1" title="Call Passenger"
+                                        >
+                                            <Phone size={14}/>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-600">{txn.driverName}</span>
+                                        {txn.driverId && (
+                                            <button 
+                                                onClick={() => setCallRecipient({name: txn.driverName || 'Driver', role: 'Driver'})}
+                                                className="text-gray-400 hover:text-emerald-600 p-1" title="Call Driver"
+                                            >
+                                                <Phone size={14}/>
+                                            </button>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <span className={`px-2 py-1 rounded text-[10px] font-bold border ${
+                                        txn.channel === 'PAYSTACK' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                        txn.channel === 'WALLET' ? 'bg-purple-50 text-purple-700 border-purple-100' :
+                                        'bg-gray-50 text-gray-700 border-gray-200'
+                                    }`}>
+                                        {txn.channel}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 font-bold text-gray-900">{CURRENCY_SYMBOL}{txn.amount.toLocaleString()}</td>
+                                <td className="px-6 py-4">
+                                     <StatusDot status={txn.status} /> <span className="text-xs ml-1">{txn.status}</span>
+                                </td>
+                                <td className="px-6 py-4 text-xs text-gray-500">{new Date(txn.date).toLocaleDateString()}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+              </div>
           </div>
+          
+          {callRecipient && (
+              <VoiceCallModal 
+                  recipientName={callRecipient.name}
+                  recipientRole={callRecipient.role}
+                  onEndCall={() => setCallRecipient(null)}
+              />
+          )}
       </div>
     );
   }
@@ -406,43 +490,82 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid - EXPANDED as requested */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-gray-500">Total Revenue</span>
-                <div className="p-2 bg-emerald-50 rounded-lg"><TrendingUp size={20} className="text-emerald-600"/></div>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{CURRENCY_SYMBOL}{stats.totalRevenue.toLocaleString()}</p>
-            <span className="text-xs text-emerald-600 font-medium">+12.5% from last week</span>
-        </div>
         
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-gray-500">Active Drivers</span>
-                <div className="p-2 bg-blue-50 rounded-lg"><Users size={20} className="text-blue-600"/></div>
+        {/* Total Users */}
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-gray-500 uppercase">Total Users</span>
+                <Users size={18} className="text-blue-500"/>
             </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.activeDrivers}</p>
-            <span className="text-xs text-blue-600 font-medium">Currently online</span>
+            <p className="text-2xl font-bold text-gray-900">{stats.totalUsers.toLocaleString()}</p>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-gray-500">Security Alerts</span>
-                <div className="p-2 bg-red-50 rounded-lg"><AlertTriangle size={20} className="text-red-600"/></div>
+        {/* Active Users */}
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-gray-500 uppercase">Active Users</span>
+                <Activity size={18} className="text-emerald-500"/>
             </div>
-            <p className="text-2xl font-bold text-gray-900">2</p>
-            <span className="text-xs text-red-600 font-medium">Require attention</span>
+            <p className="text-2xl font-bold text-gray-900">{stats.activeUsers.toLocaleString()}</p>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-gray-500">Platform Commission</span>
-                <div className="p-2 bg-purple-50 rounded-lg"><ShieldCheck size={20} className="text-purple-600"/></div>
+        {/* Total Trips */}
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-gray-500 uppercase">Total Trips</span>
+                <Truck size={18} className="text-purple-500"/>
             </div>
-            <p className="text-2xl font-bold text-gray-900">{CURRENCY_SYMBOL}{stats.platformCommission.toLocaleString()}</p>
-            <span className="text-xs text-gray-500">Accumulated this month</span>
+            <p className="text-2xl font-bold text-gray-900">{stats.totalTrips.toLocaleString()}</p>
         </div>
+
+        {/* Live Trips */}
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-gray-500 uppercase">Live Trips</span>
+                <div className="relative">
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                    <Map size={18} className="text-red-500"/>
+                </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.liveTrips}</p>
+        </div>
+
+        {/* Total Drivers */}
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-gray-500 uppercase">Total Drivers</span>
+                <Car size={18} className="text-orange-500"/>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.totalDrivers.toLocaleString()}</p>
+        </div>
+
+        {/* Total Staff */}
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-gray-500 uppercase">Total Staff</span>
+                <Briefcase size={18} className="text-gray-600"/>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.totalStaff}</p>
+        </div>
+
+        {/* Regions */}
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
+            <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-gray-500 uppercase">Service Regions</span>
+                <Map size={18} className="text-teal-500"/>
+            </div>
+            <div className="flex items-end justify-between">
+                <p className="text-2xl font-bold text-gray-900">{stats.totalRegions} Cities</p>
+                <div className="flex gap-1">
+                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px]">Sokoto</span>
+                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px]">Lagos</span>
+                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px]">Abuja</span>
+                </div>
+            </div>
+        </div>
+
       </div>
 
       {/* Main Content Grid */}
