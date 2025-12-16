@@ -6,17 +6,6 @@ import { Bike, Car, Truck, MapPin } from 'lucide-react';
 
 // NOTE: CSS is imported in index.html to prevent ESM loader errors
 
-// Fix Leaflet Default Icon Issue
-if ((L.Icon.Default.prototype as any)._getIconUrl) {
-  delete (L.Icon.Default.prototype as any)._getIconUrl;
-}
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
 interface MapMockProps {
   role?: UserRole;
   showDrivers?: boolean;
@@ -45,6 +34,25 @@ const RecenterMap = ({ coords }: { coords: [number, number] }) => {
 const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide }) => {
   // Center on Lagos
   const defaultPosition: [number, number] = [6.5244, 3.3792];
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Fix Leaflet Icons on Mount only
+  useEffect(() => {
+    setIsMounted(true);
+    // Safe check before modifying prototype
+    try {
+        if ((L.Icon.Default.prototype as any)._getIconUrl) {
+            delete (L.Icon.Default.prototype as any)._getIconUrl;
+        }
+        L.Icon.Default.mergeOptions({
+            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        });
+    } catch (e) {
+        console.warn("Leaflet icon fix failed:", e);
+    }
+  }, []);
 
   // Random Background Drivers
   const [drivers, setDrivers] = useState([
@@ -72,8 +80,6 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
   // Initialize Route for Active Ride
   useEffect(() => {
       if (activeRide) {
-          // Deterministically mock coordinates based on string lengths to simulate different locations
-          // This ensures the "Random" location sticks for the same ride ID
           const seed1 = activeRide.pickupAddress.length;
           const seed2 = activeRide.dropoffAddress.length;
           
@@ -85,10 +91,9 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
 
           setRoute({ start: [startLat, startLng], end: [endLat, endLng] });
           
-          // Reset progress based on status
           if (activeRide.status === RideStatus.COMPLETED) setProgress(1);
           else if (activeRide.status === RideStatus.PENDING || activeRide.status === RideStatus.ACCEPTED) setProgress(0);
-          else if (activeRide.status === RideStatus.IN_PROGRESS) setProgress(0.1); // Start a bit in
+          else if (activeRide.status === RideStatus.IN_PROGRESS) setProgress(0.1);
       } else {
           setRoute(null);
           setProgress(0);
@@ -113,6 +118,8 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
       route.start[1] + (route.end[1] - route.start[1]) * progress
   ] : null;
 
+  if (!isMounted) return <div className="w-full h-full bg-gray-100 animate-pulse rounded-lg"></div>;
+
   return (
     <div className="w-full h-full rounded-lg overflow-hidden border border-gray-200 z-0 relative">
       <MapContainer center={defaultPosition} zoom={13} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
@@ -131,7 +138,7 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
             </LayersControl.BaseLayer>
         </LayersControl>
 
-        {/* --- Background Fleet (only if enabled and no active ride focusing) --- */}
+        {/* --- Background Fleet --- */}
         {showDrivers && !activeRide && drivers.map(d => (
             <Marker 
                 key={d.id} 
@@ -150,23 +157,14 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
         {/* --- Active Ride Navigation --- */}
         {activeRide && route && vehiclePos && (
             <>
-                {/* Recenter Map on Vehicle */}
                 <RecenterMap coords={vehiclePos} />
-
-                {/* Pickup Point */}
                 <Marker position={route.start} icon={createIcon('#10b981', 'PIN')}>
                     <Popup>Pickup: {activeRide.pickupAddress}</Popup>
                 </Marker>
-
-                {/* Dropoff Point */}
                 <Marker position={route.end} icon={createIcon('#ef4444', 'PIN')}>
                     <Popup>Dropoff: {activeRide.dropoffAddress}</Popup>
                 </Marker>
-
-                {/* Route Line */}
                 <Polyline positions={[route.start, route.end]} color="#6366f1" weight={4} dashArray="10, 10" opacity={0.6} />
-
-                {/* Moving Vehicle */}
                 <Marker 
                     position={vehiclePos} 
                     icon={createIcon(

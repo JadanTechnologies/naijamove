@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { getSystemSettings, updateSystemSettings } from '../../services/mockService';
-import { SystemSettings } from '../../types';
+import { SystemSettings, TrackerConfig } from '../../types';
 import { Button } from '../../components/ui/Button';
-import { Shield, CreditCard, Bell, Sparkles, Smartphone, Globe, Lock, Activity } from 'lucide-react';
+import { Shield, CreditCard, Bell, Sparkles, Smartphone, Globe, Lock, Activity, Radio, Router, Plus, Trash2 } from 'lucide-react';
 
 const AdminSettings: React.FC = () => {
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [activeTab, setActiveTab] = useState('branding');
+
+  // Tracker State for new addition
+  const [isAddingTracker, setIsAddingTracker] = useState(false);
+  const [newTracker, setNewTracker] = useState<Partial<TrackerConfig>>({
+      provider: 'TELTONIKA',
+      protocol: 'TCP',
+      port: 5000,
+      serverIp: '0.0.0.0'
+  });
 
   useEffect(() => {
     getSystemSettings().then(setSettings);
@@ -28,6 +37,40 @@ const AdminSettings: React.FC = () => {
         [key]: value
       }
     });
+  };
+
+  const addTracker = () => {
+      if(!settings || !newTracker.name) return;
+      const tracker: TrackerConfig = {
+          id: `trk-${Date.now()}`,
+          name: newTracker.name,
+          provider: newTracker.provider as any,
+          protocol: newTracker.protocol as any,
+          port: newTracker.port || 5000,
+          serverIp: newTracker.serverIp || '0.0.0.0',
+          enabled: true
+      };
+      
+      setSettings({
+          ...settings,
+          trackers: {
+              ...settings.trackers,
+              integrations: [...settings.trackers.integrations, tracker]
+          }
+      });
+      setIsAddingTracker(false);
+      setNewTracker({ provider: 'TELTONIKA', protocol: 'TCP', port: 5000, serverIp: '0.0.0.0' });
+  };
+
+  const removeTracker = (id: string) => {
+      if(!settings) return;
+      setSettings({
+          ...settings,
+          trackers: {
+              ...settings.trackers,
+              integrations: settings.trackers.integrations.filter(t => t.id !== id)
+          }
+      });
   };
 
   if (!settings) return <div>Loading settings...</div>;
@@ -64,6 +107,128 @@ const AdminSettings: React.FC = () => {
                                 onChange={(e) => updateField('branding', 'primaryColor', e.target.value)}
                             />
                         </div>
+                    </div>
+                </div>
+            );
+        case 'trackers':
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h3 className="text-lg font-bold flex items-center gap-2"><Router size={20} className="text-blue-600"/> GPS Trackers</h3>
+                            <p className="text-sm text-gray-500">Manage hardware integrations for Okada & Fleet.</p>
+                        </div>
+                        <Button size="sm" onClick={() => setIsAddingTracker(true)} disabled={isAddingTracker}>
+                            <Plus size={16} className="mr-2"/> Add Tracker
+                        </Button>
+                    </div>
+
+                    {isAddingTracker && (
+                        <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6 animate-in slide-in-from-top-2">
+                            <h4 className="font-bold text-blue-900 mb-4">New Integration</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-blue-800 mb-1">Friendly Name</label>
+                                    <input 
+                                        className="w-full p-2 text-sm border rounded" 
+                                        placeholder="e.g. Lagos Okada Fleet"
+                                        value={newTracker.name || ''}
+                                        onChange={e => setNewTracker({...newTracker, name: e.target.value})}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-blue-800 mb-1">Provider Protocol</label>
+                                    <select 
+                                        className="w-full p-2 text-sm border rounded bg-white"
+                                        value={newTracker.provider}
+                                        onChange={e => setNewTracker({...newTracker, provider: e.target.value as any})}
+                                    >
+                                        <option value="TELTONIKA">Teltonika (FMB/FMC Series)</option>
+                                        <option value="RUPTELA">Ruptela</option>
+                                        <option value="CONCOX">Concox / Jimi IoT</option>
+                                        <option value="CALAMP">CalAmp LMU</option>
+                                        <option value="QUECLINK">Queclink</option>
+                                        <option value="MEITRACK">Meitrack</option>
+                                        <option value="COBAN">Coban (GPS103)</option>
+                                        <option value="SUNTECH">Suntech</option>
+                                        <option value="GOSAFE">Gosafe</option>
+                                        <option value="TRAMIGO">Tramigo</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-blue-800 mb-1">Server IP (Listener)</label>
+                                    <input 
+                                        className="w-full p-2 text-sm border rounded" 
+                                        value={newTracker.serverIp}
+                                        onChange={e => setNewTracker({...newTracker, serverIp: e.target.value})}
+                                    />
+                                </div>
+                                <div className="flex gap-4">
+                                    <div className="flex-1">
+                                        <label className="block text-xs font-bold text-blue-800 mb-1">Port</label>
+                                        <input 
+                                            type="number"
+                                            className="w-full p-2 text-sm border rounded" 
+                                            value={newTracker.port}
+                                            onChange={e => setNewTracker({...newTracker, port: parseInt(e.target.value)})}
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="block text-xs font-bold text-blue-800 mb-1">Protocol</label>
+                                        <select 
+                                            className="w-full p-2 text-sm border rounded bg-white"
+                                            value={newTracker.protocol}
+                                            onChange={e => setNewTracker({...newTracker, protocol: e.target.value as any})}
+                                        >
+                                            <option value="TCP">TCP</option>
+                                            <option value="UDP">UDP</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                                <Button size="sm" variant="outline" onClick={() => setIsAddingTracker(false)}>Cancel</Button>
+                                <Button size="sm" onClick={addTracker}>Save Integration</Button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="grid gap-4">
+                        {settings.trackers.integrations.map(tracker => (
+                            <div key={tracker.id} className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between group hover:shadow-md transition-shadow">
+                                <div className="flex items-center gap-4">
+                                    <div className={`p-3 rounded-lg ${tracker.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                                        <Router size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900">{tracker.name}</h4>
+                                        <div className="flex gap-3 text-xs text-gray-500 font-mono mt-1">
+                                            <span className="bg-gray-100 px-1.5 py-0.5 rounded">{tracker.provider}</span>
+                                            <span>{tracker.serverIp}:{tracker.port}</span>
+                                            <span>{tracker.protocol}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2 mr-4">
+                                        <div className={`w-2 h-2 rounded-full ${tracker.enabled ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                                        <span className="text-xs font-medium text-gray-600">{tracker.enabled ? 'Listening' : 'Disabled'}</span>
+                                    </div>
+                                    <button 
+                                        onClick={() => removeTracker(tracker.id)}
+                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                        {settings.trackers.integrations.length === 0 && !isAddingTracker && (
+                            <div className="text-center py-10 bg-gray-50 border border-dashed rounded-xl">
+                                <p className="text-gray-500">No hardware trackers configured.</p>
+                                <button onClick={() => setIsAddingTracker(true)} className="text-blue-600 font-medium text-sm mt-2 hover:underline">Connect a device</button>
+                            </div>
+                        )}
                     </div>
                 </div>
             );
@@ -200,6 +365,7 @@ const AdminSettings: React.FC = () => {
 
   const tabs = [
     { id: 'branding', icon: Globe, label: 'Branding' },
+    { id: 'trackers', icon: Router, label: 'Trackers' },
     { id: 'payments', icon: CreditCard, label: 'Payments' },
     { id: 'communication', icon: Bell, label: 'Communication' },
     { id: 'ai', icon: Sparkles, label: 'AI & Fraud' },

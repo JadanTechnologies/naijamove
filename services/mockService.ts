@@ -1,4 +1,4 @@
-import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings } from '../types';
+import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig } from '../types';
 import { VEHICLE_PRICING } from '../constants';
 
 // --- Mock Data ---
@@ -24,6 +24,29 @@ let SETTINGS: SystemSettings = {
   },
   ai: {
     geminiEnabled: true
+  },
+  trackers: {
+      enabled: true,
+      integrations: [
+          {
+              id: 'trk-1',
+              provider: 'TELTONIKA',
+              name: 'Okada Fleet Tracker',
+              enabled: true,
+              serverIp: '192.168.1.50',
+              port: 5027,
+              protocol: 'TCP'
+          },
+          {
+              id: 'trk-2',
+              provider: 'QUECLINK',
+              name: 'Logistics Trucks',
+              enabled: false,
+              serverIp: '192.168.1.51',
+              port: 6001,
+              protocol: 'UDP'
+          }
+      ]
   },
   maintenanceMode: false,
   security: {

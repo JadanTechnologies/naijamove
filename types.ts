@@ -59,6 +59,16 @@ export interface RideRequest {
   receiverPhone?: string;
 }
 
+export interface TrackerConfig {
+    id: string;
+    provider: 'TELTONIKA' | 'RUPTELA' | 'CONCOX' | 'CALAMP' | 'QUECLINK' | 'MEITRACK' | 'COBAN' | 'SUNTECH' | 'GOSAFE' | 'TRAMIGO';
+    name: string;
+    enabled: boolean;
+    serverIp: string;
+    port: number;
+    protocol: 'TCP' | 'UDP';
+}
+
 export interface SystemSettings {
   branding: {
     appName: string;
@@ -79,6 +89,10 @@ export interface SystemSettings {
   };
   ai: {
     geminiEnabled: boolean; // For auto-reply & fraud detection
+  };
+  trackers: {
+      enabled: boolean;
+      integrations: TrackerConfig[];
   };
   maintenanceMode: boolean;
   security: {
