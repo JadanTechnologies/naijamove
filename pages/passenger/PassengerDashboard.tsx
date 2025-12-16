@@ -4,7 +4,7 @@ import { calculateFare, createRide, getActiveRides } from '../../services/mockSe
 import { Button } from '../../components/ui/Button';
 import { CURRENCY_SYMBOL } from '../../constants';
 import MapMock from '../../components/MapMock';
-import { Bike, Car, Box, Truck, MapPin, Phone, MessageSquare, History, Clock } from 'lucide-react';
+import { Bike, Car, Box, Truck, MapPin, Phone, MessageSquare, History, Clock, Bell, X } from 'lucide-react';
 import { ChatWindow } from '../../components/ChatWindow';
 import { VoiceCallModal } from '../../components/VoiceCallModal';
 
@@ -30,6 +30,10 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
   // Logistics Fields
   const [parcelDesc, setParcelDesc] = useState('');
   const [receiverPhone, setReceiverPhone] = useState('');
+
+  // Notification State
+  const [notification, setNotification] = useState<string | null>(null);
+  const [hasNotifiedArrival, setHasNotifiedArrival] = useState(false);
 
   useEffect(() => {
     // Check for active rides and history on mount
@@ -69,6 +73,7 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
             receiverPhone: mode === 'LOGISTICS' ? receiverPhone : undefined,
         });
         setActiveRide(ride);
+        setHasNotifiedArrival(false); // Reset notification state for new ride
     } catch (e) {
         alert("Booking failed. Try again.");
     } finally {
@@ -79,6 +84,20 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
   const handleSOS = () => {
       if(confirm("ALERT: Are you in danger? This will immediately alert the admin team and nearby security patrols.")) {
           alert("SOS Signal Sent! Support team is contacting you now.");
+      }
+  };
+
+  const handleProgressUpdate = (progress: number) => {
+      // Trigger notification when driver is 90% of the way there (approaching)
+      if (progress > 0.9 && !hasNotifiedArrival && activeRide?.status === RideStatus.IN_PROGRESS) {
+          setNotification(`Your driver is approaching ${activeRide.dropoffAddress}. Please get ready.`);
+          setHasNotifiedArrival(true);
+          
+          // Play a sound if possible (browser policy might block without interaction)
+          try {
+              const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+              audio.play().catch(e => console.warn("Audio play blocked", e));
+          } catch(e) {}
       }
   };
 
@@ -114,6 +133,27 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
   if (activeRide) {
       return (
           <div className="h-full flex flex-col lg:flex-row gap-6 relative">
+              {/* --- Push Notification Toast --- */}
+              {notification && (
+                  <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[2000] w-[90%] max-w-md animate-in slide-in-from-top-4 fade-in">
+                      <div className="bg-white/90 backdrop-blur-md border border-emerald-100 shadow-2xl rounded-2xl p-4 flex gap-4 items-center">
+                          <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 flex-shrink-0 animate-bounce">
+                              <Car size={24} />
+                          </div>
+                          <div className="flex-1">
+                              <h4 className="font-bold text-gray-900 text-sm">Arriving Soon</h4>
+                              <p className="text-xs text-gray-600">{notification}</p>
+                          </div>
+                          <button 
+                            onClick={() => setNotification(null)}
+                            className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600"
+                          >
+                              <X size={18} />
+                          </button>
+                      </div>
+                  </div>
+              )}
+
               <div className="lg:w-1/3 space-y-6">
                   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                       <div className="flex items-center gap-3 mb-6">
@@ -158,7 +198,7 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
               </div>
               <div className="flex-1 h-[500px] lg:h-auto bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative">
                   {/* Pass activeRide to Map for real-time tracking */}
-                  <MapMock activeRide={activeRide} />
+                  <MapMock activeRide={activeRide} onProgressUpdate={handleProgressUpdate} />
                   
                   {activeRide.driverId && (
                     <div className="absolute bottom-6 left-6 right-6 bg-white p-4 rounded-lg shadow-lg z-[1000] flex justify-between items-center">

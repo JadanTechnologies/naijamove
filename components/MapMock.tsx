@@ -7,6 +7,7 @@ interface MapMockProps {
   role?: UserRole;
   showDrivers?: boolean;
   activeRide?: RideRequest | null;
+  onProgressUpdate?: (progress: number) => void;
 }
 
 // SVG Strings for Vehicle Types
@@ -58,7 +59,7 @@ const RecenterMap = ({ coords }: { coords: [number, number] }) => {
     return null;
 }
 
-const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide }) => {
+const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide, onProgressUpdate }) => {
   // Coordinates for Sokoto, Nigeria
   const defaultPosition: [number, number] = [13.0059, 5.2476];
   const [isMounted, setIsMounted] = useState(false);
@@ -174,13 +175,15 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
       if (activeRide?.status === RideStatus.IN_PROGRESS && route && progress < 1) {
           const interval = setInterval(() => {
               setProgress(prev => {
-                  if (prev >= 1) return 1;
-                  return prev + 0.005; // Move 0.5% every 100ms
+                  const next = prev + 0.005; // Move 0.5% every 100ms
+                  if (onProgressUpdate) onProgressUpdate(next);
+                  if (next >= 1) return 1;
+                  return next;
               });
           }, 100);
           return () => clearInterval(interval);
       }
-  }, [activeRide?.status, route, progress]);
+  }, [activeRide?.status, route, progress, onProgressUpdate]);
 
   const vehiclePos: [number, number] | null = route ? [
       route.start[0] + (route.end[0] - route.start[0]) * progress,
