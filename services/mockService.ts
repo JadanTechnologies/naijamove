@@ -998,3 +998,33 @@ export const runCronJob = async (id: string) => {
         return CRON_JOBS[idx];
     }
 };
+
+export const triggerSOS = async (userId: string, location: Coordinates) => {
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network
+    
+    // Log for Admin
+    logActivity(userId, 'SOS_ALERT', `CRITICAL: SOS Triggered at ${location.lat}, ${location.lng}`);
+    
+    // Create Ticket
+    const ticket: SupportTicket = {
+        id: `SOS-${Date.now()}`,
+        userId,
+        userName: USERS.find(u => u.id === userId)?.name || 'Unknown Driver',
+        subject: 'URGENT: SOS DISTRESS SIGNAL',
+        status: 'ESCALATED',
+        priority: 'HIGH',
+        createdAt: new Date().toISOString(),
+        messages: [{
+            id: `msg-${Date.now()}`,
+            senderId: userId,
+            senderName: 'System',
+            content: `Emergency distress signal received. Location: https://maps.google.com/?q=${location.lat},${location.lng}`,
+            timestamp: new Date().toISOString(),
+            isRead: false
+        }]
+    };
+    TICKETS = [ticket, ...TICKETS];
+    save(STORAGE_KEYS.TICKETS, TICKETS);
+    
+    return true;
+};

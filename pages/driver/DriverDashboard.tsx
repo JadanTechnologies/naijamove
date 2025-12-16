@@ -1,14 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, RideRequest, RideStatus, VehicleType, PaymentTransaction } from '../../types';
-import { getActiveRides, updateRideStatus, rejectRide, withdrawFunds, createSupportTicket, updateUserProfile, getUserTransactions } from '../../services/mockService';
+import { getActiveRides, updateRideStatus, rejectRide, withdrawFunds, createSupportTicket, updateUserProfile, getUserTransactions, triggerSOS } from '../../services/mockService';
 import { Button } from '../../components/ui/Button';
 import { CURRENCY_SYMBOL } from '../../constants';
-import { MapPin, Navigation, Package, Phone, CheckCircle, XCircle, MessageSquare, AlertOctagon, TrendingUp, CreditCard, Banknote, Calendar, Clock, Headphones, Send, User as UserIcon, Settings, Star, ShieldCheck, Truck, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { MapPin, Navigation, Package, Phone, CheckCircle, XCircle, MessageSquare, AlertOctagon, TrendingUp, CreditCard, Banknote, Calendar, Clock, Headphones, Send, User as UserIcon, Settings, Star, ShieldCheck, Truck, ArrowUpRight, ArrowDownLeft, Siren } from 'lucide-react';
 import MapMock from '../../components/MapMock';
 import { ChatWindow } from '../../components/ChatWindow';
 import { VoiceCallModal } from '../../components/VoiceCallModal';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { useToast } from '../../components/ui/Toast';
 
 interface DriverDashboardProps {
   user: User;
@@ -42,6 +43,8 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
       nin: user.nin || ''
   });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const { addToast } = useToast();
+  const [sosLoading, setSosLoading] = useState(false);
 
   useEffect(() => {
     // Poll for rides & update data
@@ -149,9 +152,20 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
       }
   };
 
-  const handleSOS = () => {
-      if(confirm("EMERGENCY: Report security threat? Admin and nearby police stations will be notified.")) {
-          alert("Distress signal sent! Help is on the way.");
+  const handleSOS = async () => {
+      if(!confirm("EMERGENCY: Are you sure you want to send an SOS alert? This will share your live location with Admin and Emergency Services.")) return;
+      
+      setSosLoading(true);
+      try {
+          // Mock location if user doesn't have one, or use user.location
+          const location = user.location || { lat: 13.0059, lng: 5.2476 }; // Default or user loc
+          
+          await triggerSOS(user.id, location);
+          addToast("SOS Alert Sent! Emergency contacts have been notified.", "error");
+      } catch (e) {
+          addToast("Failed to send SOS", "error");
+      } finally {
+          setSosLoading(false);
       }
   };
 
@@ -533,7 +547,24 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
 
   // --- Dashboard View (Default) ---
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 relative">
+      {/* Floating SOS Button - Always available in Dashboard View */}
+      <button 
+        onClick={handleSOS}
+        disabled={sosLoading}
+        className="fixed bottom-6 right-6 z-[1002] bg-red-600 text-white w-16 h-16 rounded-full flex items-center justify-center font-bold shadow-xl sos-btn hover:bg-red-700 transition-all transform hover:scale-105 active:scale-95 disabled:opacity-70 disabled:animate-none"
+        title="Emergency SOS"
+      >
+          {sosLoading ? (
+              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          ) : (
+              <div className="flex flex-col items-center">
+                  <Siren size={24} />
+                  <span className="text-[10px] font-bold">SOS</span>
+              </div>
+          )}
+      </button>
+
       {/* Status Toggle */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
           <div>
@@ -556,13 +587,6 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
       {/* Current Active Job */}
       {currentRide && (
           <div className="bg-white rounded-xl shadow-lg border-l-4 border-emerald-500 overflow-hidden relative">
-               <button 
-                    onClick={handleSOS}
-                    className="absolute top-4 right-4 z-[50] bg-red-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold shadow-lg sos-btn hover:bg-red-700 transition-colors text-xs"
-                  >
-                      SOS
-               </button>
-
               <div className="p-6 bg-emerald-50 border-b border-emerald-100 flex justify-between items-center">
                   <h3 className="font-bold text-emerald-900 flex items-center gap-2">
                       <Navigation size={20} />
