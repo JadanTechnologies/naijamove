@@ -2,7 +2,29 @@ import React, { useEffect, useState } from 'react';
 import { getSystemSettings, updateSystemSettings, getTemplates, saveTemplate, deleteTemplate, getAnnouncements, createAnnouncement } from '../../services/mockService';
 import { SystemSettings, TrackerConfig, NotificationTemplate, Announcement } from '../../types';
 import { Button } from '../../components/ui/Button';
-import { Shield, CreditCard, Bell, Sparkles, Smartphone, Globe, Lock, Activity, Radio, Router, Plus, Trash2, FileText, Megaphone, Edit, Send } from 'lucide-react';
+import { Shield, CreditCard, Bell, Sparkles, Smartphone, Globe, Lock, Activity, Radio, Router, Plus, Trash2, FileText, Megaphone, Edit, Send, Eye, EyeOff } from 'lucide-react';
+
+const PasswordInput = ({ value, onChange, placeholder }: { value?: string, onChange: (val: string) => void, placeholder?: string }) => {
+    const [show, setShow] = useState(false);
+    return (
+        <div className="relative flex-1">
+            <input 
+                type={show ? "text" : "password"}
+                className="w-full p-2 border rounded font-mono text-sm pr-10"
+                placeholder={placeholder}
+                value={value || ''}
+                onChange={(e) => onChange(e.target.value)}
+            />
+            <button 
+                type="button"
+                onClick={() => setShow(!show)}
+                className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
+            >
+                {show ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+        </div>
+    )
+}
 
 const AdminSettings: React.FC = () => {
   const [settings, setSettings] = useState<SystemSettings | null>(null);
@@ -300,16 +322,11 @@ const AdminSettings: React.FC = () => {
                             {settings.payments.paystackEnabled && (
                                 <div className="p-4 bg-white space-y-2">
                                     <label className="text-xs font-bold text-gray-700">Secret Key (Live/Test)</label>
-                                    <div className="relative">
-                                        <input 
-                                            type="password"
-                                            className="w-full p-2 text-sm border rounded pr-10 font-mono"
-                                            value={settings.payments.paystackSecretKey}
-                                            onChange={(e) => updateField('payments', 'paystackSecretKey', e.target.value)}
-                                            placeholder="sk_live_..."
-                                        />
-                                        <Lock className="absolute right-3 top-2.5 text-gray-400" size={14}/>
-                                    </div>
+                                    <PasswordInput 
+                                        value={settings.payments.paystackSecretKey}
+                                        onChange={(val) => updateField('payments', 'paystackSecretKey', val)}
+                                        placeholder="sk_live_..."
+                                    />
                                 </div>
                             )}
                         </div>
@@ -330,16 +347,11 @@ const AdminSettings: React.FC = () => {
                             {settings.payments.flutterwaveEnabled && (
                                 <div className="p-4 bg-white space-y-2">
                                     <label className="text-xs font-bold text-gray-700">Secret Key</label>
-                                    <div className="relative">
-                                        <input 
-                                            type="password"
-                                            className="w-full p-2 text-sm border rounded pr-10 font-mono"
-                                            value={settings.payments.flutterwaveSecretKey}
-                                            onChange={(e) => updateField('payments', 'flutterwaveSecretKey', e.target.value)}
-                                            placeholder="FLWSECK_..."
-                                        />
-                                        <Lock className="absolute right-3 top-2.5 text-gray-400" size={14}/>
-                                    </div>
+                                    <PasswordInput 
+                                        value={settings.payments.flutterwaveSecretKey}
+                                        onChange={(val) => updateField('payments', 'flutterwaveSecretKey', val)}
+                                        placeholder="FLWSECK_..."
+                                    />
                                 </div>
                             )}
                         </div>
@@ -398,12 +410,10 @@ const AdminSettings: React.FC = () => {
                                     <option value="INFOBIP">Infobip</option>
                                     <option value="TERMII">Termii (Nigeria)</option>
                                 </select>
-                                <input 
-                                    type="password"
-                                    className="flex-1 p-2 border rounded font-mono text-sm"
-                                    placeholder="API Key / Auth Token"
+                                <PasswordInput 
                                     value={settings.communication.smsApiKey}
-                                    onChange={(e) => updateField('communication', 'smsApiKey', e.target.value)}
+                                    onChange={(val) => updateField('communication', 'smsApiKey', val)}
+                                    placeholder="API Key / Auth Token"
                                 />
                              </div>
                          </div>
@@ -418,12 +428,10 @@ const AdminSettings: React.FC = () => {
                                     <option value="ONESIGNAL">OneSignal</option>
                                     <option value="FIREBASE">Firebase Cloud Messaging</option>
                                 </select>
-                                <input 
-                                    type="password"
-                                    className="flex-1 p-2 border rounded font-mono text-sm"
-                                    placeholder="Rest API Key"
+                                <PasswordInput 
                                     value={settings.communication.pushApiKey}
-                                    onChange={(e) => updateField('communication', 'pushApiKey', e.target.value)}
+                                    onChange={(val) => updateField('communication', 'pushApiKey', val)}
+                                    placeholder="Rest API Key"
                                 />
                              </div>
                          </div>
@@ -438,12 +446,10 @@ const AdminSettings: React.FC = () => {
                                     <option value="RESEND">Resend</option>
                                     <option value="SMTP">Custom SMTP</option>
                                 </select>
-                                <input 
-                                    type="password"
-                                    className="flex-1 p-2 border rounded font-mono text-sm"
-                                    placeholder="API Key"
+                                <PasswordInput 
                                     value={settings.communication.emailApiKey}
-                                    onChange={(e) => updateField('communication', 'emailApiKey', e.target.value)}
+                                    onChange={(val) => updateField('communication', 'emailApiKey', val)}
+                                    placeholder="API Key"
                                 />
                              </div>
                          </div>
