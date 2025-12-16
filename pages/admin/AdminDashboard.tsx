@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { getDashboardStats, getActiveRides } from '../../services/mockService';
+import { getDashboardStats, getActiveRides, getSystemHealth } from '../../services/mockService';
 import { CURRENCY_SYMBOL } from '../../constants';
 import MapMock from '../../components/MapMock';
-import { Users, TrendingUp, AlertTriangle, ShieldCheck, Truck, CreditCard, Download, Search, Car } from 'lucide-react';
+import { Users, TrendingUp, AlertTriangle, ShieldCheck, Truck, CreditCard, Download, Search, Car, Activity, Server, Database, Radio, CheckCircle, AlertCircle, XCircle, Cpu, RefreshCw } from 'lucide-react';
 import AdminSettings from './AdminSettings';
 import UserManagement from './UserManagement';
-import { RideRequest, UserRole } from '../../types';
+import { RideRequest, UserRole, SystemHealth } from '../../types';
 
 interface AdminDashboardProps {
     view: string;
@@ -16,6 +16,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   const [stats, setStats] = useState<any>(null);
   const [allRides, setAllRides] = useState<RideRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [healthData, setHealthData] = useState<SystemHealth | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -34,6 +35,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
     };
     loadData();
   }, []);
+
+  // Poll health data when in health view
+  useEffect(() => {
+      if (view === 'health') {
+          const fetchHealth = () => getSystemHealth().then(setHealthData);
+          fetchHealth();
+          const interval = setInterval(fetchHealth, 5000);
+          return () => clearInterval(interval);
+      }
+  }, [view]);
 
   const data = [
     { name: 'Mon', revenue: 400000 },
@@ -165,6 +176,160 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
              </div>
         </div>
     );
+  }
+
+  // System Health View
+  if (view === 'health') {
+      const StatusDot = ({ status }: { status: string }) => {
+          let color = 'bg-gray-300';
+          if (['OPTIMAL', 'OPERATIONAL', 'CONNECTED', 'UP'].includes(status)) color = 'bg-emerald-500';
+          else if (['DEGRADED', 'ISSUES'].includes(status)) color = 'bg-yellow-500';
+          else if (['DOWN', 'DISCONNECTED'].includes(status)) color = 'bg-red-500';
+
+          return <span className={`w-3 h-3 rounded-full ${color} inline-block`}></span>;
+      };
+
+      const ProgressBar = ({ value, label, color = 'bg-blue-600' }: any) => (
+          <div className="mb-2">
+              <div className="flex justify-between text-xs font-medium mb-1">
+                  <span>{label}</span>
+                  <span>{value}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className={`${color} h-2 rounded-full transition-all duration-500`} style={{ width: `${value}%` }}></div>
+              </div>
+          </div>
+      );
+
+      if (!healthData) return <div className="p-8 text-center animate-pulse">Scanning system health...</div>;
+
+      return (
+          <div className="space-y-6 animate-in fade-in">
+              <div className="flex justify-between items-center">
+                  <h1 className="text-2xl font-bold text-gray-900">System Health Monitor</h1>
+                  <button className="flex items-center gap-2 text-sm text-gray-600 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50" onClick={() => getSystemHealth().then(setHealthData)}>
+                      <RefreshCw size={14} /> Refresh
+                  </button>
+              </div>
+
+              {/* Top Level Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Database */}
+                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
+                      <div>
+                          <p className="text-sm font-bold text-gray-500 mb-1">Database Cluster</p>
+                          <div className="flex items-center gap-2 mb-2">
+                              <StatusDot status={healthData.database.status} />
+                              <span className="text-xl font-bold">{healthData.database.status}</span>
+                          </div>
+                          <p className="text-xs text-gray-600">Latency: {healthData.database.latency}ms</p>
+                          <p className="text-xs text-gray-600">Active Conn: {healthData.database.activeConnections}</p>
+                      </div>
+                      <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                          <Database size={24} />
+                      </div>
+                  </div>
+
+                  {/* API */}
+                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
+                      <div>
+                          <p className="text-sm font-bold text-gray-500 mb-1">API Gateway</p>
+                          <div className="flex items-center gap-2 mb-2">
+                              <StatusDot status="OPERATIONAL" />
+                              <span className="text-xl font-bold">{healthData.api.uptime}% Uptime</span>
+                          </div>
+                          <p className="text-xs text-gray-600">Req/sec: {healthData.api.requestsPerSecond}</p>
+                          <p className="text-xs text-gray-600">Avg Resp: {healthData.api.avgResponseTime}ms</p>
+                      </div>
+                      <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
+                          <Activity size={24} />
+                      </div>
+                  </div>
+
+                  {/* Realtime */}
+                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
+                      <div>
+                          <p className="text-sm font-bold text-gray-500 mb-1">WebSocket Server</p>
+                          <div className="flex items-center gap-2 mb-2">
+                              <StatusDot status={healthData.realtime.status} />
+                              <span className="text-xl font-bold">{healthData.realtime.status}</span>
+                          </div>
+                          <p className="text-xs text-gray-600">Active Sockets: {healthData.realtime.activeSockets.toLocaleString()}</p>
+                          <p className="text-xs text-gray-600">Msg/sec: {healthData.realtime.messagesPerSecond}</p>
+                      </div>
+                      <div className="p-3 bg-orange-50 text-orange-600 rounded-lg">
+                          <Radio size={24} />
+                      </div>
+                  </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Microservices Status Table */}
+                  <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
+                      <div className="p-4 border-b border-gray-100 bg-gray-50">
+                          <h3 className="font-bold text-gray-700">Microservices Status</h3>
+                      </div>
+                      <table className="w-full text-left">
+                          <thead className="bg-white text-gray-500 text-xs uppercase font-semibold">
+                              <tr>
+                                  <th className="px-6 py-3">Service Name</th>
+                                  <th className="px-6 py-3">Status</th>
+                                  <th className="px-6 py-3">Latency</th>
+                                  <th className="px-6 py-3">Last Check</th>
+                              </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 text-sm">
+                              {healthData.services.map((svc, idx) => (
+                                  <tr key={idx} className="hover:bg-gray-50">
+                                      <td className="px-6 py-4 font-medium">{svc.name}</td>
+                                      <td className="px-6 py-4">
+                                          <div className="flex items-center gap-2">
+                                              {svc.status === 'OPERATIONAL' ? <CheckCircle size={16} className="text-emerald-500"/> : 
+                                               svc.status === 'ISSUES' ? <AlertCircle size={16} className="text-yellow-500"/> :
+                                               <XCircle size={16} className="text-red-500"/>}
+                                              <span>{svc.status}</span>
+                                          </div>
+                                      </td>
+                                      <td className="px-6 py-4 font-mono">{svc.latency}ms</td>
+                                      <td className="px-6 py-4 text-gray-500">Just now</td>
+                                  </tr>
+                              ))}
+                          </tbody>
+                      </table>
+                  </div>
+
+                  {/* Server Load */}
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                      <div className="flex items-center gap-3 mb-6">
+                          <Cpu size={24} className="text-gray-400" />
+                          <h3 className="font-bold text-gray-700">Server Load</h3>
+                      </div>
+                      <div className="space-y-4">
+                          <ProgressBar 
+                            value={healthData.server.cpuUsage} 
+                            label="CPU Usage" 
+                            color={healthData.server.cpuUsage > 80 ? 'bg-red-500' : 'bg-blue-600'} 
+                          />
+                          <ProgressBar 
+                            value={healthData.server.memoryUsage} 
+                            label="Memory (RAM)" 
+                            color={healthData.server.memoryUsage > 85 ? 'bg-red-500' : 'bg-purple-600'} 
+                          />
+                          <ProgressBar 
+                            value={healthData.server.diskUsage} 
+                            label="SSD Storage" 
+                            color="bg-emerald-600" 
+                          />
+                      </div>
+                      <div className="mt-6 pt-4 border-t border-gray-100">
+                          <div className="text-xs text-gray-500 mb-2">Error Rate (5xx)</div>
+                          <div className="text-3xl font-bold text-gray-900">{healthData.api.errorRate}%</div>
+                          <div className="text-xs text-emerald-600 mt-1">Within SLA limits (<1.0%)</div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      );
   }
 
   // Finance View

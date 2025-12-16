@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, UserRole } from '../types';
 import { APP_NAME } from '../constants';
-import { Menu, X, LogOut, LayoutDashboard, Car, Package, Settings, CreditCard, User as UserIcon, Users } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard, Car, Package, Settings, CreditCard, User as UserIcon, Users, Activity } from 'lucide-react';
 import { getSystemSettings } from '../services/mockService';
 
 interface LayoutProps {
@@ -45,6 +45,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
           <LinkItem icon={Car} label="Active Trips" page="trips" />
           <LinkItem icon={Package} label="Logistics" page="logistics" />
           <LinkItem icon={CreditCard} label="Finance" page="finance" />
+          <LinkItem icon={Activity} label="System Health" page="health" />
           <LinkItem icon={Settings} label="System Config" page="settings" />
         </>
       );

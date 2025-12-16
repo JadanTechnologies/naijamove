@@ -146,3 +146,32 @@ export interface Coordinates {
   lat: number;
   lng: number;
 }
+
+export interface SystemHealth {
+  database: {
+    status: 'OPTIMAL' | 'DEGRADED' | 'DOWN';
+    latency: number;
+    activeConnections: number;
+  };
+  api: {
+    uptime: number;
+    requestsPerSecond: number;
+    avgResponseTime: number;
+    errorRate: number;
+  };
+  realtime: {
+    status: 'CONNECTED' | 'DISCONNECTED';
+    activeSockets: number;
+    messagesPerSecond: number;
+  };
+  server: {
+    cpuUsage: number;
+    memoryUsage: number;
+    diskUsage: number;
+  };
+  services: {
+    name: string;
+    status: 'OPERATIONAL' | 'ISSUES' | 'DOWN';
+    latency: number;
+  }[];
+}

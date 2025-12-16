@@ -1,4 +1,4 @@
-import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement, ChatMessage } from '../types';
+import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement, ChatMessage, SystemHealth } from '../types';
 import { VEHICLE_PRICING } from '../constants';
 
 // --- Local Storage Helpers ---
@@ -379,3 +379,40 @@ export const sendMessage = async (rideId: string, senderId: string, senderName: 
     save(STORAGE_KEYS.MESSAGES, MESSAGES);
     return msg;
 }
+
+// --- System Health Services ---
+export const getSystemHealth = async (): Promise<SystemHealth> => {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    return {
+        database: {
+            status: Math.random() > 0.95 ? 'DEGRADED' : 'OPTIMAL',
+            latency: Math.floor(Math.random() * 20) + 5,
+            activeConnections: Math.floor(Math.random() * 100) + 20
+        },
+        api: {
+            uptime: 99.99,
+            requestsPerSecond: Math.floor(Math.random() * 500) + 100,
+            avgResponseTime: Math.floor(Math.random() * 80) + 20,
+            errorRate: Number((Math.random() * 0.5).toFixed(2))
+        },
+        realtime: {
+            status: 'CONNECTED',
+            activeSockets: Math.floor(Math.random() * 2000) + 500,
+            messagesPerSecond: Math.floor(Math.random() * 300) + 50
+        },
+        server: {
+            cpuUsage: Math.floor(Math.random() * 60) + 10,
+            memoryUsage: Math.floor(Math.random() * 70) + 20,
+            diskUsage: 45
+        },
+        services: [
+            { name: 'Auth Service', status: 'OPERATIONAL', latency: 12 },
+            { name: 'Ride Matching', status: 'OPERATIONAL', latency: 45 },
+            { name: 'Payments', status: Math.random() > 0.9 ? 'ISSUES' : 'OPERATIONAL', latency: 120 },
+            { name: 'Notifications', status: 'OPERATIONAL', latency: 25 },
+            { name: 'Geo-Spatial', status: 'OPERATIONAL', latency: 30 }
+        ]
+    };
+};
