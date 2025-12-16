@@ -20,6 +20,14 @@
       
       /* Leaflet Fixes */
       .leaflet-container { width: 100%; height: 100%; z-index: 0; }
+      
+      /* SOS Button Pulse */
+      @keyframes sos-pulse {
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+      }
+      .sos-btn { animation: sos-pulse 2s infinite; }
     </style>
   <script type="importmap">
 {

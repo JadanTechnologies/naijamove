@@ -4,7 +4,7 @@ import { calculateFare, createRide, getActiveRides } from '../../services/mockSe
 import { Button } from '../../components/ui/Button';
 import { CURRENCY_SYMBOL, VEHICLE_PRICING } from '../../constants';
 import MapMock from '../../components/MapMock';
-import { Bike, Car, Box, Truck, MapPin, Clock } from 'lucide-react';
+import { Bike, Car, Box, Truck, MapPin, Clock, ShieldAlert } from 'lucide-react';
 
 interface PassengerDashboardProps {
   user: User;
@@ -66,6 +66,12 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
     }
   };
 
+  const handleSOS = () => {
+      if(confirm("ALERT: Are you in danger? This will immediately alert the admin team and nearby security patrols.")) {
+          alert("SOS Signal Sent! Support team is contacting you now.");
+      }
+  };
+
   const VehicleCard = ({ type, icon: Icon, label, eta }: any) => {
     if (!distance) return null;
     const price = calculateFare(type, distance);
@@ -97,7 +103,7 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
 
   if (activeRide) {
       return (
-          <div className="h-full flex flex-col lg:flex-row gap-6">
+          <div className="h-full flex flex-col lg:flex-row gap-6 relative">
               <div className="lg:w-1/3 space-y-6">
                   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                       <div className="flex items-center gap-3 mb-6">
@@ -162,6 +168,14 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
                         </div>
                     </div>
                   )}
+
+                  {/* SOS Button for Active Rides */}
+                  <button 
+                    onClick={handleSOS}
+                    className="absolute top-4 right-4 z-[1001] bg-red-600 text-white w-14 h-14 rounded-full flex items-center justify-center font-bold shadow-lg sos-btn hover:bg-red-700 transition-colors"
+                  >
+                      SOS
+                  </button>
               </div>
           </div>
       );

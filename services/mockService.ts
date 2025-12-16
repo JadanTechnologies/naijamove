@@ -1,10 +1,36 @@
 import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement } from '../types';
 import { VEHICLE_PRICING } from '../constants';
 
-// --- Mock Data ---
+// --- Local Storage Helpers ---
+const STORAGE_KEYS = {
+  SETTINGS: 'naijamove_settings',
+  USERS: 'naijamove_users',
+  RIDES: 'naijamove_rides',
+  TEMPLATES: 'naijamove_templates',
+  ANNOUNCEMENTS: 'naijamove_announcements'
+};
 
-// Initialize Default Settings
-let SETTINGS: SystemSettings = {
+const load = <T>(key: string, defaultValue: T): T => {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  } catch (e) {
+    console.warn(`Failed to load ${key}`, e);
+    return defaultValue;
+  }
+};
+
+const save = (key: string, data: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (e) {
+    console.error(`Failed to save ${key}`, e);
+  }
+};
+
+// --- Initial Mock Data (Defaults) ---
+
+const DEFAULT_SETTINGS: SystemSettings = {
   branding: {
     appName: "NaijaMove",
     logoUrl: "",
@@ -41,15 +67,6 @@ let SETTINGS: SystemSettings = {
               serverIp: '192.168.1.50',
               port: 5027,
               protocol: 'TCP'
-          },
-          {
-              id: 'trk-2',
-              provider: 'QUECLINK',
-              name: 'Logistics Trucks',
-              enabled: false,
-              serverIp: '192.168.1.51',
-              port: 6001,
-              protocol: 'UDP'
           }
       ]
   },
@@ -60,51 +77,14 @@ let SETTINGS: SystemSettings = {
   }
 };
 
-let TEMPLATES: NotificationTemplate[] = [
-    {
-        id: 'tpl-1',
-        name: 'Welcome Email',
-        type: 'EMAIL',
-        subject: 'Welcome to NaijaMove, {{name}}!',
-        body: 'Hi {{name}},\n\nWelcome to Nigeria\'s fastest logistics platform. We are glad to have you.',
-        variables: ['{{name}}']
-    },
-    {
-        id: 'tpl-2',
-        name: 'OTP SMS',
-        type: 'SMS',
-        body: 'Your NaijaMove code is {{otp}}. Do not share this with anyone.',
-        variables: ['{{otp}}']
-    },
-    {
-        id: 'tpl-3',
-        name: 'Ride Arrival',
-        type: 'PUSH',
-        body: 'Your driver {{driver_name}} has arrived!',
-        variables: ['{{driver_name}}']
-    }
-];
-
-let ANNOUNCEMENTS: Announcement[] = [
-    {
-        id: 'ann-1',
-        title: 'New Surge Pricing in Lagos',
-        message: 'Due to heavy rain, surge pricing is active in Lagos Island.',
-        target: 'DRIVERS',
-        status: 'SENT',
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        sentAt: new Date(Date.now() - 86400000).toISOString()
-    }
-];
-
-let MOCK_USERS: User[] = [
+const DEFAULT_USERS: User[] = [
   {
     id: 'admin-1',
     name: 'Super Admin',
     email: 'admin@naijamove.ng',
     role: UserRole.ADMIN,
     walletBalance: 5000000,
-    avatar: 'https://picsum.photos/id/1/200/200',
+    avatar: 'https://ui-avatars.com/api/?name=Super+Admin&background=10b981&color=fff',
     status: 'ACTIVE'
   },
   {
@@ -127,7 +107,7 @@ let MOCK_USERS: User[] = [
     isOnline: true,
     rating: 4.8,
     totalTrips: 142,
-    avatar: 'https://picsum.photos/id/2/200/200',
+    avatar: 'https://ui-avatars.com/api/?name=Musa+Ibrahim&background=f97316&color=fff',
     status: 'ACTIVE',
     ip: '197.210.1.1'
   },
@@ -141,7 +121,7 @@ let MOCK_USERS: User[] = [
     isOnline: true,
     rating: 4.5,
     totalTrips: 89,
-    avatar: 'https://picsum.photos/id/3/200/200',
+    avatar: 'https://ui-avatars.com/api/?name=Chinedu+Eze&background=3b82f6&color=fff',
     status: 'ACTIVE'
   },
   {
@@ -150,13 +130,13 @@ let MOCK_USERS: User[] = [
     email: 'tola@gmail.com',
     role: UserRole.PASSENGER,
     walletBalance: 5000,
-    avatar: 'https://picsum.photos/id/4/200/200',
+    avatar: 'https://ui-avatars.com/api/?name=Tola+Adebayo&background=8b5cf6&color=fff',
     status: 'ACTIVE',
     ip: '102.12.33.1'
   },
 ];
 
-let RIDES: RideRequest[] = [
+const DEFAULT_RIDES: RideRequest[] = [
   {
     id: 'ride-101',
     passengerId: 'passenger-1',
@@ -187,6 +167,25 @@ let RIDES: RideRequest[] = [
   },
 ];
 
+const DEFAULT_TEMPLATES: NotificationTemplate[] = [
+    {
+        id: 'tpl-1',
+        name: 'Welcome Email',
+        type: 'EMAIL',
+        subject: 'Welcome to NaijaMove, {{name}}!',
+        body: 'Hi {{name}},\n\nWelcome to Nigeria\'s fastest logistics platform.',
+        variables: ['{{name}}']
+    }
+];
+
+// --- Initialize State from Storage ---
+
+let SETTINGS = load<SystemSettings>(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
+let USERS = load<User[]>(STORAGE_KEYS.USERS, DEFAULT_USERS);
+let RIDES = load<RideRequest[]>(STORAGE_KEYS.RIDES, DEFAULT_RIDES);
+let TEMPLATES = load<NotificationTemplate[]>(STORAGE_KEYS.TEMPLATES, DEFAULT_TEMPLATES);
+let ANNOUNCEMENTS = load<Announcement[]>(STORAGE_KEYS.ANNOUNCEMENTS, []);
+
 // --- Helper Functions ---
 
 // Text-to-Speech Helper
@@ -203,12 +202,12 @@ export const login = async (identifier: string, isToken = false): Promise<User> 
   await new Promise(resolve => setTimeout(resolve, 800)); // Simulate latency
   
   if (isToken) {
-    const user = MOCK_USERS.find(u => u.token === identifier);
+    const user = USERS.find(u => u.token === identifier);
     if (!user) throw new Error('Invalid Staff Token');
     return user;
   }
 
-  const user = MOCK_USERS.find(u => u.email === identifier);
+  const user = USERS.find(u => u.email === identifier);
   if (!user) throw new Error('User not found');
   if (user.status !== 'ACTIVE') throw new Error(`Account is ${user.status}`);
   
@@ -222,18 +221,20 @@ export const getSystemSettings = async (): Promise<SystemSettings> => {
 export const updateSystemSettings = async (newSettings: SystemSettings): Promise<SystemSettings> => {
   await new Promise(resolve => setTimeout(resolve, 500));
   SETTINGS = newSettings;
-  speak("System settings updated successfully.");
+  save(STORAGE_KEYS.SETTINGS, SETTINGS);
+  speak("System settings updated.");
   return SETTINGS;
 };
 
 export const getAllUsers = async (): Promise<User[]> => {
-    return [...MOCK_USERS];
+    return [...USERS];
 };
 
 export const updateUserStatus = async (userId: string, status: 'ACTIVE' | 'BANNED' | 'SUSPENDED') => {
-    const idx = MOCK_USERS.findIndex(u => u.id === userId);
+    const idx = USERS.findIndex(u => u.id === userId);
     if(idx !== -1) {
-        MOCK_USERS[idx].status = status;
+        USERS[idx] = { ...USERS[idx], status };
+        save(STORAGE_KEYS.USERS, USERS);
     }
 };
 
@@ -260,6 +261,7 @@ export const createRide = async (ride: Omit<RideRequest, 'id' | 'status' | 'crea
     createdAt: new Date().toISOString(),
   };
   RIDES = [newRide, ...RIDES];
+  save(STORAGE_KEYS.RIDES, RIDES);
   return newRide;
 };
 
@@ -272,6 +274,7 @@ export const updateRideStatus = async (rideId: string, status: RideStatus, drive
   if (driverId) updatedRide.driverId = driverId;
   
   RIDES[rideIndex] = updatedRide;
+  save(STORAGE_KEYS.RIDES, RIDES);
   return updatedRide;
 };
 
@@ -282,6 +285,7 @@ export const rejectRide = async (rideId: string, driverId: string) => {
         if(!ride.rejectedBy) ride.rejectedBy = [];
         if(!ride.rejectedBy.includes(driverId)) {
             ride.rejectedBy.push(driverId);
+            save(STORAGE_KEYS.RIDES, RIDES);
         }
     }
 }
@@ -289,7 +293,7 @@ export const rejectRide = async (rideId: string, driverId: string) => {
 export const getDashboardStats = async () => {
   await new Promise(resolve => setTimeout(resolve, 600));
   const totalRevenue = RIDES.filter(r => r.status === RideStatus.COMPLETED).reduce((acc, r) => acc + r.price, 0);
-  const activeDrivers = MOCK_USERS.filter(u => u.role === UserRole.DRIVER && u.isOnline).length;
+  const activeDrivers = USERS.filter(u => u.role === UserRole.DRIVER && u.isOnline).length;
   const completedTrips = RIDES.filter(r => r.status === RideStatus.COMPLETED).length;
   
   return {
@@ -313,11 +317,13 @@ export const saveTemplate = async (template: NotificationTemplate) => {
     const idx = TEMPLATES.findIndex(t => t.id === template.id);
     if(idx !== -1) TEMPLATES[idx] = template;
     else TEMPLATES.push({...template, id: `tpl-${Date.now()}`});
+    save(STORAGE_KEYS.TEMPLATES, TEMPLATES);
     return template;
 }
 
 export const deleteTemplate = async (id: string) => {
     TEMPLATES = TEMPLATES.filter(t => t.id !== id);
+    save(STORAGE_KEYS.TEMPLATES, TEMPLATES);
 }
 
 export const getAnnouncements = async () => [...ANNOUNCEMENTS];
@@ -331,6 +337,7 @@ export const createAnnouncement = async (announcement: Omit<Announcement, 'id' |
         sentAt: new Date().toISOString()
     };
     ANNOUNCEMENTS = [newAnn, ...ANNOUNCEMENTS];
+    save(STORAGE_KEYS.ANNOUNCEMENTS, ANNOUNCEMENTS);
     speak("Announcement broadcasted successfully.");
     return newAnn;
 }

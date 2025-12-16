@@ -48,6 +48,12 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user }) => {
       }
   };
 
+  const handleSOS = () => {
+      if(confirm("EMERGENCY: Report security threat? Admin and nearby police stations will be notified.")) {
+          alert("Distress signal sent! Help is on the way.");
+      }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Status Toggle */}
@@ -71,7 +77,14 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user }) => {
 
       {/* Current Active Job */}
       {currentRide && (
-          <div className="bg-white rounded-xl shadow-lg border-l-4 border-emerald-500 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-lg border-l-4 border-emerald-500 overflow-hidden relative">
+               <button 
+                    onClick={handleSOS}
+                    className="absolute top-4 right-4 z-[50] bg-red-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold shadow-lg sos-btn hover:bg-red-700 transition-colors text-xs"
+                  >
+                      SOS
+               </button>
+
               <div className="p-6 bg-emerald-50 border-b border-emerald-100 flex justify-between items-center">
                   <h3 className="font-bold text-emerald-900 flex items-center gap-2">
                       <Navigation size={20} />
