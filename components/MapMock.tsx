@@ -3,15 +3,12 @@ import { MapContainer, TileLayer, Marker, Popup, LayersControl, Polyline, useMap
 import L from 'leaflet';
 import { UserRole, VehicleType, RideRequest, RideStatus } from '../types';
 
-// NOTE: CSS is imported in index.html to prevent ESM loader errors
-
 interface MapMockProps {
   role?: UserRole;
   showDrivers?: boolean;
   activeRide?: RideRequest | null;
 }
 
-// Custom Icons
 const createIcon = (color: string, type: 'VEHICLE' | 'PIN' = 'VEHICLE') => new L.DivIcon({
   className: 'custom-icon',
   html: type === 'VEHICLE' 
@@ -21,7 +18,6 @@ const createIcon = (color: string, type: 'VEHICLE' | 'PIN' = 'VEHICLE') => new L
   iconAnchor: type === 'VEHICLE' ? [12, 12] : [8, 8]
 });
 
-// Component to recenter map when active ride changes
 const RecenterMap = ({ coords }: { coords: [number, number] }) => {
     const map = useMap();
     useEffect(() => {
@@ -31,14 +27,11 @@ const RecenterMap = ({ coords }: { coords: [number, number] }) => {
 }
 
 const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide }) => {
-  // Center on Lagos
   const defaultPosition: [number, number] = [6.5244, 3.3792];
   const [isMounted, setIsMounted] = useState(false);
 
-  // Fix Leaflet Icons on Mount only
   useEffect(() => {
     setIsMounted(true);
-    // Safe check before modifying prototype
     try {
         if ((L.Icon.Default.prototype as any)._getIconUrl) {
             delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -53,18 +46,53 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
     }
   }, []);
 
-  // Random Background Drivers
   const [drivers, setDrivers] = useState([
-    { id: 1, type: VehicleType.OKADA, lat: 6.528, lng: 3.385, name: "Musa", status: "BUSY" },
-    { id: 2, type: VehicleType.KEKE, lat: 6.520, lng: 3.370, name: "Chinedu", status: "IDLE" },
-    { id: 3, type: VehicleType.MINIBUS, lat: 6.530, lng: 3.390, name: "Sola", status: "BUSY" },
+    { 
+        id: 1, 
+        type: VehicleType.OKADA, 
+        lat: 6.528, 
+        lng: 3.385, 
+        name: "Musa Ibrahim", 
+        status: "BUSY",
+        rating: 4.8,
+        trips: 1240,
+        currentRide: {
+            id: 'RIDE-8821',
+            passenger: 'Adebayo T.',
+            dest: 'Ikeja City Mall'
+        }
+    },
+    { 
+        id: 2, 
+        type: VehicleType.KEKE, 
+        lat: 6.520, 
+        lng: 3.370, 
+        name: "Chinedu Eze", 
+        status: "IDLE",
+        rating: 4.5,
+        trips: 850,
+        currentRide: null
+    },
+    { 
+        id: 3, 
+        type: VehicleType.MINIBUS, 
+        lat: 6.530, 
+        lng: 3.390, 
+        name: "Sola Alabi", 
+        status: "BUSY",
+        rating: 4.9,
+        trips: 2100,
+         currentRide: {
+            id: 'RIDE-9942',
+            passenger: 'Grace O.',
+            dest: 'Victoria Island'
+        }
+    },
   ]);
 
-  // Active Ride State
   const [route, setRoute] = useState<{start: [number,number], end: [number,number]} | null>(null);
   const [progress, setProgress] = useState(0);
 
-  // Background Movement
   useEffect(() => {
     const interval = setInterval(() => {
         setDrivers(prev => prev.map(d => ({
@@ -76,7 +104,6 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
     return () => clearInterval(interval);
   }, []);
 
-  // Initialize Route for Active Ride
   useEffect(() => {
       if (activeRide) {
           const seed1 = activeRide.pickupAddress.length;
@@ -99,7 +126,6 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
       }
   }, [activeRide?.id]);
 
-  // Animate Vehicle for Active Ride
   useEffect(() => {
       if (activeRide?.status === RideStatus.IN_PROGRESS && route && progress < 1) {
           const interval = setInterval(() => {
@@ -145,17 +171,51 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
             </LayersControl.Overlay>
         </LayersControl>
 
-        {/* --- Background Fleet --- */}
+        {/* --- Background Fleet with Detailed Popups --- */}
         {showDrivers && !activeRide && drivers.map(d => (
             <Marker 
                 key={d.id} 
                 position={[d.lat, d.lng]} 
                 icon={createIcon(d.type === VehicleType.OKADA ? '#10b981' : d.type === VehicleType.KEKE ? '#f97316' : '#2563eb')}
             >
-                <Popup>
-                    <div className="p-2">
-                        <h3 className="font-bold">{d.name}</h3>
-                        <p className="text-xs text-gray-600">{d.type} • {d.status}</p>
+                <Popup className="driver-popup">
+                    <div className="p-1 min-w-[200px]">
+                        <div className="flex justify-between items-start mb-2 border-b pb-2">
+                             <div>
+                                <h3 className="font-bold text-gray-900">{d.name}</h3>
+                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                    <span>{d.rating}★</span>
+                                    <span>•</span>
+                                    <span>{d.trips} Trips</span>
+                                </div>
+                             </div>
+                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                 d.status === 'BUSY' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'
+                             }`}>
+                                 {d.status}
+                             </span>
+                        </div>
+                        
+                        <div className="space-y-2">
+                             <div className="flex justify-between text-xs">
+                                 <span className="text-gray-500">Vehicle Type:</span>
+                                 <span className="font-medium">{d.type}</span>
+                             </div>
+                             {d.currentRide ? (
+                                 <div className="bg-gray-50 p-2 rounded border border-gray-100 mt-2">
+                                     <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">Current Ride</div>
+                                     <div className="text-xs">
+                                         <div className="font-mono text-emerald-600 mb-0.5">{d.currentRide.id}</div>
+                                         <div className="font-medium truncate">To: {d.currentRide.dest}</div>
+                                         <div className="text-gray-500">Pass: {d.currentRide.passenger}</div>
+                                     </div>
+                                 </div>
+                             ) : (
+                                 <div className="text-xs text-gray-400 italic text-center py-2">
+                                     Waiting for requests...
+                                 </div>
+                             )}
+                        </div>
                     </div>
                 </Popup>
             </Marker>

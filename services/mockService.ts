@@ -37,6 +37,26 @@ const DEFAULT_SETTINGS: SystemSettings = {
     logoUrl: "",
     primaryColor: "#10b981"
   },
+  landingPage: {
+    heroTitle: "The Future of Logistics & Rides",
+    heroSubtitle: "Logistics & Rides",
+    heroDescription: "Move parcels, people, and cargo with Nigeria's most advanced AI-powered fleet. Real-time tracking for Okada, Keke, and Mini-bus.",
+    stats: {
+        rides: "2.5M+",
+        drivers: "50k+",
+        matchTime: "0.5s",
+        cities: "36"
+    },
+    contactEmail: "support@naijamove.ng",
+    contactPhone: "+234 800 NAIJA"
+  },
+  mobileApps: {
+      androidUrl: "https://play.google.com/store/apps/details?id=com.naijamove.app",
+      iosUrl: "https://apps.apple.com/ng/app/naijamove",
+      version: "2.1.0",
+      releaseNotes: "Performance improvements and new dark mode.",
+      lastUpdated: new Date().toISOString()
+  },
   payments: {
     paystackEnabled: true,
     paystackSecretKey: "sk_test_xxxxxxxxxxxxxxxxxxxx",

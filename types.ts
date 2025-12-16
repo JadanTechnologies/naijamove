@@ -101,12 +101,36 @@ export interface Announcement {
     sentAt?: string;
 }
 
+export interface LandingPageConfig {
+    heroTitle: string;
+    heroSubtitle: string;
+    heroDescription: string;
+    stats: {
+        rides: string;
+        drivers: string;
+        matchTime: string;
+        cities: string;
+    };
+    contactEmail: string;
+    contactPhone: string;
+}
+
+export interface MobileAppConfig {
+    androidUrl: string;
+    iosUrl: string;
+    version: string;
+    releaseNotes: string;
+    lastUpdated: string;
+}
+
 export interface SystemSettings {
   branding: {
     appName: string;
     logoUrl: string;
     primaryColor: string;
   };
+  landingPage: LandingPageConfig;
+  mobileApps: MobileAppConfig;
   payments: {
     paystackEnabled: boolean;
     paystackSecretKey?: string;

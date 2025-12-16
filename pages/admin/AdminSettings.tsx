@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getSystemSettings, updateSystemSettings, getTemplates, saveTemplate, deleteTemplate, getAnnouncements, createAnnouncement } from '../../services/mockService';
 import { SystemSettings, TrackerConfig, NotificationTemplate, Announcement } from '../../types';
 import { Button } from '../../components/ui/Button';
-import { Shield, CreditCard, Bell, Sparkles, Smartphone, Globe, Lock, Activity, Radio, Router, Plus, Trash2, FileText, Megaphone, Edit, Send, Eye, EyeOff, X, Monitor, Map, Globe2, ShieldAlert } from 'lucide-react';
+import { Shield, CreditCard, Bell, Sparkles, Smartphone, Globe, Activity, Router, Plus, Trash2, FileText, Megaphone, Edit, Send, Eye, EyeOff, X, Monitor, Map, Globe2, ShieldAlert, LayoutTemplate, Download } from 'lucide-react';
 
 const PasswordInput = ({ value, onChange, placeholder }: { value?: string, onChange: (val: string) => void, placeholder?: string }) => {
     const [show, setShow] = useState(false);
@@ -23,8 +23,8 @@ const PasswordInput = ({ value, onChange, placeholder }: { value?: string, onCha
                 {show ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
         </div>
-    )
-}
+    );
+};
 
 const BlockListManager = ({ 
     title, 
@@ -128,8 +128,43 @@ const AdminSettings: React.FC = () => {
       }
     });
   };
+  
+  const updateLandingPageField = (key: string, value: any) => {
+      if (!settings) return;
+      setSettings({
+        ...settings,
+        landingPage: {
+            ...settings.landingPage,
+            [key]: value
+        }
+      });
+  };
 
-  // Security Helper to update array fields
+  const updateLandingPageStats = (key: string, value: any) => {
+      if (!settings) return;
+      setSettings({
+        ...settings,
+        landingPage: {
+            ...settings.landingPage,
+            stats: {
+                ...settings.landingPage.stats,
+                [key]: value
+            }
+        }
+      });
+  };
+
+    const updateMobileAppField = (key: string, value: any) => {
+      if (!settings) return;
+      setSettings({
+        ...settings,
+        mobileApps: {
+            ...settings.mobileApps,
+            [key]: value
+        }
+      });
+  };
+
   const updateSecurityList = (listKey: keyof SystemSettings['security'], action: 'ADD' | 'REMOVE', value: string) => {
       if(!settings) return;
       const list = settings.security[listKey];
@@ -146,7 +181,7 @@ const AdminSettings: React.FC = () => {
       });
   };
 
-  // --- Tracker Handlers ---
+  // --- Handlers ---
   const addTracker = () => {
       if(!settings || !newTracker.name) return;
       const tracker: TrackerConfig = {
@@ -181,7 +216,6 @@ const AdminSettings: React.FC = () => {
       });
   };
 
-  // --- Template Handlers ---
   const handleSaveTemplate = async () => {
       if(!editingTemplate) return;
       await saveTemplate(editingTemplate);
@@ -209,7 +243,6 @@ const AdminSettings: React.FC = () => {
       setIsTemplateModalOpen(true);
   };
 
-  // --- Announcement Handlers ---
   const handleSendAnnouncement = async () => {
       if(!newAnnouncement.title || !newAnnouncement.message) return;
       await createAnnouncement(newAnnouncement);
@@ -222,6 +255,171 @@ const AdminSettings: React.FC = () => {
 
   const renderTabContent = () => {
     switch(activeTab) {
+        case 'cms':
+            return (
+                 <div className="space-y-6 animate-in fade-in">
+                    <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl mb-6">
+                        <h3 className="text-emerald-900 font-bold flex items-center gap-2"><LayoutTemplate size={20}/> Landing Page CMS</h3>
+                        <p className="text-sm text-emerald-700 mt-1">
+                            Customize the content, statistics, and links visible on the public landing page.
+                        </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <div className="bg-white p-5 rounded-xl border border-gray-200">
+                            <h4 className="font-bold text-gray-800 mb-4 border-b pb-2">Hero Section</h4>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Headline Title</label>
+                                    <input 
+                                        className="w-full p-2 border rounded text-sm"
+                                        value={settings.landingPage.heroTitle}
+                                        onChange={(e) => updateLandingPageField('heroTitle', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Subtitle (Gradient Text)</label>
+                                    <input 
+                                        className="w-full p-2 border rounded text-sm"
+                                        value={settings.landingPage.heroSubtitle}
+                                        onChange={(e) => updateLandingPageField('heroSubtitle', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Description Text</label>
+                                    <textarea 
+                                        className="w-full p-2 border rounded text-sm h-24"
+                                        value={settings.landingPage.heroDescription}
+                                        onChange={(e) => updateLandingPageField('heroDescription', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                         </div>
+
+                         <div className="bg-white p-5 rounded-xl border border-gray-200">
+                            <h4 className="font-bold text-gray-800 mb-4 border-b pb-2">Footer Contacts</h4>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Support Email</label>
+                                    <input 
+                                        className="w-full p-2 border rounded text-sm"
+                                        value={settings.landingPage.contactEmail}
+                                        onChange={(e) => updateLandingPageField('contactEmail', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Support Phone</label>
+                                    <input 
+                                        className="w-full p-2 border rounded text-sm"
+                                        value={settings.landingPage.contactPhone}
+                                        onChange={(e) => updateLandingPageField('contactPhone', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                         </div>
+
+                         <div className="bg-white p-5 rounded-xl border border-gray-200 md:col-span-2">
+                            <h4 className="font-bold text-gray-800 mb-4 border-b pb-2">Statistics Counters</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Completed Rides</label>
+                                    <input 
+                                        className="w-full p-2 border rounded text-sm"
+                                        value={settings.landingPage.stats.rides}
+                                        onChange={(e) => updateLandingPageStats('rides', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Active Drivers</label>
+                                    <input 
+                                        className="w-full p-2 border rounded text-sm"
+                                        value={settings.landingPage.stats.drivers}
+                                        onChange={(e) => updateLandingPageStats('drivers', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Avg. Match Time</label>
+                                    <input 
+                                        className="w-full p-2 border rounded text-sm"
+                                        value={settings.landingPage.stats.matchTime}
+                                        onChange={(e) => updateLandingPageStats('matchTime', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Total Cities</label>
+                                    <input 
+                                        className="w-full p-2 border rounded text-sm"
+                                        value={settings.landingPage.stats.cities}
+                                        onChange={(e) => updateLandingPageStats('cities', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                         </div>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl mt-8 mb-6">
+                        <h3 className="text-blue-900 font-bold flex items-center gap-2"><Smartphone size={20}/> Mobile App Downloads</h3>
+                        <p className="text-sm text-blue-700 mt-1">
+                            Manage the download links and version information for the mobile applications.
+                        </p>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-xl border border-gray-200">
+                        <h4 className="font-bold text-gray-800 mb-4 border-b pb-2">Version Control</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Android Play Store URL</label>
+                                <div className="flex gap-2">
+                                    <input 
+                                        className="w-full p-2 border rounded text-sm"
+                                        value={settings.mobileApps.androidUrl}
+                                        onChange={(e) => updateMobileAppField('androidUrl', e.target.value)}
+                                        placeholder="https://play.google.com/..."
+                                    />
+                                    <Button size="sm" variant="outline"><Download size={14}/></Button>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">iOS App Store URL</label>
+                                <div className="flex gap-2">
+                                    <input 
+                                        className="w-full p-2 border rounded text-sm"
+                                        value={settings.mobileApps.iosUrl}
+                                        onChange={(e) => updateMobileAppField('iosUrl', e.target.value)}
+                                        placeholder="https://apps.apple.com/..."
+                                    />
+                                    <Button size="sm" variant="outline"><Download size={14}/></Button>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Current Version</label>
+                                <input 
+                                    className="w-full p-2 border rounded text-sm"
+                                    value={settings.mobileApps.version}
+                                    onChange={(e) => updateMobileAppField('version', e.target.value)}
+                                    placeholder="e.g. 2.1.0"
+                                />
+                            </div>
+                             <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Last Updated</label>
+                                <input 
+                                    className="w-full p-2 border rounded text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                                    value={new Date(settings.mobileApps.lastUpdated).toLocaleDateString()}
+                                    disabled
+                                />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Release Notes</label>
+                                <textarea 
+                                    className="w-full p-2 border rounded text-sm h-20"
+                                    value={settings.mobileApps.releaseNotes}
+                                    onChange={(e) => updateMobileAppField('releaseNotes', e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+            );
         case 'security':
             return (
                 <div className="space-y-6 animate-in fade-in">
@@ -233,7 +431,6 @@ const AdminSettings: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Network */}
                         <div className="space-y-4">
                              <h3 className="font-bold text-gray-700 border-b pb-2">Network Layer</h3>
                              <BlockListManager 
@@ -246,7 +443,6 @@ const AdminSettings: React.FC = () => {
                              />
                         </div>
 
-                        {/* Geolocation */}
                         <div className="space-y-4">
                              <h3 className="font-bold text-gray-700 border-b pb-2">Geolocation</h3>
                              <BlockListManager 
@@ -267,7 +463,6 @@ const AdminSettings: React.FC = () => {
                              />
                         </div>
 
-                        {/* Device Fingerprint */}
                         <div className="space-y-4 md:col-span-2">
                              <h3 className="font-bold text-gray-700 border-b pb-2">Device & Environment</h3>
                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -716,7 +911,6 @@ const AdminSettings: React.FC = () => {
              return (
                 <div className="space-y-6 animate-in fade-in">
                     <div className="flex flex-col md:flex-row gap-6">
-                        {/* Create Announcement */}
                         <div className="md:w-1/3 space-y-4">
                             <h3 className="text-lg font-bold">Broadcast Message</h3>
                             <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
@@ -764,7 +958,6 @@ const AdminSettings: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* History */}
                         <div className="flex-1 space-y-4">
                             <h3 className="text-lg font-bold">History</h3>
                             <div className="space-y-4">
@@ -799,6 +992,7 @@ const AdminSettings: React.FC = () => {
 
   const tabs = [
     { id: 'branding', icon: Globe, label: 'Branding' },
+    { id: 'cms', icon: LayoutTemplate, label: 'Landing Page' },
     { id: 'security', icon: Shield, label: 'Security' },
     { id: 'trackers', icon: Router, label: 'Trackers' },
     { id: 'payments', icon: CreditCard, label: 'Payments' },
@@ -810,7 +1004,6 @@ const AdminSettings: React.FC = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[600px] flex flex-col md:flex-row overflow-hidden">
-        {/* Sidebar */}
         <div className="w-full md:w-64 bg-gray-50 border-r border-gray-200 p-4">
             <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 px-2">Settings</h2>
             <div className="space-y-1">
@@ -827,7 +1020,6 @@ const AdminSettings: React.FC = () => {
             </div>
         </div>
         
-        {/* Content */}
         <div className="flex-1 p-8 overflow-y-auto">
             <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-bold text-gray-900">System Configuration</h2>

@@ -10,12 +10,12 @@ interface LandingPageProps {
 
 const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [branding, setBranding] = useState<SystemSettings['branding'] | null>(null);
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [staffToken, setStaffToken] = useState('');
   const [showStaffInput, setShowStaffInput] = useState(false);
 
   useEffect(() => {
-    getSystemSettings().then(s => setBranding(s.branding));
+    getSystemSettings().then(setSettings);
   }, []);
 
   const handleLoginSelection = (email: string) => {
@@ -29,7 +29,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
       }
   };
 
-  const appName = branding?.appName || "NaijaMove";
+  if (!settings) return <div className="min-h-screen bg-black flex items-center justify-center text-emerald-500 animate-pulse">Initializing...</div>;
+
+  const appName = settings.branding.appName;
+  const cms = settings.landingPage;
+  const apps = settings.mobileApps;
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden relative selection:bg-emerald-500 selection:text-white font-sans flex flex-col">
@@ -48,8 +52,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.5)] overflow-hidden">
             <img 
-                src="https://cdn-icons-png.flaticon.com/512/2972/2972185.png" 
-                alt="NaijaMove Logo" 
+                src={settings.branding.logoUrl || "https://cdn-icons-png.flaticon.com/512/2972/2972185.png"}
+                alt="Logo" 
                 className="w-8 h-8 object-contain" 
             />
           </div>
@@ -169,15 +173,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
           </div>
           
           <h1 className="text-5xl md:text-7xl font-bold leading-tight tracking-tight">
-            The Future of <br />
+            {cms.heroTitle} <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500 typing-effect">
-              Logistics & Rides
+              {cms.heroSubtitle}
             </span>
           </h1>
           
           <p className="text-lg text-gray-400 max-w-xl mx-auto md:mx-0 leading-relaxed">
-            Move parcels, people, and cargo with Nigeria's most advanced AI-powered fleet. 
-            Real-time tracking for Okada, Keke, and Mini-bus.
+            {cms.heroDescription}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start pt-4">
@@ -187,9 +190,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
              >
                 Get Started <ChevronRight size={20} />
              </button>
-             <button className="px-8 py-4 border border-white/20 text-white rounded-full font-bold text-lg hover:bg-white/10 hover:border-white/40 transition-all flex items-center justify-center gap-2">
+             <a 
+                href={apps.androidUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-4 border border-white/20 text-white rounded-full font-bold text-lg hover:bg-white/10 hover:border-white/40 transition-all flex items-center justify-center gap-2"
+             >
                 <Download size={20} /> Download App
-             </button>
+             </a>
           </div>
           
           {loading && <p className="text-emerald-500 animate-pulse text-sm font-medium">Authenticating secure connection...</p>}
@@ -207,7 +215,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
                   
                   {/* Central Logo */}
                   <div className="w-24 h-24 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-2xl flex items-center justify-center shadow-2xl z-20 overflow-hidden bg-white">
-                    <img src="https://cdn-icons-png.flaticon.com/512/2972/2972185.png" alt="Logo" className="w-16 h-16 object-contain filter drop-shadow-lg" />
+                    <img src={settings.branding.logoUrl || "https://cdn-icons-png.flaticon.com/512/2972/2972185.png"} alt="Logo" className="w-16 h-16 object-contain filter drop-shadow-lg" />
                   </div>
 
                   {/* Orbiting Vehicles */}
@@ -242,19 +250,19 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
       <div className="relative z-10 border-t border-white/10 bg-black/50 backdrop-blur-md">
          <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center md:text-left">
-               <h3 className="text-4xl font-bold text-white tracking-tight">2.5M+</h3>
+               <h3 className="text-4xl font-bold text-white tracking-tight">{cms.stats.rides}</h3>
                <p className="text-xs font-semibold text-emerald-500 uppercase tracking-widest mt-1">Completed Rides</p>
             </div>
             <div className="text-center md:text-left">
-               <h3 className="text-4xl font-bold text-white tracking-tight">50k+</h3>
+               <h3 className="text-4xl font-bold text-white tracking-tight">{cms.stats.drivers}</h3>
                <p className="text-xs font-semibold text-emerald-500 uppercase tracking-widest mt-1">Active Drivers</p>
             </div>
             <div className="text-center md:text-left">
-               <h3 className="text-4xl font-bold text-white tracking-tight">0.5s</h3>
+               <h3 className="text-4xl font-bold text-white tracking-tight">{cms.stats.matchTime}</h3>
                <p className="text-xs font-semibold text-emerald-500 uppercase tracking-widest mt-1">Match Time</p>
             </div>
             <div className="text-center md:text-left">
-               <h3 className="text-4xl font-bold text-white tracking-tight">36</h3>
+               <h3 className="text-4xl font-bold text-white tracking-tight">{cms.stats.cities}</h3>
                <p className="text-xs font-semibold text-emerald-500 uppercase tracking-widest mt-1">Nigerian Cities</p>
             </div>
          </div>
@@ -267,7 +275,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
                   <div className="space-y-4">
                       <div className="flex items-center gap-2 mb-4">
                           <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center font-bold text-white overflow-hidden p-1">
-                            <img src="https://cdn-icons-png.flaticon.com/512/2972/2972185.png" alt="Logo" className="w-full h-full object-contain filter brightness-0 invert" />
+                            <img src={settings.branding.logoUrl || "https://cdn-icons-png.flaticon.com/512/2972/2972185.png"} alt="Logo" className="w-full h-full object-contain filter brightness-0 invert" />
                           </div>
                           <span className="text-xl font-bold text-white">{appName}</span>
                       </div>
@@ -301,8 +309,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading }) => {
                       <ul className="space-y-3 text-sm text-gray-500">
                           <li><a href="#" className="hover:text-emerald-500 transition-colors">Help Center</a></li>
                           <li><a href="#faq" className="hover:text-emerald-500 transition-colors">FAQs</a></li>
-                          <li><a href="#" className="hover:text-emerald-500 transition-colors flex items-center gap-2"><Mail size={14}/> support@{appName.toLowerCase()}.ng</a></li>
-                          <li><a href="#" className="hover:text-emerald-500 transition-colors flex items-center gap-2"><Phone size={14}/> +234 800 NAIJA</a></li>
+                          <li><a href={`mailto:${cms.contactEmail}`} className="hover:text-emerald-500 transition-colors flex items-center gap-2"><Mail size={14}/> {cms.contactEmail}</a></li>
+                          <li><a href={`tel:${cms.contactPhone}`} className="hover:text-emerald-500 transition-colors flex items-center gap-2"><Phone size={14}/> {cms.contactPhone}</a></li>
                       </ul>
                   </div>
               </div>
