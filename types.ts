@@ -57,6 +57,8 @@ export interface RideRequest {
   parcelDescription?: string;
   parcelWeight?: string;
   receiverPhone?: string;
+  // Driver specific
+  rejectedBy?: string[];
 }
 
 export interface TrackerConfig {

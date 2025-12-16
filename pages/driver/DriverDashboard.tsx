@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, RideRequest, RideStatus } from '../../types';
-import { getActiveRides, updateRideStatus } from '../../services/mockService';
+import { getActiveRides, updateRideStatus, rejectRide } from '../../services/mockService';
 import { Button } from '../../components/ui/Button';
 import { CURRENCY_SYMBOL } from '../../constants';
 import { MapPin, Navigation, Package, Phone, CheckCircle, XCircle } from 'lucide-react';
@@ -22,6 +22,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user }) => {
             getActiveRides(user.role, user.id).then(rides => {
                 const active = rides.find(r => r.status === RideStatus.ACCEPTED || r.status === RideStatus.IN_PROGRESS);
                 setCurrentRide(active || null);
+                // Filter out rides that are not PENDING for the request list
                 setRequests(rides.filter(r => r.status === RideStatus.PENDING));
             });
         }
@@ -32,6 +33,11 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user }) => {
   const handleAccept = async (rideId: string) => {
     await updateRideStatus(rideId, RideStatus.ACCEPTED, user.id);
     // Refresh immediately handled by effect
+  };
+
+  const handleReject = async (rideId: string) => {
+      await rejectRide(rideId, user.id);
+      setRequests(prev => prev.filter(r => r.id !== rideId));
   };
 
   const handleStatusUpdate = async (status: RideStatus) => {
@@ -159,7 +165,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user }) => {
                                   <div className="flex flex-col items-end gap-2 justify-center">
                                       <span className="text-2xl font-bold text-gray-900">{CURRENCY_SYMBOL}{req.price}</span>
                                       <div className="flex gap-2 w-full md:w-auto">
-                                          <Button size="sm" variant="outline" onClick={() => {/* Reject */}} className="flex-1 md:flex-none">
+                                          <Button size="sm" variant="outline" onClick={() => handleReject(req.id)} className="flex-1 md:flex-none">
                                               <XCircle size={18} />
                                           </Button>
                                           <Button size="sm" onClick={() => handleAccept(req.id)} className="flex-1 md:flex-none">

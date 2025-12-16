@@ -199,7 +199,12 @@ export const getActiveRides = async (role: UserRole, userId: string): Promise<Ri
   await new Promise(resolve => setTimeout(resolve, 500));
   if (role === UserRole.ADMIN || role === UserRole.STAFF) return RIDES;
   if (role === UserRole.DRIVER) {
-    return RIDES.filter(r => r.status === RideStatus.PENDING || r.driverId === userId);
+    // Return rides that are Pending AND NOT rejected by this driver
+    // OR rides that are already accepted by this driver
+    return RIDES.filter(r => 
+        (r.status === RideStatus.PENDING && !r.rejectedBy?.includes(userId)) || 
+        r.driverId === userId
+    );
   }
   return RIDES.filter(r => r.passengerId === userId);
 };
@@ -227,6 +232,17 @@ export const updateRideStatus = async (rideId: string, status: RideStatus, drive
   RIDES[rideIndex] = updatedRide;
   return updatedRide;
 };
+
+export const rejectRide = async (rideId: string, driverId: string) => {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const ride = RIDES.find(r => r.id === rideId);
+    if(ride) {
+        if(!ride.rejectedBy) ride.rejectedBy = [];
+        if(!ride.rejectedBy.includes(driverId)) {
+            ride.rejectedBy.push(driverId);
+        }
+    }
+}
 
 export const getDashboardStats = async () => {
   await new Promise(resolve => setTimeout(resolve, 600));
