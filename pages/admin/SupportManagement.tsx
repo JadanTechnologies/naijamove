@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { SupportTicket, KnowledgeBaseItem } from '../../types';
 import { getSupportTickets, getKnowledgeBase, saveKBItem, deleteKBItem, addTicketMessage } from '../../services/mockService';
 import { Button } from '../../components/ui/Button';
-import { MessageSquare, BookOpen, Send, Trash2, CheckCircle, Search, Plus, User } from 'lucide-react';
+import { MessageSquare, BookOpen, Send, Trash2, CheckCircle, Search, Plus, User, Phone } from 'lucide-react';
+import { VoiceCallModal } from '../../components/VoiceCallModal';
 
 const SupportManagement: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'TICKETS' | 'KB'>('TICKETS');
@@ -16,6 +17,9 @@ const SupportManagement: React.FC = () => {
     // KB State
     const [newKb, setNewKb] = useState<Partial<KnowledgeBaseItem>>({});
     const [isEditingKb, setIsEditingKb] = useState(false);
+
+    // Call State
+    const [showCallModal, setShowCallModal] = useState(false);
 
     useEffect(() => {
         refresh();
@@ -114,7 +118,12 @@ const SupportManagement: React.FC = () => {
                                             <span>User: {selectedTicket.userName}</span>
                                         </div>
                                     </div>
-                                    <Button variant="outline" size="sm">Mark Resolved</Button>
+                                    <div className="flex gap-2">
+                                        <Button variant="outline" size="sm" onClick={() => setShowCallModal(true)}>
+                                            <Phone size={16} className="mr-1" /> Call User
+                                        </Button>
+                                        <Button variant="outline" size="sm">Mark Resolved</Button>
+                                    </div>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
                                     {selectedTicket.messages.map(msg => (
@@ -140,6 +149,13 @@ const SupportManagement: React.FC = () => {
                                         <Button onClick={handleReply}><Send size={18}/></Button>
                                     </div>
                                 </div>
+                                {showCallModal && (
+                                    <VoiceCallModal 
+                                        recipientName={selectedTicket.userName}
+                                        recipientRole="App User"
+                                        onEndCall={() => setShowCallModal(false)}
+                                    />
+                                )}
                             </>
                         ) : (
                             <div className="flex-1 flex flex-col items-center justify-center text-gray-400">

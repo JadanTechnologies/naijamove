@@ -30,6 +30,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
   // Support State
   const [supportMessage, setSupportMessage] = useState('');
   const [supportSent, setSupportSent] = useState(false);
+  const [showSupportCall, setShowSupportCall] = useState(false);
 
   useEffect(() => {
     // Poll for rides & update data
@@ -253,8 +254,13 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
                   </div>
 
                   <div className="space-y-4">
+                      <div className="flex gap-3">
+                           <Button onClick={() => setShowSupportCall(true)} className="flex-1" variant="outline">
+                               <Phone size={18} className="mr-2" /> Call Support Agent
+                           </Button>
+                      </div>
                       <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">How can we help you?</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Or leave a message</label>
                           <textarea 
                               className="w-full p-3 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-emerald-500 outline-none"
                               placeholder="Describe your issue regarding payments, app bugs, or safety..."
@@ -287,6 +293,14 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
                       <p className="text-sm text-orange-800">Sokoto, Nigeria</p>
                   </div>
               </div>
+              
+              {showSupportCall && (
+                  <VoiceCallModal 
+                      recipientName="NaijaMove Support"
+                      recipientRole="Customer Service"
+                      onEndCall={() => setShowSupportCall(false)}
+                  />
+              )}
           </div>
       );
   }

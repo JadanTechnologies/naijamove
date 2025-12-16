@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getSystemSettings, updateSystemSettings, getTemplates, saveTemplate, deleteTemplate, getAnnouncements, createAnnouncement } from '../../services/mockService';
+import { getSystemSettings, updateSystemSettings, getTemplates, saveTemplate, deleteTemplate, getAnnouncements, createAnnouncement, speak } from '../../services/mockService';
 import { SystemSettings, TrackerConfig, NotificationTemplate, Announcement, VehicleType } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Shield, CreditCard, Bell, Sparkles, Smartphone, Globe, Activity, Router, Plus, Trash2, FileText, Megaphone, Edit, Send, Eye, EyeOff, X, Monitor, Map, Globe2, ShieldAlert, LayoutTemplate, Download, Coins, Plug, AlertTriangle } from 'lucide-react';
@@ -115,6 +115,7 @@ const AdminSettings: React.FC = () => {
   const handleSave = async () => {
     if (settings) {
       await updateSystemSettings(settings);
+      speak("System settings saved successfully.");
     }
   };
 
@@ -218,6 +219,7 @@ const AdminSettings: React.FC = () => {
       });
       setIsAddingTracker(false);
       setNewTracker({ provider: 'TELTONIKA', protocol: 'TCP', port: 5000, serverIp: '0.0.0.0' });
+      speak("New GPS tracker added.");
   };
 
   const removeTracker = (id: string) => {
@@ -237,12 +239,14 @@ const AdminSettings: React.FC = () => {
       setTemplates(await getTemplates());
       setEditingTemplate(null);
       setIsTemplateModalOpen(false);
+      speak("Notification template saved.");
   };
 
   const handleDeleteTemplate = async (id: string) => {
       if(confirm('Delete this template?')) {
           await deleteTemplate(id);
           setTemplates(await getTemplates());
+          speak("Template deleted.");
       }
   };
 
@@ -263,6 +267,7 @@ const AdminSettings: React.FC = () => {
       await createAnnouncement(newAnnouncement);
       setAnnouncements(await getAnnouncements());
       setNewAnnouncement({ title: '', message: '', target: 'ALL' });
+      speak("Announcement broadcast sent successfully.");
   };
 
 
@@ -270,6 +275,8 @@ const AdminSettings: React.FC = () => {
 
   const renderTabContent = () => {
     switch(activeTab) {
+        // ... (Content remains same as provided file, just omitted for brevity in XML if not changed, but must include if full replacement is needed.
+        // For safety, I will include the switch structure and rely on the full file update pattern)
         case 'maintenance':
             return (
                 <div className="space-y-6 animate-in fade-in">
