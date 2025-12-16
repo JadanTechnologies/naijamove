@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, UserRole } from '../types';
 import { APP_NAME } from '../constants';
-import { Menu, X, LogOut, LayoutDashboard, Car, Package, Settings, CreditCard, User as UserIcon, Users, Activity, ChevronLeft, ChevronRight, Headphones } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard, Car, Package, Settings, CreditCard, User as UserIcon, Users, Activity, ChevronLeft, ChevronRight, Headphones, Wallet } from 'lucide-react';
 import { getSystemSettings } from '../services/mockService';
 import { SupportWidget } from './SupportWidget';
 
@@ -60,6 +60,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
         <>
           <LinkItem icon={LayoutDashboard} label="Dashboard" page="dashboard" />
           <LinkItem icon={Car} label="My Trips" page="trips" />
+          <LinkItem icon={Wallet} label="Earnings & Wallet" page="wallet" />
+          <LinkItem icon={Headphones} label="Support" page="support" />
         </>
       );
     }
@@ -163,7 +165,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
         <main className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50 scroll-smooth relative">
           {children}
           {/* Support Widget for Non-Admins */}
-          {user.role !== UserRole.ADMIN && user.role !== UserRole.STAFF && (
+          {user.role !== UserRole.ADMIN && user.role !== UserRole.STAFF && currentPage !== 'support' && (
               <SupportWidget user={user} />
           )}
         </main>

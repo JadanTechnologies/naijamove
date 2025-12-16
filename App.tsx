@@ -40,7 +40,7 @@ const App: React.FC = () => {
     <Layout user={user} onLogout={handleLogout} onNavigate={setCurrentPage} currentPage={currentPage}>
       {user.role === UserRole.ADMIN && <AdminDashboard view={currentPage} />}
       {user.role === UserRole.PASSENGER && <PassengerDashboard user={user} />}
-      {user.role === UserRole.DRIVER && <DriverDashboard user={user} />}
+      {user.role === UserRole.DRIVER && <DriverDashboard user={user} view={currentPage} />}
       {user.role === UserRole.STAFF && <AdminDashboard view={currentPage} />}
     </Layout>
   );

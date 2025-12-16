@@ -343,6 +343,7 @@ export const getActiveRides = async (role: UserRole, userId: string): Promise<Ri
   await new Promise(resolve => setTimeout(resolve, 500));
   if (role === UserRole.ADMIN || role === UserRole.STAFF) return RIDES;
   if (role === UserRole.DRIVER) {
+    // Return all rides for this driver (including past ones) + Pending ones they can see
     return RIDES.filter(r => 
         (r.status === RideStatus.PENDING && !r.rejectedBy?.includes(userId)) || 
         r.driverId === userId
@@ -415,6 +416,21 @@ export const rejectRide = async (rideId: string, driverId: string) => {
         }
     }
 }
+
+export const withdrawFunds = async (userId: string, amount: number) => {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    const userIdx = USERS.findIndex(u => u.id === userId);
+    if(userIdx === -1) throw new Error("User not found");
+    
+    if(USERS[userIdx].walletBalance < amount) {
+        throw new Error("Insufficient funds");
+    }
+
+    USERS[userIdx].walletBalance -= amount;
+    save(STORAGE_KEYS.USERS, USERS);
+    logActivity(userId, 'WITHDRAWAL', `Withdrew ${amount}`);
+    return USERS[userIdx];
+};
 
 export const getDashboardStats = async () => {
   await new Promise(resolve => setTimeout(resolve, 600));
