@@ -1,4 +1,4 @@
-import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig } from '../types';
+import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement } from '../types';
 import { VEHICLE_PRICING } from '../constants';
 
 // --- Mock Data ---
@@ -12,15 +12,20 @@ let SETTINGS: SystemSettings = {
   },
   payments: {
     paystackEnabled: true,
+    paystackSecretKey: "sk_test_xxxxxxxxxxxxxxxxxxxx",
     flutterwaveEnabled: false,
+    flutterwaveSecretKey: "",
     monnifyEnabled: false,
     manualEnabled: true,
     manualBankDetails: "GTBank - 0123456789 - NaijaMove Ltd"
   },
   communication: {
     emailProvider: 'RESEND',
+    emailApiKey: "re_123456789",
     smsProvider: 'TWILIO',
-    pushProvider: 'ONESIGNAL'
+    smsApiKey: "",
+    pushProvider: 'ONESIGNAL',
+    pushApiKey: ""
   },
   ai: {
     geminiEnabled: true
@@ -54,6 +59,43 @@ let SETTINGS: SystemSettings = {
     blockedCountries: []
   }
 };
+
+let TEMPLATES: NotificationTemplate[] = [
+    {
+        id: 'tpl-1',
+        name: 'Welcome Email',
+        type: 'EMAIL',
+        subject: 'Welcome to NaijaMove, {{name}}!',
+        body: 'Hi {{name}},\n\nWelcome to Nigeria\'s fastest logistics platform. We are glad to have you.',
+        variables: ['{{name}}']
+    },
+    {
+        id: 'tpl-2',
+        name: 'OTP SMS',
+        type: 'SMS',
+        body: 'Your NaijaMove code is {{otp}}. Do not share this with anyone.',
+        variables: ['{{otp}}']
+    },
+    {
+        id: 'tpl-3',
+        name: 'Ride Arrival',
+        type: 'PUSH',
+        body: 'Your driver {{driver_name}} has arrived!',
+        variables: ['{{driver_name}}']
+    }
+];
+
+let ANNOUNCEMENTS: Announcement[] = [
+    {
+        id: 'ann-1',
+        title: 'New Surge Pricing in Lagos',
+        message: 'Due to heavy rain, surge pricing is active in Lagos Island.',
+        target: 'DRIVERS',
+        status: 'SENT',
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+        sentAt: new Date(Date.now() - 86400000).toISOString()
+    }
+];
 
 let MOCK_USERS: User[] = [
   {
@@ -262,3 +304,33 @@ export const calculateFare = (vehicleType: VehicleType, distanceKm: number): num
   const pricing = VEHICLE_PRICING[vehicleType];
   return Math.ceil(pricing.base + (pricing.perKm * distanceKm));
 };
+
+// --- Template & Announcement Services ---
+
+export const getTemplates = async () => [...TEMPLATES];
+
+export const saveTemplate = async (template: NotificationTemplate) => {
+    const idx = TEMPLATES.findIndex(t => t.id === template.id);
+    if(idx !== -1) TEMPLATES[idx] = template;
+    else TEMPLATES.push({...template, id: `tpl-${Date.now()}`});
+    return template;
+}
+
+export const deleteTemplate = async (id: string) => {
+    TEMPLATES = TEMPLATES.filter(t => t.id !== id);
+}
+
+export const getAnnouncements = async () => [...ANNOUNCEMENTS];
+
+export const createAnnouncement = async (announcement: Omit<Announcement, 'id' | 'createdAt' | 'status'>) => {
+    const newAnn: Announcement = {
+        ...announcement,
+        id: `ann-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        status: 'SENT',
+        sentAt: new Date().toISOString()
+    };
+    ANNOUNCEMENTS = [newAnn, ...ANNOUNCEMENTS];
+    speak("Announcement broadcasted successfully.");
+    return newAnn;
+}

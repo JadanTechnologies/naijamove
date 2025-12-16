@@ -1,3 +1,4 @@
+
 export enum UserRole {
   ADMIN = 'ADMIN',
   DRIVER = 'DRIVER',
@@ -71,6 +72,25 @@ export interface TrackerConfig {
     protocol: 'TCP' | 'UDP';
 }
 
+export interface NotificationTemplate {
+    id: string;
+    type: 'EMAIL' | 'SMS' | 'PUSH';
+    name: string;
+    subject?: string; // Only for email
+    body: string;
+    variables: string[]; // e.g. {{name}}, {{otp}}
+}
+
+export interface Announcement {
+    id: string;
+    title: string;
+    message: string;
+    target: 'ALL' | 'DRIVERS' | 'PASSENGERS';
+    status: 'DRAFT' | 'SENT';
+    createdAt: string;
+    sentAt?: string;
+}
+
 export interface SystemSettings {
   branding: {
     appName: string;
@@ -79,15 +99,20 @@ export interface SystemSettings {
   };
   payments: {
     paystackEnabled: boolean;
+    paystackSecretKey?: string;
     flutterwaveEnabled: boolean;
+    flutterwaveSecretKey?: string;
     monnifyEnabled: boolean;
     manualEnabled: boolean;
     manualBankDetails?: string;
   };
   communication: {
     emailProvider: 'RESEND' | 'SMTP';
-    smsProvider: 'TWILIO';
+    emailApiKey?: string;
+    smsProvider: 'TWILIO' | 'INFOBIP' | 'TERMII';
+    smsApiKey?: string;
     pushProvider: 'ONESIGNAL' | 'FIREBASE';
+    pushApiKey?: string;
   };
   ai: {
     geminiEnabled: boolean; // For auto-reply & fraud detection

@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { getSystemSettings, updateSystemSettings } from '../../services/mockService';
-import { SystemSettings, TrackerConfig } from '../../types';
+import { getSystemSettings, updateSystemSettings, getTemplates, saveTemplate, deleteTemplate, getAnnouncements, createAnnouncement } from '../../services/mockService';
+import { SystemSettings, TrackerConfig, NotificationTemplate, Announcement } from '../../types';
 import { Button } from '../../components/ui/Button';
-import { Shield, CreditCard, Bell, Sparkles, Smartphone, Globe, Lock, Activity, Radio, Router, Plus, Trash2 } from 'lucide-react';
+import { Shield, CreditCard, Bell, Sparkles, Smartphone, Globe, Lock, Activity, Radio, Router, Plus, Trash2, FileText, Megaphone, Edit, Send } from 'lucide-react';
 
 const AdminSettings: React.FC = () => {
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [activeTab, setActiveTab] = useState('branding');
 
-  // Tracker State for new addition
+  // Tracker State
   const [isAddingTracker, setIsAddingTracker] = useState(false);
   const [newTracker, setNewTracker] = useState<Partial<TrackerConfig>>({
       provider: 'TELTONIKA',
@@ -17,8 +17,23 @@ const AdminSettings: React.FC = () => {
       serverIp: '0.0.0.0'
   });
 
+  // Template State
+  const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
+  const [editingTemplate, setEditingTemplate] = useState<NotificationTemplate | null>(null);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+
+  // Announcement State
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [newAnnouncement, setNewAnnouncement] = useState<{title: string; message: string; target: Announcement['target']}>({
+      title: '',
+      message: '',
+      target: 'ALL'
+  });
+
   useEffect(() => {
     getSystemSettings().then(setSettings);
+    getTemplates().then(setTemplates);
+    getAnnouncements().then(setAnnouncements);
   }, []);
 
   const handleSave = async () => {
@@ -39,6 +54,7 @@ const AdminSettings: React.FC = () => {
     });
   };
 
+  // --- Tracker Handlers ---
   const addTracker = () => {
       if(!settings || !newTracker.name) return;
       const tracker: TrackerConfig = {
@@ -73,6 +89,43 @@ const AdminSettings: React.FC = () => {
       });
   };
 
+  // --- Template Handlers ---
+  const handleSaveTemplate = async () => {
+      if(!editingTemplate) return;
+      await saveTemplate(editingTemplate);
+      setTemplates(await getTemplates());
+      setEditingTemplate(null);
+      setIsTemplateModalOpen(false);
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+      if(confirm('Delete this template?')) {
+          await deleteTemplate(id);
+          setTemplates(await getTemplates());
+      }
+  };
+
+  const openNewTemplate = () => {
+      setEditingTemplate({
+          id: '',
+          name: '',
+          type: 'EMAIL',
+          subject: '',
+          body: '',
+          variables: []
+      });
+      setIsTemplateModalOpen(true);
+  };
+
+  // --- Announcement Handlers ---
+  const handleSendAnnouncement = async () => {
+      if(!newAnnouncement.title || !newAnnouncement.message) return;
+      await createAnnouncement(newAnnouncement);
+      setAnnouncements(await getAnnouncements());
+      setNewAnnouncement({ title: '', message: '', target: 'ALL' });
+  };
+
+
   if (!settings) return <div>Loading settings...</div>;
 
   const renderTabContent = () => {
@@ -81,7 +134,7 @@ const AdminSettings: React.FC = () => {
             return (
                 <div className="space-y-6 animate-in fade-in">
                     <h3 className="text-lg font-bold">App Branding</h3>
-                    <div className="grid gap-4">
+                    <div className="grid gap-4 max-w-xl">
                         <div>
                             <label className="block text-sm font-medium mb-1">Application Name</label>
                             <input 
@@ -223,12 +276,6 @@ const AdminSettings: React.FC = () => {
                                 </div>
                             </div>
                         ))}
-                        {settings.trackers.integrations.length === 0 && !isAddingTracker && (
-                            <div className="text-center py-10 bg-gray-50 border border-dashed rounded-xl">
-                                <p className="text-gray-500">No hardware trackers configured.</p>
-                                <button onClick={() => setIsAddingTracker(true)} className="text-blue-600 font-medium text-sm mt-2 hover:underline">Connect a device</button>
-                            </div>
-                        )}
                     </div>
                 </div>
             );
@@ -236,48 +283,66 @@ const AdminSettings: React.FC = () => {
             return (
                 <div className="space-y-6 animate-in fade-in">
                     <h3 className="text-lg font-bold">Payment Gateways</h3>
-                    <div className="space-y-4">
-                        <label className="flex items-center space-x-3 p-4 border rounded bg-gray-50">
-                            <input 
-                                type="checkbox" 
-                                checked={settings.payments.paystackEnabled}
-                                onChange={(e) => updateField('payments', 'paystackEnabled', e.target.checked)}
-                                className="w-5 h-5 text-emerald-600 rounded"
-                            />
-                            <div className="flex-1">
-                                <span className="font-bold block">Paystack</span>
-                                <span className="text-xs text-gray-500">Nigeria's leading payment gateway</span>
-                            </div>
-                        </label>
-                        <label className="flex items-center space-x-3 p-4 border rounded bg-gray-50">
-                            <input 
-                                type="checkbox" 
-                                checked={settings.payments.flutterwaveEnabled}
-                                onChange={(e) => updateField('payments', 'flutterwaveEnabled', e.target.checked)}
-                                className="w-5 h-5 text-emerald-600 rounded"
-                            />
-                            <div>
-                                <span className="font-bold block">Flutterwave</span>
-                                <span className="text-xs text-gray-500">International payments support</span>
-                            </div>
-                        </label>
-                         <label className="flex items-center space-x-3 p-4 border rounded bg-gray-50">
-                            <input 
-                                type="checkbox" 
-                                checked={settings.payments.manualEnabled}
-                                onChange={(e) => updateField('payments', 'manualEnabled', e.target.checked)}
-                                className="w-5 h-5 text-emerald-600 rounded"
-                            />
-                            <div className="flex-1">
-                                <span className="font-bold block">Manual Bank Transfer</span>
+                    <div className="space-y-6">
+                        <div className="border rounded-lg bg-gray-50 overflow-hidden">
+                            <label className="flex items-center space-x-3 p-4 border-b">
                                 <input 
-                                    className="mt-2 w-full p-2 text-sm border rounded"
-                                    placeholder="Enter Bank Details"
-                                    value={settings.payments.manualBankDetails}
-                                    onChange={(e) => updateField('payments', 'manualBankDetails', e.target.value)}
+                                    type="checkbox" 
+                                    checked={settings.payments.paystackEnabled}
+                                    onChange={(e) => updateField('payments', 'paystackEnabled', e.target.checked)}
+                                    className="w-5 h-5 text-emerald-600 rounded"
                                 />
-                            </div>
-                        </label>
+                                <div className="flex-1">
+                                    <span className="font-bold block">Paystack</span>
+                                    <span className="text-xs text-gray-500">Nigeria's leading payment gateway</span>
+                                </div>
+                            </label>
+                            {settings.payments.paystackEnabled && (
+                                <div className="p-4 bg-white space-y-2">
+                                    <label className="text-xs font-bold text-gray-700">Secret Key (Live/Test)</label>
+                                    <div className="relative">
+                                        <input 
+                                            type="password"
+                                            className="w-full p-2 text-sm border rounded pr-10 font-mono"
+                                            value={settings.payments.paystackSecretKey}
+                                            onChange={(e) => updateField('payments', 'paystackSecretKey', e.target.value)}
+                                            placeholder="sk_live_..."
+                                        />
+                                        <Lock className="absolute right-3 top-2.5 text-gray-400" size={14}/>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="border rounded-lg bg-gray-50 overflow-hidden">
+                            <label className="flex items-center space-x-3 p-4 border-b">
+                                <input 
+                                    type="checkbox" 
+                                    checked={settings.payments.flutterwaveEnabled}
+                                    onChange={(e) => updateField('payments', 'flutterwaveEnabled', e.target.checked)}
+                                    className="w-5 h-5 text-emerald-600 rounded"
+                                />
+                                <div>
+                                    <span className="font-bold block">Flutterwave</span>
+                                    <span className="text-xs text-gray-500">International payments support</span>
+                                </div>
+                            </label>
+                            {settings.payments.flutterwaveEnabled && (
+                                <div className="p-4 bg-white space-y-2">
+                                    <label className="text-xs font-bold text-gray-700">Secret Key</label>
+                                    <div className="relative">
+                                        <input 
+                                            type="password"
+                                            className="w-full p-2 text-sm border rounded pr-10 font-mono"
+                                            value={settings.payments.flutterwaveSecretKey}
+                                            onChange={(e) => updateField('payments', 'flutterwaveSecretKey', e.target.value)}
+                                            placeholder="FLWSECK_..."
+                                        />
+                                        <Lock className="absolute right-3 top-2.5 text-gray-400" size={14}/>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             );
@@ -320,44 +385,259 @@ const AdminSettings: React.FC = () => {
             return (
                 <div className="space-y-6 animate-in fade-in">
                      <h3 className="text-lg font-bold">Communication Providers</h3>
-                     <div className="grid gap-6">
+                     <div className="grid gap-6 max-w-2xl">
                          <div>
                              <label className="block text-sm font-bold mb-2">SMS Provider (OTP)</label>
-                             <select 
-                                value={settings.communication.smsProvider} 
-                                className="w-full p-2 border rounded bg-gray-50"
-                                onChange={(e) => updateField('communication', 'smsProvider', e.target.value)}
-                             >
-                                 <option value="TWILIO">Twilio</option>
-                                 <option value="INFOBIP">Infobip</option>
-                                 <option value="TERMII">Termii (Nigeria)</option>
-                             </select>
+                             <div className="flex gap-2">
+                                <select 
+                                    value={settings.communication.smsProvider} 
+                                    className="w-1/3 p-2 border rounded bg-gray-50"
+                                    onChange={(e) => updateField('communication', 'smsProvider', e.target.value)}
+                                >
+                                    <option value="TWILIO">Twilio</option>
+                                    <option value="INFOBIP">Infobip</option>
+                                    <option value="TERMII">Termii (Nigeria)</option>
+                                </select>
+                                <input 
+                                    type="password"
+                                    className="flex-1 p-2 border rounded font-mono text-sm"
+                                    placeholder="API Key / Auth Token"
+                                    value={settings.communication.smsApiKey}
+                                    onChange={(e) => updateField('communication', 'smsApiKey', e.target.value)}
+                                />
+                             </div>
                          </div>
                          <div>
                              <label className="block text-sm font-bold mb-2">Push Notifications</label>
-                             <select 
-                                value={settings.communication.pushProvider}
-                                className="w-full p-2 border rounded bg-gray-50"
-                                onChange={(e) => updateField('communication', 'pushProvider', e.target.value)}
-                             >
-                                 <option value="ONESIGNAL">OneSignal</option>
-                                 <option value="FIREBASE">Firebase Cloud Messaging</option>
-                             </select>
+                             <div className="flex gap-2">
+                                <select 
+                                    value={settings.communication.pushProvider}
+                                    className="w-1/3 p-2 border rounded bg-gray-50"
+                                    onChange={(e) => updateField('communication', 'pushProvider', e.target.value)}
+                                >
+                                    <option value="ONESIGNAL">OneSignal</option>
+                                    <option value="FIREBASE">Firebase Cloud Messaging</option>
+                                </select>
+                                <input 
+                                    type="password"
+                                    className="flex-1 p-2 border rounded font-mono text-sm"
+                                    placeholder="Rest API Key"
+                                    value={settings.communication.pushApiKey}
+                                    onChange={(e) => updateField('communication', 'pushApiKey', e.target.value)}
+                                />
+                             </div>
                          </div>
                          <div>
                              <label className="block text-sm font-bold mb-2">Email Service</label>
-                             <select 
-                                value={settings.communication.emailProvider}
-                                className="w-full p-2 border rounded bg-gray-50"
-                                onChange={(e) => updateField('communication', 'emailProvider', e.target.value)}
-                             >
-                                 <option value="RESEND">Resend</option>
-                                 <option value="SMTP">Custom SMTP</option>
-                             </select>
+                             <div className="flex gap-2">
+                                <select 
+                                    value={settings.communication.emailProvider}
+                                    className="w-1/3 p-2 border rounded bg-gray-50"
+                                    onChange={(e) => updateField('communication', 'emailProvider', e.target.value)}
+                                >
+                                    <option value="RESEND">Resend</option>
+                                    <option value="SMTP">Custom SMTP</option>
+                                </select>
+                                <input 
+                                    type="password"
+                                    className="flex-1 p-2 border rounded font-mono text-sm"
+                                    placeholder="API Key"
+                                    value={settings.communication.emailApiKey}
+                                    onChange={(e) => updateField('communication', 'emailApiKey', e.target.value)}
+                                />
+                             </div>
                          </div>
                      </div>
                 </div>
             );
+        case 'templates':
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h3 className="text-lg font-bold">Message Templates</h3>
+                            <p className="text-sm text-gray-500">Manage Email, SMS, and Push content.</p>
+                        </div>
+                        <Button size="sm" onClick={openNewTemplate}>
+                            <Plus size={16} className="mr-2"/> New Template
+                        </Button>
+                    </div>
+
+                    {isTemplateModalOpen && editingTemplate && (
+                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95">
+                                <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
+                                    <h4 className="font-bold">{editingTemplate.id ? 'Edit Template' : 'New Template'}</h4>
+                                    <button onClick={() => setIsTemplateModalOpen(false)}><Trash2 size={20} className="text-gray-400 hover:text-red-500" /></button>
+                                </div>
+                                <div className="p-6 space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Template Name</label>
+                                        <input 
+                                            className="w-full p-2 border rounded text-sm"
+                                            value={editingTemplate.name}
+                                            onChange={e => setEditingTemplate({...editingTemplate, name: e.target.value})}
+                                            placeholder="e.g. Welcome Email"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-700 mb-1">Type</label>
+                                            <select 
+                                                className="w-full p-2 border rounded text-sm bg-white"
+                                                value={editingTemplate.type}
+                                                onChange={e => setEditingTemplate({...editingTemplate, type: e.target.value as any})}
+                                            >
+                                                <option value="EMAIL">Email</option>
+                                                <option value="SMS">SMS</option>
+                                                <option value="PUSH">Push</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {editingTemplate.type === 'EMAIL' && (
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-700 mb-1">Subject</label>
+                                            <input 
+                                                className="w-full p-2 border rounded text-sm"
+                                                value={editingTemplate.subject}
+                                                onChange={e => setEditingTemplate({...editingTemplate, subject: e.target.value})}
+                                                placeholder="Email Subject"
+                                            />
+                                        </div>
+                                    )}
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Content Body</label>
+                                        <textarea 
+                                            className="w-full p-2 border rounded text-sm h-32"
+                                            value={editingTemplate.body}
+                                            onChange={e => setEditingTemplate({...editingTemplate, body: e.target.value})}
+                                            placeholder="Type your message here..."
+                                        />
+                                        <p className="text-[10px] text-gray-500 mt-1">Available variables: {'{{name}}, {{otp}}, {{driver_name}}'}</p>
+                                    </div>
+                                </div>
+                                <div className="p-4 bg-gray-50 text-right flex justify-end gap-2">
+                                    <Button size="sm" variant="outline" onClick={() => setIsTemplateModalOpen(false)}>Cancel</Button>
+                                    <Button size="sm" onClick={handleSaveTemplate}>Save Template</Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {templates.map(tpl => (
+                            <div key={tpl.id} className="p-4 bg-white border rounded-xl hover:shadow-md transition-shadow relative group">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-2 py-1 rounded text-[10px] font-bold ${
+                                            tpl.type === 'EMAIL' ? 'bg-blue-100 text-blue-800' :
+                                            tpl.type === 'SMS' ? 'bg-orange-100 text-orange-800' :
+                                            'bg-purple-100 text-purple-800'
+                                        }`}>{tpl.type}</span>
+                                        <h4 className="font-bold text-sm">{tpl.name}</h4>
+                                    </div>
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button 
+                                            onClick={() => { setEditingTemplate(tpl); setIsTemplateModalOpen(true); }}
+                                            className="p-1.5 hover:bg-gray-100 rounded text-blue-600"
+                                        >
+                                            <Edit size={16} />
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDeleteTemplate(tpl.id)}
+                                            className="p-1.5 hover:bg-red-50 rounded text-red-600"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                                {tpl.subject && <p className="text-xs font-semibold text-gray-700 mb-1 truncate">{tpl.subject}</p>}
+                                <p className="text-xs text-gray-500 line-clamp-3 whitespace-pre-line">{tpl.body}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        case 'announcements':
+             return (
+                <div className="space-y-6 animate-in fade-in">
+                    <div className="flex flex-col md:flex-row gap-6">
+                        {/* Create Announcement */}
+                        <div className="md:w-1/3 space-y-4">
+                            <h3 className="text-lg font-bold">Broadcast Message</h3>
+                            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Title</label>
+                                        <input 
+                                            className="w-full p-2 border rounded text-sm"
+                                            value={newAnnouncement.title}
+                                            onChange={e => setNewAnnouncement({...newAnnouncement, title: e.target.value})}
+                                            placeholder="Announcement Headline"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Target Audience</label>
+                                        <div className="flex gap-2">
+                                            {['ALL', 'DRIVERS', 'PASSENGERS'].map(target => (
+                                                <button 
+                                                    key={target}
+                                                    onClick={() => setNewAnnouncement({...newAnnouncement, target: target as any})}
+                                                    className={`flex-1 py-1.5 text-xs font-medium rounded border ${
+                                                        newAnnouncement.target === target 
+                                                        ? 'bg-emerald-600 text-white border-emerald-600' 
+                                                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    {target}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Message</label>
+                                        <textarea 
+                                            className="w-full p-2 border rounded text-sm h-32"
+                                            value={newAnnouncement.message}
+                                            onChange={e => setNewAnnouncement({...newAnnouncement, message: e.target.value})}
+                                            placeholder="Write your announcement here..."
+                                        />
+                                    </div>
+                                    <Button className="w-full" onClick={handleSendAnnouncement}>
+                                        <Send size={16} className="mr-2" /> Send Broadcast
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* History */}
+                        <div className="flex-1 space-y-4">
+                            <h3 className="text-lg font-bold">History</h3>
+                            <div className="space-y-4">
+                                {announcements.map(ann => (
+                                    <div key={ann.id} className="bg-white p-4 rounded-xl border border-gray-200">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h4 className="font-bold text-gray-900">{ann.title}</h4>
+                                                <p className="text-xs text-gray-500 mt-0.5">
+                                                    Sent to <span className="font-semibold">{ann.target}</span> • {new Date(ann.sentAt!).toLocaleString()}
+                                                </p>
+                                            </div>
+                                            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-1 rounded">SENT</span>
+                                        </div>
+                                        <div className="mt-3 text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
+                                            {ann.message}
+                                        </div>
+                                    </div>
+                                ))}
+                                {announcements.length === 0 && (
+                                    <div className="text-center py-10 text-gray-500 text-sm">No announcements sent yet.</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+             );
         default:
             return <div>Select a category</div>;
     }
@@ -368,9 +648,9 @@ const AdminSettings: React.FC = () => {
     { id: 'trackers', icon: Router, label: 'Trackers' },
     { id: 'payments', icon: CreditCard, label: 'Payments' },
     { id: 'communication', icon: Bell, label: 'Communication' },
+    { id: 'templates', icon: FileText, label: 'Templates' },
+    { id: 'announcements', icon: Megaphone, label: 'Announcements' },
     { id: 'ai', icon: Sparkles, label: 'AI & Fraud' },
-    { id: 'security', icon: Lock, label: 'Security' },
-    { id: 'system', icon: Activity, label: 'System Health' },
   ];
 
   return (
