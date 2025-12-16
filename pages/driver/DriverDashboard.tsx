@@ -3,7 +3,7 @@ import { User, RideRequest, RideStatus } from '../../types';
 import { getActiveRides, updateRideStatus, rejectRide } from '../../services/mockService';
 import { Button } from '../../components/ui/Button';
 import { CURRENCY_SYMBOL } from '../../constants';
-import { MapPin, Navigation, Package, Phone, CheckCircle, XCircle, MessageSquare } from 'lucide-react';
+import { MapPin, Navigation, Package, Phone, CheckCircle, XCircle, MessageSquare, AlertOctagon } from 'lucide-react';
 import MapMock from '../../components/MapMock';
 import { ChatWindow } from '../../components/ChatWindow';
 import { VoiceCallModal } from '../../components/VoiceCallModal';
@@ -49,6 +49,15 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user }) => {
       await updateRideStatus(currentRide.id, status);
       if (status === RideStatus.COMPLETED) {
           setCurrentRide(null);
+      }
+  };
+
+  const handleCancel = async () => {
+      if(!currentRide) return;
+      if(confirm("Are you sure you want to cancel this active ride? This may negatively impact your driver rating.")) {
+          await updateRideStatus(currentRide.id, RideStatus.CANCELLED);
+          setCurrentRide(null);
+          alert("Ride cancelled successfully.");
       }
   };
 
@@ -130,22 +139,27 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user }) => {
                           </div>
                       )}
 
-                      <div className="flex gap-3">
+                      <div className="grid grid-cols-2 gap-3">
                         {currentRide.status === RideStatus.ACCEPTED && (
-                             <Button onClick={() => handleStatusUpdate(RideStatus.IN_PROGRESS)} className="w-full">
+                             <Button onClick={() => handleStatusUpdate(RideStatus.IN_PROGRESS)} className="w-full col-span-2 py-3 text-lg">
                                 Start Trip
                              </Button>
                         )}
                         {currentRide.status === RideStatus.IN_PROGRESS && (
-                             <Button onClick={() => handleStatusUpdate(RideStatus.COMPLETED)} variant="primary" className="w-full bg-emerald-600">
+                             <Button onClick={() => handleStatusUpdate(RideStatus.COMPLETED)} variant="primary" className="w-full bg-emerald-600 col-span-2 py-3 text-lg">
                                 Complete Trip
                              </Button>
                         )}
+                        
                         <Button variant="outline" className="w-full" onClick={() => setShowCall(true)}>
                             <Phone size={18} className="mr-2"/> Call
                         </Button>
                         <Button variant="outline" className="w-full bg-emerald-50 text-emerald-700 border-emerald-200" onClick={() => setShowChat(!showChat)}>
                             <MessageSquare size={18} className="mr-2"/> Chat
+                        </Button>
+
+                        <Button variant="danger" className="w-full col-span-2 mt-2" onClick={handleCancel}>
+                            <AlertOctagon size={18} className="mr-2"/> Cancel Ride
                         </Button>
                       </div>
                   </div>
