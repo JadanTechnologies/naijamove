@@ -1,0 +1,7 @@
+{
+  "name": "NaijaMove",
+  "description": "Nigeria's premier ride-hailing and logistics platform supporting Okada, Keke, and Mini-Bus.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
