@@ -11,7 +11,8 @@ const STORAGE_KEYS = {
   MESSAGES: 'naijamove_messages',
   TICKETS: 'naijamove_tickets',
   KB: 'naijamove_kb',
-  ACTIVITIES: 'naijamove_activities'
+  ACTIVITIES: 'naijamove_activities',
+  TRANSACTIONS: 'naijamove_transactions' // New key for persistent withdrawals
 };
 
 const load = <T>(key: string, defaultValue: T): T => {
@@ -164,7 +165,12 @@ const DEFAULT_USERS: User[] = [
     location: { lat: 13.0100, lng: 5.2500 },
     vehicleCapacityKg: 150,
     currentLoadKg: 0,
-    loadStatus: 'EMPTY'
+    loadStatus: 'EMPTY',
+    bankAccount: {
+        bankName: "Wema Bank",
+        accountNumber: "9923456781",
+        accountName: "Musa Ibrahim"
+    }
   },
   {
     id: 'driver-2',
@@ -224,6 +230,7 @@ let MESSAGES = load<ChatMessage[]>(STORAGE_KEYS.MESSAGES, []);
 let TICKETS = load<SupportTicket[]>(STORAGE_KEYS.TICKETS, []);
 let KB = load<KnowledgeBaseItem[]>(STORAGE_KEYS.KB, DEFAULT_KB);
 let ACTIVITIES = load<UserActivity[]>(STORAGE_KEYS.ACTIVITIES, []);
+let TRANSACTIONS = load<PaymentTransaction[]>(STORAGE_KEYS.TRANSACTIONS, []);
 
 // --- Helper Functions ---
 
@@ -590,19 +597,67 @@ export const rejectRide = async (rideId: string, driverId: string) => {
     }
 }
 
+// Updated Withdraw Funds with persistence
 export const withdrawFunds = async (userId: string, amount: number) => {
     await new Promise(resolve => setTimeout(resolve, 1500));
     const userIdx = USERS.findIndex(u => u.id === userId);
     if(userIdx === -1) throw new Error("User not found");
+    const user = USERS[userIdx];
     
-    if(USERS[userIdx].walletBalance < amount) {
+    if(user.walletBalance < amount) {
         throw new Error("Insufficient funds");
     }
 
+    // Create withdrawal transaction record
+    const transaction: PaymentTransaction = {
+        id: `txn-${Date.now()}`,
+        type: 'WITHDRAWAL',
+        driverId: user.id,
+        driverName: user.name,
+        amount: amount,
+        channel: 'TRANSFER',
+        status: 'PENDING',
+        date: new Date().toISOString(),
+        reference: `WD-${Math.random().toString(36).substring(7).toUpperCase()}`,
+        bankDetails: user.bankAccount ? `${user.bankAccount.bankName} - ${user.bankAccount.accountNumber}` : 'N/A'
+    };
+
+    // Deduct balance immediately
     USERS[userIdx].walletBalance -= amount;
+    
+    // Save state
+    TRANSACTIONS = [transaction, ...TRANSACTIONS];
+    save(STORAGE_KEYS.TRANSACTIONS, TRANSACTIONS);
     save(STORAGE_KEYS.USERS, USERS);
-    logActivity(userId, 'WITHDRAWAL', `Withdrew ${amount}`);
-    return USERS[userIdx];
+    
+    logActivity(userId, 'WITHDRAWAL_REQ', `Requested withdrawal of ${amount}. Ref: ${transaction.reference}`);
+    return transaction;
+};
+
+// Helper to fetch transactions for a specific user
+export const getUserTransactions = async (userId: string): Promise<PaymentTransaction[]> => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Get earning transactions from RIDES
+    const earningTxns: PaymentTransaction[] = RIDES
+        .filter(r => r.driverId === userId && r.status === RideStatus.COMPLETED)
+        .map(r => ({
+            id: `earn-${r.id}`,
+            type: 'EARNING',
+            rideId: r.id,
+            amount: r.price * 0.8, // 80% share
+            channel: 'WALLET',
+            status: 'SUCCESS',
+            date: r.endTime || r.createdAt,
+            reference: `ERN-${r.id.split('-')[1]}`,
+            passengerName: USERS.find(u => u.id === r.passengerId)?.name || 'Passenger'
+        }));
+
+    // Get withdrawal transactions from persisted TRANSACTIONS
+    const withdrawalTxns = TRANSACTIONS.filter(t => t.driverId === userId || t.passengerId === userId);
+
+    // Combine and sort
+    return [...earningTxns, ...withdrawalTxns].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
 export const getDashboardStats = async (): Promise<DashboardStats> => {
@@ -624,15 +679,16 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
 
 export const getTransactions = async (): Promise<PaymentTransaction[]> => {
     await new Promise(resolve => setTimeout(resolve, 500));
-    // Simulate transactions from completed rides
-    return RIDES.map((ride) => {
+    
+    // Mock ride transactions
+    const rideTxns: PaymentTransaction[] = RIDES.map((ride) => {
         const passenger = USERS.find(u => u.id === ride.passengerId);
         const driver = USERS.find(u => u.id === ride.driverId);
-        // Mock channel logic
         const channel: 'PAYSTACK' | 'WALLET' = parseInt(ride.id.split('-')[1]) % 2 === 0 ? 'PAYSTACK' : 'WALLET';
         
         return {
             id: `TXN-${ride.id.split('-')[1]}`,
+            type: 'PAYMENT',
             rideId: ride.id,
             passengerId: ride.passengerId,
             passengerName: passenger?.name || 'Unknown',
@@ -644,7 +700,10 @@ export const getTransactions = async (): Promise<PaymentTransaction[]> => {
             date: ride.createdAt,
             reference: `REF-${Math.random().toString(36).substring(7).toUpperCase()}`
         };
-    }).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    });
+
+    // Combine with persistent withdrawals
+    return [...rideTxns, ...TRANSACTIONS].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
 export const calculateFare = (vehicleType: VehicleType, distanceKm: number): number => {

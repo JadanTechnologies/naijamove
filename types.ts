@@ -125,9 +125,10 @@ export interface RideRequest {
 
 export interface PaymentTransaction {
     id: string;
-    rideId: string;
-    passengerId: string;
-    passengerName: string;
+    type: 'EARNING' | 'WITHDRAWAL' | 'PAYMENT';
+    rideId?: string;
+    passengerId?: string;
+    passengerName?: string;
     driverId?: string;
     driverName?: string;
     amount: number;
@@ -135,6 +136,7 @@ export interface PaymentTransaction {
     status: 'SUCCESS' | 'PENDING' | 'FAILED';
     date: string;
     reference: string;
+    bankDetails?: string; // For withdrawals
 }
 
 export interface DashboardStats {

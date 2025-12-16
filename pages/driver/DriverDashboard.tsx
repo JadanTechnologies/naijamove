@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
-import { User, RideRequest, RideStatus, VehicleType } from '../../types';
-import { getActiveRides, updateRideStatus, rejectRide, withdrawFunds, createSupportTicket, updateUserProfile } from '../../services/mockService';
+import { User, RideRequest, RideStatus, VehicleType, PaymentTransaction } from '../../types';
+import { getActiveRides, updateRideStatus, rejectRide, withdrawFunds, createSupportTicket, updateUserProfile, getUserTransactions } from '../../services/mockService';
 import { Button } from '../../components/ui/Button';
 import { CURRENCY_SYMBOL } from '../../constants';
-import { MapPin, Navigation, Package, Phone, CheckCircle, XCircle, MessageSquare, AlertOctagon, TrendingUp, CreditCard, Banknote, Calendar, Clock, Headphones, Send, User as UserIcon, Settings, Star, ShieldCheck, Truck } from 'lucide-react';
+import { MapPin, Navigation, Package, Phone, CheckCircle, XCircle, MessageSquare, AlertOctagon, TrendingUp, CreditCard, Banknote, Calendar, Clock, Headphones, Send, User as UserIcon, Settings, Star, ShieldCheck, Truck, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import MapMock from '../../components/MapMock';
 import { ChatWindow } from '../../components/ChatWindow';
 import { VoiceCallModal } from '../../components/VoiceCallModal';
@@ -26,6 +27,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
   // Withdrawal State
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
 
   // Support State
   const [supportMessage, setSupportMessage] = useState('');
@@ -68,6 +70,13 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
     return () => clearInterval(interval);
   }, [user.id, user.role, isOnline]);
 
+  // Fetch transactions when wallet view is active
+  useEffect(() => {
+      if (view === 'wallet') {
+          getUserTransactions(user.id).then(setTransactions);
+      }
+  }, [view, user.id, walletBalance]); // Reload on balance change
+
   const handleAccept = async (rideId: string) => {
     await updateRideStatus(rideId, RideStatus.ACCEPTED, user.id);
   };
@@ -101,12 +110,14 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
       if(isNaN(amount) || amount <= 0) return alert("Invalid amount");
       if(amount > walletBalance) return alert("Insufficient funds");
 
+      if(!user.bankAccount) return alert("Please set up your bank account in Profile settings first.");
+
       setWithdrawLoading(true);
       try {
           await withdrawFunds(user.id, amount);
           setWalletBalance(prev => prev - amount);
           setWithdrawAmount('');
-          alert("Withdrawal successful! Funds will reach your account shortly.");
+          alert("Withdrawal request initiated successfully! Status: PENDING");
       } catch (e: any) {
           alert(e.message);
       } finally {
@@ -326,6 +337,16 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
                           
                           <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/20">
                               <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><Banknote size={16}/> Withdraw Earnings</h3>
+                              
+                              <div className="mb-3 p-2 bg-emerald-800/30 rounded border border-emerald-500/30 text-xs text-emerald-100">
+                                  <p className="font-bold mb-1">Bank Account (Pre-filled):</p>
+                                  {user.bankAccount ? (
+                                      <p>{user.bankAccount.bankName} - {user.bankAccount.accountNumber}</p>
+                                  ) : (
+                                      <p className="text-red-300">No account linked. Check Profile.</p>
+                                  )}
+                              </div>
+
                               <div className="flex gap-2">
                                   <div className="relative flex-1">
                                       <span className="absolute left-3 top-2.5 text-emerald-200">{CURRENCY_SYMBOL}</span>
@@ -341,11 +362,11 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
                                     onClick={handleWithdraw} 
                                     isLoading={withdrawLoading}
                                     className="bg-white text-emerald-700 hover:bg-emerald-50 border-none font-bold"
+                                    disabled={!user.bankAccount}
                                   >
                                       Withdraw
                                   </Button>
                               </div>
-                              <p className="text-[10px] text-emerald-200 mt-2">To: {user.bankAccount?.bankName} - {user.bankAccount?.accountNumber}</p>
                           </div>
                       </div>
                   </div>
@@ -376,6 +397,66 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
                               </BarChart>
                           </ResponsiveContainer>
                       </div>
+                  </div>
+              </div>
+
+              {/* Transaction History */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="p-4 border-b border-gray-100">
+                      <h3 className="font-bold text-gray-900">Transaction History</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                          <thead className="bg-gray-50 text-gray-500 font-medium">
+                              <tr>
+                                  <th className="px-6 py-3">Type</th>
+                                  <th className="px-6 py-3">Details</th>
+                                  <th className="px-6 py-3">Date</th>
+                                  <th className="px-6 py-3">Status</th>
+                                  <th className="px-6 py-3 text-right">Amount</th>
+                              </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                              {transactions.length === 0 && (
+                                  <tr>
+                                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">No transactions yet.</td>
+                                  </tr>
+                              )}
+                              {transactions.map(txn => (
+                                  <tr key={txn.id} className="hover:bg-gray-50">
+                                      <td className="px-6 py-4">
+                                          <div className="flex items-center gap-2">
+                                              {txn.type === 'EARNING' ? (
+                                                  <div className="p-1.5 bg-green-100 text-green-700 rounded-full"><ArrowDownLeft size={16}/></div>
+                                              ) : (
+                                                  <div className="p-1.5 bg-gray-100 text-gray-700 rounded-full"><ArrowUpRight size={16}/></div>
+                                              )}
+                                              <span className="font-medium text-gray-900">{txn.type === 'EARNING' ? 'Trip Earning' : 'Withdrawal'}</span>
+                                          </div>
+                                      </td>
+                                      <td className="px-6 py-4 text-gray-600">
+                                          {txn.type === 'EARNING' ? (
+                                              <span>Ride #{txn.rideId?.slice(-6)}</span>
+                                          ) : (
+                                              <span>{txn.reference}</span>
+                                          )}
+                                      </td>
+                                      <td className="px-6 py-4 text-gray-500">{new Date(txn.date).toLocaleDateString()}</td>
+                                      <td className="px-6 py-4">
+                                          <span className={`px-2 py-1 text-[10px] font-bold rounded ${
+                                              txn.status === 'SUCCESS' ? 'bg-green-100 text-green-700' : 
+                                              txn.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                                          }`}>
+                                              {txn.status}
+                                          </span>
+                                      </td>
+                                      <td className={`px-6 py-4 text-right font-bold ${txn.type === 'EARNING' ? 'text-emerald-600' : 'text-gray-900'}`}>
+                                          {txn.type === 'EARNING' ? '+' : '-'}{CURRENCY_SYMBOL}{txn.amount.toLocaleString()}
+                                      </td>
+                                  </tr>
+                              ))}
+                          </tbody>
+                      </table>
                   </div>
               </div>
           </div>

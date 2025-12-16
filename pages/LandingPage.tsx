@@ -92,7 +92,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
       {/* Background Hologram Effects */}
       <style>{`
         .perspective-grid {
-            transform: perspective(500px) rotateX(60deg);
+            transform: perspective(1000px) rotateX(60deg);
             transform-style: preserve-3d;
         }
         .grid-floor {
@@ -108,18 +108,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
             0% { transform: translateY(-50%) translateY(0); }
             100% { transform: translateY(-50%) translateY(50px); }
         }
-        .hologram-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 40px rgba(16, 185, 129, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        
+        .hologram-bike {
+            filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.6)) hue-rotate(140deg) brightness(1.5) contrast(1.2);
+            opacity: 0.9;
+            mix-blend-mode: screen;
+            animation: drive-loop 8s ease-in-out infinite;
         }
-        .hologram-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 50px rgba(16, 185, 129, 0.2);
-            border-color: rgba(16, 185, 129, 0.3);
+
+        @keyframes drive-loop {
+            0% { transform: translateX(-100px) scaleX(1) translateY(0); opacity: 0; }
+            10% { opacity: 0.9; }
+            45% { transform: translateX(100px) scaleX(1) translateY(-20px); }
+            50% { transform: translateX(100px) scaleX(-1) translateY(-20px); } /* Turn around */
+            90% { opacity: 0.9; }
+            100% { transform: translateX(-100px) scaleX(-1) translateY(0); opacity: 0; }
         }
+
         .typing-effect {
             display: inline-block;
             overflow: hidden;
@@ -131,9 +136,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
         @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: #10b981; } }
       `}</style>
 
-      <div className="absolute inset-0 perspective-grid z-0 opacity-40 pointer-events-none">
-        <div className="grid-floor"></div>
+      {/* Floor Grid - Pushed back with Z-index */}
+      <div className="absolute inset-0 perspective-grid z-0 opacity-30 pointer-events-none overflow-hidden">
+        <div className="grid-floor absolute left-1/2 -translate-x-1/2"></div>
       </div>
+      
+      {/* Ambient Glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-emerald-500/20 blur-[120px] rounded-full pointer-events-none z-0"></div>
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/10 blur-[100px] rounded-full pointer-events-none z-0"></div>
 
@@ -466,50 +474,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
           </div>
         </div>
 
-        {/* Right: Holographic 3D Cards */}
-        <div className="flex-1 w-full max-w-lg hidden md:block perspective-grid relative h-[600px]">
-            <div className="relative w-full h-full transform preserve-3d animate-float">
-                {/* Back Card (Logistics) */}
-                <div className="absolute top-10 right-0 w-72 h-40 hologram-card rounded-2xl p-6 transform translate-z-[-50px] rotate-y-[-10deg] rotate-x-[5deg]">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="p-2 bg-orange-500/20 rounded-lg text-orange-400"><Box size={24}/></div>
-                        <span className="text-xs font-mono text-orange-300">LOGISTICS</span>
-                    </div>
-                    <div className="space-y-2">
-                        <div className="h-2 w-2/3 bg-white/10 rounded"></div>
-                        <div className="h-2 w-1/2 bg-white/10 rounded"></div>
-                    </div>
-                </div>
-
-                {/* Middle Card (Map) */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-[450px] bg-gray-900 rounded-[3rem] border-8 border-gray-800 shadow-2xl overflow-hidden transform rotate-y-[15deg]">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-800 rounded-b-xl z-20"></div>
-                    <img src="https://i.imgur.com/8Qj9X9r.png" alt="Map App" className="w-full h-full object-cover opacity-80" />
-                    <div className="absolute bottom-0 inset-x-0 h-1/2 bg-gradient-to-t from-gray-900 to-transparent"></div>
-                    
-                    {/* Floating Elements on Phone */}
-                    <div className="absolute bottom-20 left-6 right-6 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white"><Bike size={20}/></div>
-                            <div>
-                                <div className="text-sm font-bold text-white">Musa is arriving</div>
-                                <div className="text-xs text-gray-400">2 mins away • Okada</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Front Card (Ride) */}
-                <div className="absolute bottom-20 left-0 w-72 h-40 hologram-card rounded-2xl p-6 transform translate-z-[50px] rotate-y-[10deg] rotate-x-[-5deg]">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><Car size={24}/></div>
-                        <span className="text-xs font-mono text-emerald-300">RIDE ACTIVE</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="text-2xl font-bold text-white">₦400</div>
-                        <div className="text-xs text-gray-400">Sokoto Market <br/> to University</div>
-                    </div>
-                </div>
+        {/* Right: Holographic 3D Cards - Now using proper separate perspective context */}
+        <div className="flex-1 w-full max-w-lg hidden md:block relative h-[600px] flex items-center justify-center">
+            {/* Animated Okada Hologram */}
+            <div className="relative w-full h-full flex items-center justify-center">
+                <img 
+                    src="https://cdn-icons-png.flaticon.com/512/171/171827.png" 
+                    alt="Holographic Okada" 
+                    className="w-96 h-auto hologram-bike"
+                />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-20 bg-emerald-500/10 blur-xl rounded-[100%] animate-pulse"></div>
             </div>
         </div>
       </main>
