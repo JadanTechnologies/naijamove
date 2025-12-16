@@ -3,7 +3,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { getDashboardStats, getActiveRides, getSystemHealth } from '../../services/mockService';
 import { CURRENCY_SYMBOL } from '../../constants';
 import MapMock from '../../components/MapMock';
-import { Users, TrendingUp, AlertTriangle, ShieldCheck, Truck, CreditCard, Download, Search, Car, Activity, Server, Database, Radio, CheckCircle, AlertCircle, XCircle, Cpu, RefreshCw } from 'lucide-react';
+import { 
+  Users, TrendingUp, AlertTriangle, ShieldCheck, Truck, CreditCard, 
+  Download, Search, Car, Activity, Server, Database, Radio, 
+  CheckCircle, AlertCircle, XCircle, Cpu, RefreshCw 
+} from 'lucide-react';
 import AdminSettings from './AdminSettings';
 import UserManagement from './UserManagement';
 import { RideRequest, UserRole, SystemHealth } from '../../types';
@@ -12,7 +16,7 @@ interface AdminDashboardProps {
     view: string;
 }
 
-// Helper Components defined outside main component to prevent re-declaration on render
+// Helper Components
 const StatusDot = ({ status }: { status: string }) => {
     let color = 'bg-gray-300';
     if (['OPTIMAL', 'OPERATIONAL', 'CONNECTED', 'UP'].includes(status)) color = 'bg-emerald-500';
@@ -60,12 +64,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
 
   // Poll health data when in health view
   useEffect(() => {
+      let interval: any;
       if (view === 'health') {
           const fetchHealth = () => getSystemHealth().then(setHealthData);
           fetchHealth();
-          const interval = setInterval(fetchHealth, 5000);
-          return () => clearInterval(interval);
+          interval = setInterval(fetchHealth, 5000);
       }
+      return () => {
+          if (interval) clearInterval(interval);
+      };
   }, [view]);
 
   const data = [
@@ -325,7 +332,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                       <div className="mt-6 pt-4 border-t border-gray-100">
                           <div className="text-xs text-gray-500 mb-2">Error Rate (5xx)</div>
                           <div className="text-3xl font-bold text-gray-900">{healthData.api.errorRate}%</div>
-                          <div className="text-xs text-emerald-600 mt-1">Within SLA limits (<1.0%)</div>
+                          <div className="text-xs text-emerald-600 mt-1">Within SLA limits (&lt;1.0%)</div>
                       </div>
                   </div>
               </div>
