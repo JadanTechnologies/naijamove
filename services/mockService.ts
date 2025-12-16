@@ -1,4 +1,4 @@
-import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement } from '../types';
+import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement, ChatMessage } from '../types';
 import { VEHICLE_PRICING } from '../constants';
 
 // --- Local Storage Helpers ---
@@ -7,7 +7,8 @@ const STORAGE_KEYS = {
   USERS: 'naijamove_users',
   RIDES: 'naijamove_rides',
   TEMPLATES: 'naijamove_templates',
-  ANNOUNCEMENTS: 'naijamove_announcements'
+  ANNOUNCEMENTS: 'naijamove_announcements',
+  MESSAGES: 'naijamove_messages'
 };
 
 const load = <T>(key: string, defaultValue: T): T => {
@@ -192,6 +193,7 @@ let USERS = load<User[]>(STORAGE_KEYS.USERS, DEFAULT_USERS);
 let RIDES = load<RideRequest[]>(STORAGE_KEYS.RIDES, DEFAULT_RIDES);
 let TEMPLATES = load<NotificationTemplate[]>(STORAGE_KEYS.TEMPLATES, DEFAULT_TEMPLATES);
 let ANNOUNCEMENTS = load<Announcement[]>(STORAGE_KEYS.ANNOUNCEMENTS, []);
+let MESSAGES = load<ChatMessage[]>(STORAGE_KEYS.MESSAGES, []);
 
 // --- Helper Functions ---
 
@@ -355,4 +357,25 @@ export const createAnnouncement = async (announcement: Omit<Announcement, 'id' |
     save(STORAGE_KEYS.ANNOUNCEMENTS, ANNOUNCEMENTS);
     speak("Announcement broadcasted successfully.");
     return newAnn;
+}
+
+// --- Chat Services ---
+export const getRideMessages = async (rideId: string) => {
+    // In a real app, this would be an API call
+    return MESSAGES.filter(m => m.rideId === rideId).sort((a,b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+}
+
+export const sendMessage = async (rideId: string, senderId: string, senderName: string, content: string) => {
+    const msg: ChatMessage = {
+        id: `msg-${Date.now()}`,
+        rideId,
+        senderId,
+        senderName,
+        content,
+        timestamp: new Date().toISOString(),
+        isRead: false
+    };
+    MESSAGES = [...MESSAGES, msg];
+    save(STORAGE_KEYS.MESSAGES, MESSAGES);
+    return msg;
 }

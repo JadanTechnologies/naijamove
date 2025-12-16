@@ -42,6 +42,16 @@ export interface User {
   permissions?: string[];
 }
 
+export interface ChatMessage {
+  id: string;
+  rideId: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  timestamp: string;
+  isRead: boolean;
+}
+
 export interface RideRequest {
   id: string;
   passengerId: string;

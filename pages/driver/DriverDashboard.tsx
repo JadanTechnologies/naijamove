@@ -3,8 +3,9 @@ import { User, RideRequest, RideStatus } from '../../types';
 import { getActiveRides, updateRideStatus, rejectRide } from '../../services/mockService';
 import { Button } from '../../components/ui/Button';
 import { CURRENCY_SYMBOL } from '../../constants';
-import { MapPin, Navigation, Package, Phone, CheckCircle, XCircle } from 'lucide-react';
+import { MapPin, Navigation, Package, Phone, CheckCircle, XCircle, MessageSquare } from 'lucide-react';
 import MapMock from '../../components/MapMock';
+import { ChatWindow } from '../../components/ChatWindow';
 
 interface DriverDashboardProps {
   user: User;
@@ -14,6 +15,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user }) => {
   const [requests, setRequests] = useState<RideRequest[]>([]);
   const [currentRide, setCurrentRide] = useState<RideRequest | null>(null);
   const [isOnline, setIsOnline] = useState(user.isOnline || false);
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     // Poll for rides
@@ -138,7 +140,10 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user }) => {
                              </Button>
                         )}
                         <Button variant="outline" className="w-full">
-                            <Phone size={18} className="mr-2"/> Call Customer
+                            <Phone size={18} className="mr-2"/> Call
+                        </Button>
+                        <Button variant="outline" className="w-full bg-emerald-50 text-emerald-700 border-emerald-200" onClick={() => setShowChat(!showChat)}>
+                            <MessageSquare size={18} className="mr-2"/> Chat
                         </Button>
                       </div>
                   </div>
@@ -148,6 +153,15 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user }) => {
                       <MapMock activeRide={currentRide} showDrivers={false} />
                   </div>
               </div>
+              
+              {showChat && (
+                  <ChatWindow 
+                      rideId={currentRide.id}
+                      currentUser={user}
+                      recipientName="Passenger" // In real app, fetch passenger name
+                      onClose={() => setShowChat(false)}
+                  />
+              )}
           </div>
       )}
 

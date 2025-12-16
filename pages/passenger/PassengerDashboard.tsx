@@ -4,7 +4,8 @@ import { calculateFare, createRide, getActiveRides } from '../../services/mockSe
 import { Button } from '../../components/ui/Button';
 import { CURRENCY_SYMBOL, VEHICLE_PRICING } from '../../constants';
 import MapMock from '../../components/MapMock';
-import { Bike, Car, Box, Truck, MapPin, Clock, ShieldAlert } from 'lucide-react';
+import { Bike, Car, Box, Truck, MapPin, Clock, ShieldAlert, MessageSquare } from 'lucide-react';
+import { ChatWindow } from '../../components/ChatWindow';
 
 interface PassengerDashboardProps {
   user: User;
@@ -18,6 +19,7 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleType | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeRide, setActiveRide] = useState<RideRequest | null>(null);
+  const [showChat, setShowChat] = useState(false);
 
   // Logistics Fields
   const [parcelDesc, setParcelDesc] = useState('');
@@ -151,7 +153,7 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
                   <MapMock activeRide={activeRide} />
                   
                   {activeRide.driverId && (
-                    <div className="absolute bottom-6 left-6 right-6 bg-white p-4 rounded-lg shadow-lg z-[1000]">
+                    <div className="absolute bottom-6 left-6 right-6 bg-white p-4 rounded-lg shadow-lg z-[1000] flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
                                 <img src="https://picsum.photos/id/2/200/200" alt="Driver" />
@@ -160,11 +162,11 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
                                 <p className="font-bold">Musa Ibrahim</p>
                                 <p className="text-sm text-gray-500">{activeRide.vehicleType} • 4.8★</p>
                             </div>
-                            <div className="ml-auto">
-                                <span className="text-2xl font-bold text-emerald-600">
-                                    {activeRide.status === RideStatus.IN_PROGRESS ? 'Live' : '5 min'}
-                                </span>
-                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                             <Button size="sm" variant="outline" onClick={() => setShowChat(!showChat)} className="border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100">
+                                <MessageSquare size={18} className="mr-2" /> Chat
+                             </Button>
                         </div>
                     </div>
                   )}
@@ -176,6 +178,16 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
                   >
                       SOS
                   </button>
+
+                  {/* Chat Window */}
+                  {showChat && activeRide.driverId && (
+                      <ChatWindow 
+                        rideId={activeRide.id} 
+                        currentUser={user} 
+                        recipientName="Musa Ibrahim" // In real app, fetch driver name
+                        onClose={() => setShowChat(false)} 
+                      />
+                  )}
               </div>
           </div>
       );
