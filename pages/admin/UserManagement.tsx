@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState } from 'react';
 import { User, UserActivity, VehicleType, UserRole, StaffPermission } from '../../types';
-import { getAllUsers, updateUserStatus, getUserActivity, recruitDriver, updateStaffPermissions } from '../../services/mockService';
+import { getAllUsers, updateUserStatus, getUserActivity, recruitDriver, updateStaffPermissions, createStaffUser } from '../../services/mockService';
 import { Button } from '../../components/ui/Button';
-import { ShieldAlert, CheckCircle, Ban, Trash2, Smartphone, Globe, MapPin, Wifi, Activity, X, UserPlus, Bike, Car, Truck, Key, Shield } from 'lucide-react';
+import { ShieldAlert, CheckCircle, Ban, Trash2, Smartphone, Globe, MapPin, Wifi, Activity, X, UserPlus, Bike, Car, Truck, Key, Shield, Link as LinkIcon, Copy } from 'lucide-react';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { useToast } from '../../components/ui/Toast';
@@ -26,6 +27,12 @@ const UserManagement: React.FC = () => {
   const [isRecruitOpen, setIsRecruitOpen] = useState(false);
   const [newDriver, setNewDriver] = useState({
       name: '', email: '', phone: '', vehicleType: VehicleType.OKADA, licensePlate: ''
+  });
+  
+  // Staff Creation State
+  const [isStaffCreateOpen, setIsStaffCreateOpen] = useState(false);
+  const [newStaff, setNewStaff] = useState({
+      name: '', email: '', password: '', permissions: [] as StaffPermission[]
   });
   const [recruiting, setRecruiting] = useState(false);
 
@@ -77,6 +84,34 @@ const UserManagement: React.FC = () => {
       }
   };
 
+  const handleCreateStaff = async () => {
+      if(!newStaff.name || !newStaff.email || !newStaff.password) return;
+      setRecruiting(true);
+      try {
+          await createStaffUser('admin-1', newStaff);
+          addToast(`Staff member created successfully!`, 'success');
+          setIsStaffCreateOpen(false);
+          setNewStaff({ name: '', email: '', password: '', permissions: [] });
+          refresh();
+      } catch (e: any) {
+          addToast(e.message, 'error');
+      } finally {
+          setRecruiting(false);
+      }
+  };
+
+  const toggleStaffPermission = (p: StaffPermission) => {
+      setNewStaff(prev => ({
+          ...prev,
+          permissions: prev.permissions.includes(p) ? prev.permissions.filter(perm => perm !== p) : [...prev.permissions, p]
+      }));
+  };
+
+  const copyToClipboard = (text: string) => {
+      navigator.clipboard.writeText(text);
+      addToast("Copied to clipboard", 'success');
+  };
+
   const filteredUsers = activeTab === 'STAFF' ? users.filter(u => u.role === UserRole.STAFF) : users;
 
   return (
@@ -100,9 +135,14 @@ const UserManagement: React.FC = () => {
                         </button>
                     </div>
                 </div>
-                <Button onClick={() => setIsRecruitOpen(true)}>
-                    <UserPlus size={18} className="mr-2"/> Recruit Driver
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={() => setIsStaffCreateOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
+                        <Key size={18} className="mr-2"/> New Staff
+                    </Button>
+                    <Button onClick={() => setIsRecruitOpen(true)}>
+                        <UserPlus size={18} className="mr-2"/> Recruit Driver
+                    </Button>
+                </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -111,7 +151,7 @@ const UserManagement: React.FC = () => {
                         <tr>
                             <th className="px-6 py-4">User Identity</th>
                             <th className="px-6 py-4">Role</th>
-                            <th className="px-6 py-4">Device & Network</th>
+                            <th className="px-6 py-4">Auth Status</th>
                             <th className="px-6 py-4">Location</th>
                             <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
@@ -142,9 +182,14 @@ const UserManagement: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="text-xs space-y-1">
-                                        <div className="flex items-center gap-1 text-gray-700"><Smartphone size={12}/> {user.device || 'Unknown'}</div>
-                                        <div className="flex items-center gap-1 text-gray-500"><Wifi size={12}/> {user.isp || 'Unknown ISP'}</div>
-                                        <div className="flex items-center gap-1 text-gray-400 font-mono"><Globe size={12}/> {user.ip || '0.0.0.0'}</div>
+                                        {user.isTotpSetup ? (
+                                            <div className="flex items-center gap-1 text-emerald-600"><CheckCircle size={12}/> 2FA Active</div>
+                                        ) : (
+                                            <div className="flex items-center gap-1 text-orange-500"><ShieldAlert size={12}/> 2FA Pending</div>
+                                        )}
+                                        {user.magicLink && (
+                                            <span className="bg-gray-100 text-gray-500 px-1 rounded text-[10px]">Link Active</span>
+                                        )}
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
@@ -183,7 +228,7 @@ const UserManagement: React.FC = () => {
             </div>
         </div>
 
-        {/* Recruit Modal */}
+        {/* Recruit Driver Modal */}
         {isRecruitOpen && (
             <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
                 <div className="bg-white w-full max-w-md rounded-xl p-6 shadow-2xl animate-in zoom-in-95">
@@ -240,6 +285,75 @@ const UserManagement: React.FC = () => {
             </div>
         )}
 
+        {/* Create Staff Modal */}
+        {isStaffCreateOpen && (
+            <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+                <div className="bg-white w-full max-w-lg rounded-xl p-6 shadow-2xl animate-in zoom-in-95 overflow-y-auto max-h-[90vh]">
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 className="text-xl font-bold text-gray-900">Create Staff Account</h3>
+                            <p className="text-xs text-gray-500">Generates credentials & magic link</p>
+                        </div>
+                        <button onClick={() => setIsStaffCreateOpen(false)}><X size={20}/></button>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="col-span-2">
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Full Name</label>
+                                <input 
+                                    className="w-full p-2 border rounded text-sm" 
+                                    value={newStaff.name}
+                                    onChange={e => setNewStaff({...newStaff, name: e.target.value})}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Email (Username)</label>
+                                <input 
+                                    className="w-full p-2 border rounded text-sm" 
+                                    value={newStaff.email}
+                                    onChange={e => setNewStaff({...newStaff, email: e.target.value})}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Initial Password</label>
+                                <input 
+                                    className="w-full p-2 border rounded text-sm" 
+                                    value={newStaff.password}
+                                    onChange={e => setNewStaff({...newStaff, password: e.target.value})}
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-2">Permissions</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {['MANAGE_USERS', 'MANAGE_RIDES', 'VIEW_FINANCE', 'MANAGE_SETTINGS', 'SUPPORT'].map((perm) => (
+                                    <label key={perm} className="flex items-center gap-2 text-sm p-2 border rounded cursor-pointer hover:bg-gray-50">
+                                        <input 
+                                            type="checkbox" 
+                                            className="rounded text-indigo-600 focus:ring-indigo-500"
+                                            checked={newStaff.permissions.includes(perm as any)}
+                                            onChange={() => toggleStaffPermission(perm as any)}
+                                        />
+                                        {perm.replace('_', ' ')}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="bg-yellow-50 p-4 rounded-lg text-xs text-yellow-800 border border-yellow-100">
+                            <p className="font-bold mb-1 flex items-center gap-1"><ShieldAlert size={12}/> Security Note</p>
+                            Staff members must set up 2FA using the NaijaMove Authenticator app on first login. A magic link will be generated upon creation.
+                        </div>
+
+                        <Button className="w-full bg-indigo-600 hover:bg-indigo-700" onClick={handleCreateStaff} isLoading={recruiting}>
+                            Create Staff Account
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        )}
+
         {/* User Detail Side Panel */}
         {selectedUser && (
             <div className="fixed inset-y-0 right-0 w-96 bg-white shadow-2xl border-l border-gray-200 z-50 overflow-y-auto animate-in slide-in-from-right">
@@ -259,6 +373,18 @@ const UserManagement: React.FC = () => {
                     </div>
 
                     <div className="space-y-6">
+                        {/* Magic Link Section for Staff */}
+                        {selectedUser.role === UserRole.STAFF && selectedUser.magicLink && (
+                            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                                <h3 className="font-bold text-indigo-900 mb-2 flex items-center gap-2"><LinkIcon size={16}/> Setup Link</h3>
+                                <div className="bg-white p-2 rounded border border-indigo-200 flex justify-between items-center mb-2">
+                                    <code className="text-xs text-indigo-700 truncate max-w-[200px]">{selectedUser.magicLink}</code>
+                                    <button onClick={() => copyToClipboard(selectedUser.magicLink!)} className="text-indigo-500 hover:text-indigo-700"><Copy size={14}/></button>
+                                </div>
+                                <p className="text-[10px] text-indigo-600">Expires: {new Date(selectedUser.magicLinkExpires!).toLocaleString()}</p>
+                            </div>
+                        )}
+
                         {/* Suspension Reason */}
                         {selectedUser.status === 'SUSPENDED' && (
                             <div className="bg-red-50 p-4 rounded-xl border border-red-100">
@@ -269,11 +395,11 @@ const UserManagement: React.FC = () => {
 
                         {/* Staff Permissions */}
                         {selectedUser.role === UserRole.STAFF && (
-                            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                                <h3 className="font-bold text-indigo-900 mb-3 flex items-center gap-2"><Key size={16}/> Staff Permissions</h3>
+                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><Key size={16}/> Staff Permissions</h3>
                                 <div className="space-y-2">
                                     {['MANAGE_USERS', 'MANAGE_RIDES', 'VIEW_FINANCE', 'MANAGE_SETTINGS', 'SUPPORT'].map((perm) => (
-                                        <label key={perm} className="flex items-center gap-2 text-sm text-indigo-800 cursor-pointer">
+                                        <label key={perm} className="flex items-center gap-2 text-sm text-gray-800 cursor-pointer">
                                             <input 
                                                 type="checkbox" 
                                                 className="rounded text-indigo-600 focus:ring-indigo-500"

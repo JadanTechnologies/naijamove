@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { User, UserRole } from '../types';
 import { APP_NAME } from '../constants';
-import { Menu, X, LogOut, LayoutDashboard, Car, Package, Settings, CreditCard, User as UserIcon, Users, Activity, ChevronLeft, ChevronRight, Headphones, Wallet } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard, Car, Package, Settings, CreditCard, User as UserIcon, Users, Activity, ChevronLeft, ChevronRight, Headphones, Wallet, Zap } from 'lucide-react';
 import { getSystemSettings } from '../services/mockService';
 import { SupportWidget } from './SupportWidget';
 
@@ -49,6 +50,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
           <LinkItem icon={Package} label="Logistics" page="logistics" />
           <LinkItem icon={CreditCard} label="Finance" page="finance" />
           <LinkItem icon={Headphones} label="Support Center" page="support" />
+          <LinkItem icon={Zap} label="Automation" page="automation" />
           <LinkItem icon={Activity} label="System Health" page="health" />
           <LinkItem icon={Settings} label="System Config" page="settings" />
         </>

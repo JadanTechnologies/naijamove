@@ -1,4 +1,4 @@
-import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement, ChatMessage, SystemHealth, SupportTicket, KnowledgeBaseItem, UserActivity, DashboardStats, PaymentTransaction, StaffPermission } from '../types';
+import { User, UserRole, RideRequest, RideStatus, VehicleType, SystemSettings, TrackerConfig, NotificationTemplate, Announcement, ChatMessage, SystemHealth, SupportTicket, KnowledgeBaseItem, UserActivity, DashboardStats, PaymentTransaction, StaffPermission, Coordinates, CronJob } from '../types';
 import { CITIES } from '../constants';
 
 // --- Local Storage Helpers ---
@@ -12,7 +12,8 @@ const STORAGE_KEYS = {
   TICKETS: 'naijamove_tickets',
   KB: 'naijamove_kb',
   ACTIVITIES: 'naijamove_activities',
-  TRANSACTIONS: 'naijamove_transactions' // New key for persistent withdrawals
+  TRANSACTIONS: 'naijamove_transactions',
+  CRON_JOBS: 'naijamove_cron_jobs'
 };
 
 const load = <T>(key: string, defaultValue: T): T => {
@@ -32,6 +33,60 @@ const save = (key: string, data: any) => {
     console.error(`Failed to save ${key}`, e);
   }
 };
+
+// --- Mock Socket Service (Real-time Simulation) ---
+type SocketListener = (data: any) => void;
+
+class MockSocketService {
+    private listeners: Record<string, SocketListener[]> = {};
+    private interval: any;
+    private drivers: Record<string, Coordinates> = {};
+
+    constructor() {
+        this.startEmitting();
+    }
+
+    private startEmitting() {
+        this.interval = setInterval(() => {
+            // Update drivers
+            const driverUpdates = this.generateDriverUpdates();
+            this.emit('DRIVER_LOCATIONS', driverUpdates);
+        }, 2000);
+    }
+
+    private generateDriverUpdates() {
+        // Simulate movement around Sokoto
+        const baseLat = 13.0059;
+        const baseLng = 5.2476;
+        
+        const updates = [];
+        for(let i=0; i<5; i++) {
+            updates.push({
+                id: `driver-${i}`,
+                lat: baseLat + (Math.random() - 0.5) * 0.05,
+                lng: baseLng + (Math.random() - 0.5) * 0.05,
+                heading: Math.random() * 360
+            });
+        }
+        return updates;
+    }
+
+    public subscribe(event: string, callback: SocketListener) {
+        if (!this.listeners[event]) this.listeners[event] = [];
+        this.listeners[event].push(callback);
+        return () => {
+            this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+        };
+    }
+
+    public emit(event: string, data: any) {
+        if (this.listeners[event]) {
+            this.listeners[event].forEach(cb => cb(data));
+        }
+    }
+}
+
+export const socketService = new MockSocketService();
 
 // --- Initial Mock Data (Defaults) ---
 
@@ -108,7 +163,8 @@ const DEFAULT_SETTINGS: SystemSettings = {
       [VehicleType.OKADA]: { base: 200, perKm: 50 },
       [VehicleType.KEKE]: { base: 300, perKm: 80 },
       [VehicleType.MINIBUS]: { base: 500, perKm: 120 },
-      [VehicleType.TRUCK]: { base: 2000, perKm: 500 }
+      [VehicleType.TRUCK]: { base: 2000, perKm: 500 },
+      logistics: { baseFare: 500, perKg: 100, perKm: 50, interstateMultiplier: 1.5 }
   },
   integrations: {
       ninApiKey: "nin_live_xxxxxxxx",
@@ -138,6 +194,8 @@ const DEFAULT_USERS: User[] = [
     email: 'staff@naijamove.ng',
     role: UserRole.STAFF,
     token: 'STAFF-TOKEN-123',
+    password: 'password123',
+    isTotpSetup: false, // Needs setup
     walletBalance: 0,
     status: 'ACTIVE',
     ip: '102.134.1.22',
@@ -213,6 +271,12 @@ const DEFAULT_USERS: User[] = [
   },
 ];
 
+const DEFAULT_CRON: CronJob[] = [
+    { id: 'job-1', name: 'Auto-Assign Logistics', schedule: 'Every 5 mins', nextRun: new Date(Date.now() + 300000).toISOString(), status: 'IDLE', enabled: true },
+    { id: 'job-2', name: 'Cleanup Stale Requests', schedule: 'Hourly', nextRun: new Date(Date.now() + 3600000).toISOString(), status: 'IDLE', enabled: true },
+    { id: 'job-3', name: 'Driver Payout Processing', schedule: 'Daily at 00:00', nextRun: new Date().setHours(24,0,0,0).toString(), status: 'IDLE', enabled: false },
+];
+
 const DEFAULT_KB: KnowledgeBaseItem[] = [
     { id: 'kb-1', question: 'How do I fund my wallet?', answer: 'You can fund your wallet via Bank Transfer or Paystack. Go to the Wallet section in the app.', tags: ['wallet', 'payment'] },
     { id: 'kb-2', question: 'What is the base fare for Okada?', answer: 'The base fare for Okada rides is ₦200, plus ₦50 per km.', tags: ['pricing', 'okada'] },
@@ -231,6 +295,7 @@ let TICKETS = load<SupportTicket[]>(STORAGE_KEYS.TICKETS, []);
 let KB = load<KnowledgeBaseItem[]>(STORAGE_KEYS.KB, DEFAULT_KB);
 let ACTIVITIES = load<UserActivity[]>(STORAGE_KEYS.ACTIVITIES, []);
 let TRANSACTIONS = load<PaymentTransaction[]>(STORAGE_KEYS.TRANSACTIONS, []);
+let CRON_JOBS = load<CronJob[]>(STORAGE_KEYS.CRON_JOBS, DEFAULT_CRON);
 
 // --- Helper Functions ---
 
@@ -368,16 +433,44 @@ export const recruitDriver = async (adminId: string, data: { name: string, email
     return newUser;
 };
 
+// New: Create Staff with Credentials and Magic Link
+export const createStaffUser = async (adminId: string, data: { name: string, email: string, password: string, permissions: StaffPermission[] }) => {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    if (USERS.find(u => u.email === data.email)) throw new Error("Email exists");
+
+    const magicToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    
+    const newUser: User = {
+        id: `staff-${Date.now()}`,
+        name: data.name,
+        email: data.email,
+        role: UserRole.STAFF,
+        password: data.password, // In real app, hash this
+        permissions: data.permissions,
+        walletBalance: 0,
+        status: 'ACTIVE',
+        isTotpSetup: false, // Forces setup on first login
+        magicLink: `https://naijamove.ng/auth/setup?token=${magicToken}`,
+        magicLinkExpires: new Date(Date.now() + 86400000).toISOString(), // 24 hours
+        avatar: `https://ui-avatars.com/api/?name=${data.name}&background=6366f1&color=fff`,
+    };
+
+    USERS = [...USERS, newUser];
+    save(STORAGE_KEYS.USERS, USERS);
+    logActivity(adminId, 'CREATE_STAFF', `Created staff ${data.name} with permissions`);
+    return newUser;
+}
+
 export const login = async (identifier: string, isToken = false): Promise<User> => {
   await new Promise(resolve => setTimeout(resolve, 800)); 
   
   if (SETTINGS.maintenanceMode) {
-      // Allow admin bypass
       if (identifier !== 'admin@naijamove.ng' && !isToken) {
           throw new Error("System is currently under maintenance. Please try again later.");
       }
   }
 
+  // Magic Link / Token Login (Bypasses password/totp)
   if (isToken) {
     const user = USERS.find(u => u.token === identifier);
     if (!user) throw new Error('Invalid Staff Token');
@@ -392,6 +485,20 @@ export const login = async (identifier: string, isToken = false): Promise<User> 
       throw new Error(`Account Suspended: ${user.suspensionReason || 'Violation of terms.'}`);
   }
   
+  // Basic password check (Mock)
+  // In a real app, you'd check password hash here.
+  // For the demo, we assume if password field exists, it matches.
+  
+  if (user.role === UserRole.STAFF || user.role === UserRole.ADMIN) {
+      // 2FA Check Signal - Returning a specific error to trigger UI flow
+      if (!user.isTotpSetup) {
+          throw new Error("TOTP_SETUP_REQUIRED"); // Signal for frontend to show Setup QR
+      }
+      // Assuming frontend sends password, we'd verify it. 
+      // Then verify TOTP token.
+      // For this mock, we'll let the frontend handle the flow steps.
+  }
+
   if (user.status !== 'ACTIVE') throw new Error(`Account is ${user.status}`);
 
   if (user.ip && SETTINGS.security.blockedIps.includes(user.ip)) {
@@ -401,6 +508,27 @@ export const login = async (identifier: string, isToken = false): Promise<User> 
   logActivity(user.id, 'LOGIN', `Logged in via ${user.device || 'Web'}`);
   return user;
 };
+
+// TOTP Helpers (Mock)
+export const setupTotp = async (userId: string) => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const idx = USERS.findIndex(u => u.id === userId);
+    if(idx === -1) throw new Error("User not found");
+    
+    const secret = "NAIJAMOVE" + Math.random().toString(36).substring(2).toUpperCase();
+    USERS[idx].totpSecret = secret;
+    USERS[idx].isTotpSetup = true;
+    save(STORAGE_KEYS.USERS, USERS);
+    return { secret, qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${secret}` };
+}
+
+export const verifyTotpToken = async (userId: string, token: string) => {
+    // Mock check: token length 6 and numeric
+    if (token.length === 6 && !isNaN(Number(token))) {
+        return true;
+    }
+    throw new Error("Invalid Token");
+}
 
 export const updateUserProfile = async (userId: string, updates: Partial<User>) => {
     await new Promise(resolve => setTimeout(resolve, 800));
@@ -838,4 +966,35 @@ export const getSystemHealth = async (): Promise<SystemHealth> => {
             { name: 'Geo-Spatial', status: 'OPERATIONAL', latency: 30 }
         ]
     };
+};
+
+// --- Cron Jobs Service ---
+export const getCronJobs = async () => CRON_JOBS;
+
+export const toggleCronJob = async (id: string) => {
+    const idx = CRON_JOBS.findIndex(j => j.id === id);
+    if(idx !== -1) {
+        CRON_JOBS[idx].enabled = !CRON_JOBS[idx].enabled;
+        save(STORAGE_KEYS.CRON_JOBS, CRON_JOBS);
+        return CRON_JOBS[idx];
+    }
+};
+
+export const runCronJob = async (id: string) => {
+    const idx = CRON_JOBS.findIndex(j => j.id === id);
+    if(idx !== -1) {
+        CRON_JOBS[idx].status = 'RUNNING';
+        save(STORAGE_KEYS.CRON_JOBS, CRON_JOBS);
+        
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate work
+        
+        CRON_JOBS[idx].status = 'IDLE';
+        CRON_JOBS[idx].lastRun = new Date().toISOString();
+        // Update next run (mock)
+        const next = new Date(Date.now() + 300000); // +5 mins
+        CRON_JOBS[idx].nextRun = next.toISOString();
+        
+        save(STORAGE_KEYS.CRON_JOBS, CRON_JOBS);
+        return CRON_JOBS[idx];
+    }
 };

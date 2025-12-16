@@ -23,6 +23,16 @@ export enum RideStatus {
 
 export type StaffPermission = 'MANAGE_USERS' | 'MANAGE_RIDES' | 'VIEW_FINANCE' | 'MANAGE_SETTINGS' | 'SUPPORT';
 
+export interface CronJob {
+    id: string;
+    name: string;
+    schedule: string; // e.g. "Every 2 mins"
+    lastRun?: string;
+    nextRun: string;
+    status: 'IDLE' | 'RUNNING' | 'FAILED';
+    enabled: boolean;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -57,6 +67,12 @@ export interface User {
   // Staff Specific
   token?: string;
   permissions?: StaffPermission[];
+  // Auth & Security
+  password?: string; // Mock password
+  totpSecret?: string;
+  isTotpSetup?: boolean;
+  magicLink?: string;
+  magicLinkExpires?: string;
 }
 
 export interface UserActivity {
@@ -208,6 +224,13 @@ export interface VehiclePricingConfig {
     perKm: number;
 }
 
+export interface LogisticsPricingConfig {
+    baseFare: number;
+    perKg: number;
+    perKm: number;
+    interstateMultiplier: number;
+}
+
 export interface SystemSettings {
   branding: {
     appName: string;
@@ -252,6 +275,8 @@ export interface SystemSettings {
   // New Settings
   pricing: {
       [key in VehicleType]: VehiclePricingConfig;
+  } & {
+      logistics: LogisticsPricingConfig;
   };
   integrations: {
       ninApiKey: string; // For Verification

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, LayersControl, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { UserRole, VehicleType, RideRequest, RideStatus } from '../types';
+import { socketService } from '../services/mockService';
 
 interface MapMockProps {
   role?: UserRole;
@@ -79,7 +80,7 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
 
   const [drivers, setDrivers] = useState([
     { 
-        id: 1, 
+        id: '1', 
         type: VehicleType.OKADA, 
         lat: 13.0100, 
         lng: 5.2500, 
@@ -95,63 +96,24 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
             dest: 'Sokoto Market'
         }
     },
-    { 
-        id: 2, 
-        type: VehicleType.KEKE, 
-        lat: 13.0020, 
-        lng: 5.2400, 
-        name: "Chinedu Eze", 
-        status: "IDLE",
-        rating: 4.5,
-        trips: 850,
-        loadKg: 0,
-        maxLoad: 400,
-        currentRide: null
-    },
-    { 
-        id: 3, 
-        type: VehicleType.MINIBUS, 
-        lat: 13.0080, 
-        lng: 5.2550, 
-        name: "Sola Alabi", 
-        status: "BUSY",
-        rating: 4.9,
-        trips: 2100,
-        loadKg: 850,
-        maxLoad: 1000,
-         currentRide: {
-            id: 'RIDE-9942',
-            passenger: 'Grace O.',
-            dest: 'Usman Danfodio Uni'
-        }
-    },
-    { 
-        id: 4, 
-        type: VehicleType.TRUCK, 
-        lat: 13.0050, 
-        lng: 5.2450, 
-        name: "Logistics Team A", 
-        status: "IDLE",
-        rating: 4.7,
-        trips: 320,
-        loadKg: 0,
-        maxLoad: 3000,
-        currentRide: null
-    },
+    // ... initial mock data
   ]);
 
   const [route, setRoute] = useState<{start: [number,number], end: [number,number]} | null>(null);
   const [progress, setProgress] = useState(0);
 
+  // Subscribe to real-time socket
   useEffect(() => {
-    const interval = setInterval(() => {
-        setDrivers(prev => prev.map(d => ({
-            ...d,
-            lat: d.lat + (Math.random() - 0.5) * 0.001,
-            lng: d.lng + (Math.random() - 0.5) * 0.001
-        })));
-    }, 2000);
-    return () => clearInterval(interval);
+      const unsubscribe = socketService.subscribe('DRIVER_LOCATIONS', (updates: any[]) => {
+          setDrivers(prev => {
+              // Merge updates with existing driver data
+              return prev.map(d => {
+                  const update = updates.find(u => u.id === d.id);
+                  return update ? { ...d, lat: update.lat, lng: update.lng } : d;
+              });
+          });
+      });
+      return unsubscribe;
   }, []);
 
   useEffect(() => {
@@ -264,20 +226,6 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
                                  <span className="text-gray-500">Vehicle Type:</span>
                                  <span className="font-bold text-gray-700">{d.type}</span>
                              </div>
-                             {/* Weight Sensor Data */}
-                             <div className="border-t pt-2 mt-2">
-                                <div className="flex justify-between text-xs mb-1">
-                                    <span className="text-gray-500">Load (Sensor):</span>
-                                    <span className="font-bold">{d.loadKg}/{d.maxLoad}kg</span>
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                    <div 
-                                        className={`h-1.5 rounded-full ${d.loadKg > d.maxLoad * 0.9 ? 'bg-red-500' : 'bg-blue-500'}`} 
-                                        style={{width: `${Math.min(100, (d.loadKg / d.maxLoad) * 100)}%`}}
-                                    ></div>
-                                </div>
-                             </div>
-
                              {d.currentRide ? (
                                  <div className="bg-gray-50 p-2 rounded border border-gray-100 mt-2">
                                      <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">Current Ride</div>

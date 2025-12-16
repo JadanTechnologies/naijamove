@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Bike, Box, Car, ChevronRight, ShieldCheck, Zap, Map, ChevronDown, Download, Phone, Mail, Key, User, CreditCard, ScanLine, ArrowRight, Loader2, Truck, Smartphone } from 'lucide-react';
-import { getSystemSettings, verifyNin, signup } from '../services/mockService';
+import { Bike, Box, Car, ChevronRight, ShieldCheck, Zap, Map, ChevronDown, Download, Phone, Mail, Key, User, CreditCard, ScanLine, ArrowRight, Loader2, Truck, Smartphone, Lock, QrCode, Copy } from 'lucide-react';
+import { getSystemSettings, verifyNin, signup, login, setupTotp, verifyTotpToken } from '../services/mockService';
 import { SystemSettings, UserRole, VehicleType } from '../types';
 import { useToast } from '../components/ui/Toast';
 
@@ -15,9 +15,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignupOpen, setIsSignupOpen] = useState(false);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
-  const [staffToken, setStaffToken] = useState('');
-  const [showStaffInput, setShowStaffInput] = useState(false);
   const { addToast } = useToast();
+
+  // Login State
+  const [loginMode, setLoginMode] = useState<'USER' | 'STAFF'>('USER'); // User = Quick Select, Staff = Creds
+  const [loginStep, setLoginStep] = useState<'CREDENTIALS' | 'TOTP' | 'SETUP_TOTP'>('CREDENTIALS');
+  const [loginData, setLoginData] = useState({ email: '', password: '', token: '' });
+  const [totpSetupData, setTotpSetupData] = useState<{secret: string, qrCode: string} | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   // Signup State
   const [signupStep, setSignupStep] = useState(1);
@@ -33,14 +38,56 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
     getSystemSettings().then(setSettings);
   }, []);
 
-  const handleLoginSelection = (email: string) => {
+  // Quick Login for Passengers/Drivers (Demo)
+  const handleQuickLogin = (email: string) => {
     setIsLoginOpen(false);
     onLogin(email);
   };
 
-  const handleStaffLogin = () => {
-      if(staffToken) {
-          onLogin(staffToken, true);
+  // Staff/Admin Login Flow
+  const handleStaffLoginInit = async () => {
+      if(!loginData.email || !loginData.password) return;
+      setIsAuthLoading(true);
+      try {
+          // 1. Validate Credentials
+          // In a real app, we'd verify password here.
+          // For mock, we attempt login to check user state.
+          
+          // Special Mock: Check if it's the first time setup
+          try {
+              await login(loginData.email); // This might throw TOTP_SETUP_REQUIRED
+              // If successful immediately (e.g. no 2FA enforced yet or already authed session), just login
+              onLogin(loginData.email);
+          } catch (e: any) {
+              if (e.message === 'TOTP_SETUP_REQUIRED') {
+                  // Initiate Setup
+                  const setup = await setupTotp('admin-1'); // Hardcoded ID for demo flow, in real app use response id
+                  setTotpSetupData(setup);
+                  setLoginStep('SETUP_TOTP');
+              } else if (e.message.includes('Suspended') || e.message.includes('Banned')) {
+                  addToast(e.message, 'error');
+              } else {
+                  // Assume normal 2FA required
+                  setLoginStep('TOTP');
+              }
+          }
+      } catch (e: any) {
+          addToast("Invalid credentials", 'error');
+      } finally {
+          setIsAuthLoading(false);
+      }
+  };
+
+  const handleTotpVerify = async () => {
+      setIsAuthLoading(true);
+      try {
+          await verifyTotpToken('admin-1', loginData.token);
+          onLogin(loginData.email);
+          setIsLoginOpen(false);
+      } catch (e) {
+          addToast("Invalid Authenticator Token", 'error');
+      } finally {
+          setIsAuthLoading(false);
       }
   };
 
@@ -71,7 +118,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
           const user = await signup(signupData);
           setIsSignupOpen(false);
           addToast('Account created successfully!', 'success');
-          // Auto login
           onLogin(user.email);
       } catch (e: any) {
           addToast(e.message, 'error');
@@ -136,7 +182,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
         @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: #10b981; } }
       `}</style>
 
-      {/* Floor Grid - Pushed back with Z-index */}
+      {/* Floor Grid */}
       <div className="absolute inset-0 perspective-grid z-0 opacity-30 pointer-events-none overflow-hidden">
         <div className="grid-floor absolute left-1/2 -translate-x-1/2"></div>
       </div>
@@ -174,98 +220,166 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
              >
                 Register
              </button>
-             <div className="relative">
-                <button 
-                    onClick={() => setIsLoginOpen(!isLoginOpen)}
-                    className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold bg-white text-black rounded-full hover:bg-gray-100 transition-colors shadow-lg shadow-emerald-900/20"
-                >
-                    Sign In <ChevronDown size={16} />
-                </button>
-
-                {isLoginOpen && (
-                    <div className="absolute right-0 top-full mt-3 w-80 bg-gray-900/95 backdrop-blur-xl border border-gray-700 rounded-2xl shadow-2xl p-2 z-50 animate-in slide-in-from-top-2 duration-200">
-                        {!showStaffInput ? (
-                        <>
-                            <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Select Portal</div>
-                            <button 
-                            onClick={() => handleLoginSelection('admin@naijamove.ng')}
-                            className="w-full flex items-center gap-3 px-3 py-3 hover:bg-emerald-500/20 rounded-xl text-left group transition-all"
-                            >
-                                <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                                <ShieldCheck size={16} />
-                                </div>
-                                <div>
-                                <div className="text-sm font-bold text-white">Super Admin</div>
-                                <div className="text-xs text-gray-400">Platform Control</div>
-                                </div>
-                            </button>
-
-                            <button 
-                            onClick={() => handleLoginSelection('musa@naijamove.ng')}
-                            className="w-full flex items-center gap-3 px-3 py-3 hover:bg-emerald-500/20 rounded-xl text-left group transition-all mt-1"
-                            >
-                                <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors">
-                                <Zap size={16} />
-                                </div>
-                                <div>
-                                <div className="text-sm font-bold text-white">Driver Partner</div>
-                                <div className="text-xs text-gray-400">Okada & Keke Riders</div>
-                                </div>
-                            </button>
-
-                            <button 
-                            onClick={() => handleLoginSelection('tola@gmail.com')}
-                            className="w-full flex items-center gap-3 px-3 py-3 hover:bg-emerald-500/20 rounded-xl text-left group transition-all mt-1"
-                            >
-                                <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                                <Map size={16} />
-                                </div>
-                                <div>
-                                <div className="text-sm font-bold text-white">Passenger</div>
-                                <div className="text-xs text-gray-400">Ride & Logistics</div>
-                                </div>
-                            </button>
-
-                            <button 
-                            onClick={() => setShowStaffInput(true)}
-                            className="w-full flex items-center gap-3 px-3 py-3 hover:bg-purple-500/20 rounded-xl text-left group transition-all mt-1 border-t border-gray-700"
-                            >
-                                <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-                                <Key size={16} />
-                                </div>
-                                <div>
-                                <div className="text-sm font-bold text-white">Staff Portal</div>
-                                <div className="text-xs text-gray-400">Token Access Only</div>
-                                </div>
-                            </button>
-                        </>
-                        ) : (
-                            <div className="p-4">
-                                <div className="flex justify-between items-center mb-4">
-                                    <span className="text-sm font-bold">Staff Access</span>
-                                    <button onClick={() => setShowStaffInput(false)} className="text-xs text-gray-400 hover:text-white">Cancel</button>
-                                </div>
-                                <input 
-                                    type="text" 
-                                    placeholder="Enter Security Token" 
-                                    className="w-full bg-gray-800 border border-gray-600 rounded p-2 text-white mb-3"
-                                    value={staffToken}
-                                    onChange={(e) => setStaffToken(e.target.value)}
-                                />
-                                <button 
-                                    onClick={handleStaffLogin}
-                                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded"
-                                >
-                                    Authenticate
-                                </button>
-                                <p className="text-[10px] text-gray-500 mt-2 text-center">Use 'STAFF-TOKEN-123' for demo</p>
-                            </div>
-                        )}
-                    </div>
-                )}
-             </div>
+             
+             <button 
+                onClick={() => {
+                    setIsLoginOpen(true);
+                    setLoginMode('USER');
+                    setLoginStep('CREDENTIALS');
+                }}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold bg-white text-black rounded-full hover:bg-gray-100 transition-colors shadow-lg shadow-emerald-900/20"
+            >
+                Sign In <ChevronDown size={16} />
+            </button>
         </div>
       </nav>
+
+      {/* --- Login Modal --- */}
+      {isLoginOpen && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+              <div className="bg-gray-900 w-full max-w-md rounded-2xl border border-gray-700 shadow-2xl overflow-hidden animate-in zoom-in-95">
+                  <div className="p-6 border-b border-gray-800 flex justify-between items-center">
+                      <h3 className="text-xl font-bold text-white">
+                          {loginMode === 'USER' ? 'Portal Login' : 'Staff Access'}
+                      </h3>
+                      <button onClick={() => setIsLoginOpen(false)} className="text-gray-400 hover:text-white"><ChevronDown size={20}/></button>
+                  </div>
+
+                  <div className="p-6">
+                      {loginMode === 'USER' ? (
+                          <div className="space-y-2">
+                              <p className="text-sm text-gray-400 mb-4">Select your dashboard to continue.</p>
+                              <button 
+                                onClick={() => handleQuickLogin('musa@naijamove.ng')}
+                                className="w-full flex items-center gap-4 p-4 bg-gray-800 hover:bg-gray-700 rounded-xl border border-gray-700 transition-all group"
+                              >
+                                  <div className="w-10 h-10 bg-orange-500/20 text-orange-500 rounded-lg flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                                      <Bike size={20} />
+                                  </div>
+                                  <div className="text-left">
+                                      <h4 className="font-bold text-white">Driver Partner</h4>
+                                      <p className="text-xs text-gray-400">Okada, Keke, Mini-bus</p>
+                                  </div>
+                              </button>
+
+                              <button 
+                                onClick={() => handleQuickLogin('tola@gmail.com')}
+                                className="w-full flex items-center gap-4 p-4 bg-gray-800 hover:bg-gray-700 rounded-xl border border-gray-700 transition-all group"
+                              >
+                                  <div className="w-10 h-10 bg-blue-500/20 text-blue-500 rounded-lg flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                                      <User size={20} />
+                                  </div>
+                                  <div className="text-left">
+                                      <h4 className="font-bold text-white">Passenger</h4>
+                                      <p className="text-xs text-gray-400">Request Rides & Logistics</p>
+                                  </div>
+                              </button>
+
+                              <div className="relative py-4">
+                                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-800"></div></div>
+                                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-gray-900 px-2 text-gray-500">Restricted Area</span></div>
+                              </div>
+
+                              <button 
+                                onClick={() => setLoginMode('STAFF')}
+                                className="w-full text-center text-sm text-emerald-500 hover:text-emerald-400 font-medium py-2"
+                              >
+                                  Log in as Staff / Admin
+                              </button>
+                          </div>
+                      ) : (
+                          // STAFF LOGIN FLOW
+                          <div>
+                              {loginStep === 'CREDENTIALS' && (
+                                  <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
+                                      <div>
+                                          <label className="block text-xs font-bold text-gray-500 mb-1">Email / Username</label>
+                                          <input 
+                                              className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white outline-none focus:border-emerald-500"
+                                              placeholder="admin@naijamove.ng"
+                                              value={loginData.email}
+                                              onChange={e => setLoginData({...loginData, email: e.target.value})}
+                                          />
+                                      </div>
+                                      <div>
+                                          <label className="block text-xs font-bold text-gray-500 mb-1">Password</label>
+                                          <input 
+                                              type="password"
+                                              className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white outline-none focus:border-emerald-500"
+                                              placeholder="••••••••"
+                                              value={loginData.password}
+                                              onChange={e => setLoginData({...loginData, password: e.target.value})}
+                                          />
+                                      </div>
+                                      <button 
+                                          onClick={handleStaffLoginInit}
+                                          disabled={isAuthLoading}
+                                          className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold flex items-center justify-center gap-2"
+                                      >
+                                          {isAuthLoading ? <Loader2 className="animate-spin"/> : 'Authenticate'}
+                                      </button>
+                                      <button onClick={() => setLoginMode('USER')} className="w-full text-xs text-gray-500 hover:text-white">Cancel</button>
+                                  </div>
+                              )}
+
+                              {loginStep === 'SETUP_TOTP' && (
+                                  <div className="space-y-4 animate-in fade-in slide-in-from-right-4 text-center">
+                                      <div className="mx-auto w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mb-2">
+                                          <ShieldCheck size={32} />
+                                      </div>
+                                      <h4 className="font-bold text-lg">Setup Authenticator</h4>
+                                      <p className="text-xs text-gray-400">Scan this code with the NaijaMove Authenticator App to link your account.</p>
+                                      
+                                      <div className="bg-white p-2 rounded-xl inline-block mx-auto">
+                                          <img src={totpSetupData?.qrCode} alt="QR" className="w-40 h-40" />
+                                      </div>
+
+                                      <div className="bg-gray-800 p-2 rounded border border-gray-700 flex justify-between items-center gap-2">
+                                          <code className="text-emerald-400 font-mono text-sm">{totpSetupData?.secret}</code>
+                                          <button className="text-gray-400 hover:text-white"><Copy size={14}/></button>
+                                      </div>
+
+                                      <button 
+                                          onClick={() => setLoginStep('TOTP')}
+                                          className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm"
+                                      >
+                                          I have scanned it
+                                      </button>
+                                  </div>
+                              )}
+
+                              {loginStep === 'TOTP' && (
+                                  <div className="space-y-4 animate-in fade-in slide-in-from-right-4 text-center">
+                                      <div className="mx-auto w-16 h-16 bg-blue-500/20 text-blue-500 rounded-full flex items-center justify-center mb-2">
+                                          <Lock size={32} />
+                                      </div>
+                                      <h4 className="font-bold text-lg">Enter Token</h4>
+                                      <p className="text-xs text-gray-400">Open your NaijaMove Authenticator and enter the 6-digit code.</p>
+                                      
+                                      <input 
+                                          type="text"
+                                          maxLength={6}
+                                          className="w-full bg-gray-800 border border-gray-700 rounded p-4 text-center text-2xl font-mono tracking-[0.5em] text-white outline-none focus:border-blue-500"
+                                          placeholder="000000"
+                                          value={loginData.token}
+                                          onChange={e => setLoginData({...loginData, token: e.target.value.replace(/\D/g,'')})}
+                                      />
+
+                                      <button 
+                                          onClick={handleTotpVerify}
+                                          disabled={loginData.token.length !== 6 || isAuthLoading}
+                                          className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold flex items-center justify-center gap-2"
+                                      >
+                                          {isAuthLoading ? <Loader2 className="animate-spin"/> : 'Verify Login'}
+                                      </button>
+                                  </div>
+                              )}
+                          </div>
+                      )}
+                  </div>
+              </div>
+          </div>
+      )}
 
       {/* --- Signup Modal --- */}
       {isSignupOpen && (

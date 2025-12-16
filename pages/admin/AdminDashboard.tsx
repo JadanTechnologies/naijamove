@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { getDashboardStats, getActiveRides, getSystemHealth, getTransactions, getOnlineDrivers, manualAssignDriver } from '../../services/mockService';
@@ -11,6 +12,7 @@ import {
 import AdminSettings from './AdminSettings';
 import UserManagement from './UserManagement';
 import SupportManagement from './SupportManagement';
+import Automation from './Automation';
 import { RideRequest, UserRole, SystemHealth, DashboardStats, PaymentTransaction, User, RideStatus } from '../../types';
 import { VoiceCallModal } from '../../components/VoiceCallModal';
 import { Button } from '../../components/ui/Button';
@@ -23,8 +25,8 @@ interface AdminDashboardProps {
 // Helper Components
 const StatusDot = ({ status }: { status: string }) => {
     let color = 'bg-gray-300';
-    if (['OPTIMAL', 'OPERATIONAL', 'CONNECTED', 'UP', 'SUCCESS', 'ACTIVE', 'ACCEPTED', 'IN_PROGRESS'].includes(status)) color = 'bg-emerald-500';
-    else if (['DEGRADED', 'ISSUES', 'PENDING'].includes(status)) color = 'bg-yellow-500';
+    if (['OPTIMAL', 'OPERATIONAL', 'CONNECTED', 'UP', 'SUCCESS', 'ACTIVE', 'ACCEPTED', 'IN_PROGRESS', 'IDLE'].includes(status)) color = 'bg-emerald-500';
+    else if (['DEGRADED', 'ISSUES', 'PENDING', 'RUNNING'].includes(status)) color = 'bg-yellow-500';
     else if (['DOWN', 'DISCONNECTED', 'FAILED', 'BANNED', 'CANCELLED', 'SUSPENDED'].includes(status)) color = 'bg-red-500';
 
     return <span className={`w-3 h-3 rounded-full ${color} inline-block`}></span>;
@@ -134,6 +136,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   if (view === 'settings') return <AdminSettings />;
   if (view === 'users') return <UserManagement />;
   if (view === 'support') return <SupportManagement />;
+  if (view === 'automation') return <Automation />;
   
   // Logistics View
   if (view === 'logistics') {
@@ -271,7 +274,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                 </table>
              </div>
              
-             {/* Re-use assign modal logic (would be cleaner extracted, but kept inline for now) */}
+             {/* Re-use assign modal logic */}
              {assignModalOpen && (
                   <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95">
@@ -514,7 +517,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                                     <div className="flex items-center gap-2">
                                         <span className="font-medium text-gray-900">{txn.passengerName}</span>
                                         <button 
-                                            onClick={() => setCallRecipient({name: txn.passengerName, role: 'Passenger'})}
+                                            onClick={() => setCallRecipient({name: txn.passengerName || 'Passenger', role: 'Passenger'})}
                                             className="text-gray-400 hover:text-emerald-600 p-1" title="Call Passenger"
                                         >
                                             <Phone size={14}/>
