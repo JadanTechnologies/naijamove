@@ -84,7 +84,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
       `}>
         <div className="flex items-center justify-between h-16 px-6 bg-gray-950 border-b border-gray-800">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center font-bold text-xl">{appName.charAt(0)}</div>
+            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src="https://cdn-icons-png.flaticon.com/512/5716/5716364.png" alt="Logo" className="w-6 h-6 object-contain filter brightness-0 invert" />
+            </div>
             <span className="font-bold text-lg tracking-tight">{appName}</span>
           </div>
           <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-gray-400">

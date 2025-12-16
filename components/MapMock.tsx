@@ -130,6 +130,14 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide 
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
             </LayersControl.BaseLayer>
+            
+            <LayersControl.BaseLayer name="Traffic View (Google)">
+                <TileLayer
+                    url="https://mt0.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}"
+                    attribution="Google Maps"
+                />
+            </LayersControl.BaseLayer>
+
             <LayersControl.BaseLayer name="Satellite (Esri)">
                 <TileLayer
                 attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
