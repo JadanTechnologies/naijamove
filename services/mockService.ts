@@ -160,7 +160,10 @@ const DEFAULT_USERS: User[] = [
     ip: '197.210.1.1',
     device: 'Samsung A54',
     isp: 'MTN Nigeria',
-    location: { lat: 13.0100, lng: 5.2500 }
+    location: { lat: 13.0100, lng: 5.2500 },
+    vehicleCapacityKg: 150,
+    currentLoadKg: 0,
+    loadStatus: 'EMPTY'
   },
   {
     id: 'driver-2',
@@ -178,7 +181,10 @@ const DEFAULT_USERS: User[] = [
     device: 'Infinix Hot 10',
     ip: '105.112.44.12',
     isp: 'Airtel Nigeria',
-    location: { lat: 13.0020, lng: 5.2400 }
+    location: { lat: 13.0020, lng: 5.2400 },
+    vehicleCapacityKg: 400,
+    currentLoadKg: 0,
+    loadStatus: 'EMPTY'
   },
   {
     id: 'passenger-1',
@@ -248,6 +254,16 @@ const generateVirtualAccount = (name: string) => {
     };
 };
 
+const getVehicleCapacity = (type: VehicleType) => {
+    switch (type) {
+        case VehicleType.OKADA: return 150; // kg
+        case VehicleType.KEKE: return 400;
+        case VehicleType.MINIBUS: return 1000;
+        case VehicleType.TRUCK: return 3000;
+        default: return 100;
+    }
+}
+
 // --- Service Methods ---
 
 export const verifyNin = async (nin: string) => {
@@ -268,7 +284,7 @@ export const verifyNin = async (nin: string) => {
     throw new Error("Invalid NIN. Please check the number.");
 };
 
-export const signup = async (data: { name: string, email: string, phone: string, nin: string, role: UserRole }) => {
+export const signup = async (data: { name: string, email: string, phone: string, nin: string, role: UserRole, vehicleType?: VehicleType, licensePlate?: string }) => {
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     // Check existing
@@ -288,12 +304,59 @@ export const signup = async (data: { name: string, email: string, phone: string,
         isNinVerified: true,
         bankAccount: generateVirtualAccount(data.name),
         avatar: `https://ui-avatars.com/api/?name=${data.name.replace(' ', '+')}&background=random`,
-        location: { lat: 13.0059, lng: 5.2476 } // Default Sokoto
+        location: { lat: 13.0059, lng: 5.2476 }, // Default Sokoto
+        // Driver specific fields
+        ...(data.role === UserRole.DRIVER && {
+            vehicleType: data.vehicleType || VehicleType.OKADA,
+            licensePlate: data.licensePlate || 'PENDING',
+            rating: 5.0,
+            totalTrips: 0,
+            isOnline: true,
+            vehicleCapacityKg: getVehicleCapacity(data.vehicleType || VehicleType.OKADA),
+            currentLoadKg: 0,
+            loadStatus: 'EMPTY'
+        })
     };
 
     USERS = [...USERS, newUser];
     save(STORAGE_KEYS.USERS, USERS);
-    logActivity(newUser.id, 'SIGNUP', 'New user registration via Web');
+    logActivity(newUser.id, 'SIGNUP', `New ${data.role} registration via Web`);
+    return newUser;
+};
+
+// Admin Recruit Driver
+export const recruitDriver = async (adminId: string, data: { name: string, email: string, phone: string, vehicleType: VehicleType, licensePlate: string }) => {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    if (USERS.find(u => u.email === data.email)) {
+        throw new Error("Email already registered.");
+    }
+
+    const newUser: User = {
+        id: `driver-${Date.now()}`,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        role: UserRole.DRIVER,
+        vehicleType: data.vehicleType,
+        licensePlate: data.licensePlate,
+        walletBalance: 0,
+        status: 'ACTIVE',
+        isNinVerified: true, // Admin verified
+        rating: 5.0,
+        totalTrips: 0,
+        isOnline: false,
+        vehicleCapacityKg: getVehicleCapacity(data.vehicleType),
+        currentLoadKg: 0,
+        loadStatus: 'EMPTY',
+        bankAccount: generateVirtualAccount(data.name),
+        avatar: `https://ui-avatars.com/api/?name=${data.name.replace(' ', '+')}&background=random`,
+        location: { lat: 13.0059, lng: 5.2476 }
+    };
+
+    USERS = [...USERS, newUser];
+    save(STORAGE_KEYS.USERS, USERS);
+    logActivity(adminId, 'RECRUIT_DRIVER', `Recruited driver ${data.name} (${data.vehicleType})`);
     return newUser;
 };
 
@@ -386,18 +449,25 @@ export const createRide = async (ride: Omit<RideRequest, 'id' | 'status' | 'crea
   const user = USERS.find(u => u.id === ride.passengerId);
   if (!user) throw new Error("User not found");
   
-  // For demo, we just assume they have funds or pay cash. 
-  // Real implementation would check walletBalance >= price
-  
+  // Calculate Weight Logic (Simulated)
+  // Assume avg person is 75kg if standard ride, else use parcel weight
+  let weight = 0;
+  if (ride.type === 'RIDE') {
+      weight = 75; // 1 passenger
+  } else {
+      weight = ride.parcelWeight ? parseInt(ride.parcelWeight) : 10;
+  }
+
   const newRide: RideRequest = {
     ...ride,
     id: `ride-${Date.now()}`,
     status: RideStatus.PENDING,
     createdAt: new Date().toISOString(),
+    estimatedWeightKg: weight
   };
   RIDES = [newRide, ...RIDES];
   save(STORAGE_KEYS.RIDES, RIDES);
-  logActivity(ride.passengerId, 'BOOK_RIDE', `Booked ${ride.vehicleType} trip. Cost: ${ride.price}`);
+  logActivity(ride.passengerId, 'BOOK_RIDE', `Booked ${ride.vehicleType} trip. Cost: ${ride.price}. Weight: ${weight}kg`);
   return newRide;
 };
 
@@ -412,6 +482,25 @@ export const updateRideStatus = async (rideId: string, status: RideStatus, drive
   if (driverId) {
       updatedRide.driverId = driverId;
       logActivity(driverId, 'RIDE_UPDATE', `Updated ride ${rideId} to ${status}`);
+      
+      // Update Driver Load Status
+      const driverIdx = USERS.findIndex(u => u.id === driverId);
+      if (driverIdx !== -1 && USERS[driverIdx].role === UserRole.DRIVER) {
+          if (status === RideStatus.ACCEPTED || status === RideStatus.IN_PROGRESS) {
+              USERS[driverIdx].currentLoadKg = (USERS[driverIdx].currentLoadKg || 0) + (ride.estimatedWeightKg || 75);
+              
+              // Load Calculation
+              const capacity = USERS[driverIdx].vehicleCapacityKg || 150;
+              const current = USERS[driverIdx].currentLoadKg || 0;
+              if (current > capacity) USERS[driverIdx].loadStatus = 'OVERLOAD';
+              else if (current > capacity / 2) USERS[driverIdx].loadStatus = 'FULL_LOAD';
+              else USERS[driverIdx].loadStatus = 'HALF_LOAD';
+          } else if (status === RideStatus.COMPLETED || status === RideStatus.CANCELLED) {
+              USERS[driverIdx].currentLoadKg = 0;
+              USERS[driverIdx].loadStatus = 'EMPTY';
+          }
+          save(STORAGE_KEYS.USERS, USERS);
+      }
   }
   
   // Handle Wallet Debit on Completion
@@ -424,6 +513,7 @@ export const updateRideStatus = async (rideId: string, status: RideStatus, drive
       if (driverIdx !== -1) {
           USERS[driverIdx].walletBalance += (ride.price * 0.8); // 80% to driver
       }
+      updatedRide.endTime = new Date().toISOString();
       save(STORAGE_KEYS.USERS, USERS);
   }
   
@@ -507,7 +597,7 @@ export const calculateFare = (vehicleType: VehicleType, distanceKm: number): num
   return Math.ceil(pricing.base + (pricing.perKm * distanceKm));
 };
 
-// --- Template & Announcement Services ---
+// ... (Rest of message/template/health logic remains same, mostly getters/setters)
 export const getTemplates = async () => [...TEMPLATES];
 export const saveTemplate = async (template: NotificationTemplate) => {
     const idx = TEMPLATES.findIndex(t => t.id === template.id);
@@ -534,8 +624,6 @@ export const createAnnouncement = async (announcement: Omit<Announcement, 'id' |
     return newAnn;
 }
 
-// --- Chat & Support Services ---
-
 export const getRideMessages = async (rideId: string) => {
     return MESSAGES.filter(m => m.rideId === rideId).sort((a,b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 }
@@ -555,7 +643,6 @@ export const sendMessage = async (rideId: string, senderId: string, senderName: 
     return msg;
 }
 
-// Support Tickets
 export const getSupportTickets = async () => [...TICKETS];
 
 export const createSupportTicket = async (userId: string, userName: string, subject: string, initialMessage: string) => {
@@ -599,7 +686,6 @@ export const addTicketMessage = async (ticketId: string, senderId: string, sende
     }
 };
 
-// Knowledge Base
 export const getKnowledgeBase = async () => [...KB];
 
 export const saveKBItem = async (item: KnowledgeBaseItem) => {
@@ -614,49 +700,25 @@ export const deleteKBItem = async (id: string) => {
     save(STORAGE_KEYS.KB, KB);
 };
 
-// Simple AI Logic
 export const queryAiAgent = async (question: string): Promise<{answer?: string, escalate?: boolean}> => {
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Think time
-    
-    // Simple keyword matching
+    await new Promise(resolve => setTimeout(resolve, 1000));
     const qLower = question.toLowerCase();
     const match = KB.find(k => qLower.includes(k.question.toLowerCase()) || k.tags.some(t => qLower.includes(t)));
-    
-    if (match) {
-        return { answer: match.answer };
-    }
-    
+    if (match) return { answer: match.answer };
     return { escalate: true };
 };
 
 export const getSystemHealth = async (): Promise<SystemHealth> => {
     await new Promise(resolve => setTimeout(resolve, 300));
     return {
-        database: {
-            status: Math.random() > 0.95 ? 'DEGRADED' : 'OPTIMAL',
-            latency: Math.floor(Math.random() * 20) + 5,
-            activeConnections: Math.floor(Math.random() * 100) + 20
-        },
-        api: {
-            uptime: 99.99,
-            requestsPerSecond: Math.floor(Math.random() * 500) + 100,
-            avgResponseTime: Math.floor(Math.random() * 80) + 20,
-            errorRate: Number((Math.random() * 0.5).toFixed(2))
-        },
-        realtime: {
-            status: 'CONNECTED',
-            activeSockets: Math.floor(Math.random() * 2000) + 500,
-            messagesPerSecond: Math.floor(Math.random() * 300) + 50
-        },
-        server: {
-            cpuUsage: Math.floor(Math.random() * 60) + 10,
-            memoryUsage: Math.floor(Math.random() * 70) + 20,
-            diskUsage: 45
-        },
+        database: { status: 'OPTIMAL', latency: 15, activeConnections: 85 },
+        api: { uptime: 99.99, requestsPerSecond: 320, avgResponseTime: 45, errorRate: 0.02 },
+        realtime: { status: 'CONNECTED', activeSockets: 1200, messagesPerSecond: 150 },
+        server: { cpuUsage: 45, memoryUsage: 60, diskUsage: 45 },
         services: [
             { name: 'Auth Service', status: 'OPERATIONAL', latency: 12 },
             { name: 'Ride Matching', status: 'OPERATIONAL', latency: 45 },
-            { name: 'Payments', status: Math.random() > 0.9 ? 'ISSUES' : 'OPERATIONAL', latency: 120 },
+            { name: 'Payments', status: 'OPERATIONAL', latency: 120 },
             { name: 'Notifications', status: 'OPERATIONAL', latency: 25 },
             { name: 'Geo-Spatial', status: 'OPERATIONAL', latency: 30 }
         ]

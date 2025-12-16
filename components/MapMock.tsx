@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, LayersControl, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -13,13 +14,9 @@ interface MapMockProps {
 // SVG Strings for Vehicle Types
 const ICONS = {
     [VehicleType.OKADA]: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3.2-1.8"/><path d="M9 19c-5 1.5-7-2-7-5.5S2 10 5 9c2 0 4 1 4 4"/><path d="m12 14 4-9 2.5-.5"/><path d="M19 17.5V14l-3-3 4-3 2 1"/></svg>`,
-    
-    [VehicleType.KEKE]: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18"/><path d="M5 10v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/><path d="m4 10 3-7h10l3 7"/><circle cx="7" cy="19" r="2"/><circle cx="17" cy="19" r="2"/></svg>`, // Stylized rickshaw/cart
-    
+    [VehicleType.KEKE]: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18"/><path d="M5 10v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/><path d="m4 10 3-7h10l3 7"/><circle cx="7" cy="19" r="2"/><circle cx="17" cy="19" r="2"/></svg>`,
     [VehicleType.MINIBUS]: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="17" cy="18" r="2"/></svg>`,
-    
     [VehicleType.TRUCK]: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="8" x="2" y="6" rx="1.5"/><path d="M10 14h3.6c.4 0 .9-.2 1.2-.6l2.7-3.6c.3-.4.8-.7 1.3-.7H22v8h-2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 18h8"/></svg>`,
-    
     PIN: `<div style="background-color: white; width: 8px; height: 8px; border-radius: 50%;"></div>`
 };
 
@@ -90,6 +87,8 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
         status: "BUSY",
         rating: 4.8,
         trips: 1240,
+        loadKg: 75,
+        maxLoad: 150,
         currentRide: {
             id: 'RIDE-8821',
             passenger: 'Adebayo T.',
@@ -105,6 +104,8 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
         status: "IDLE",
         rating: 4.5,
         trips: 850,
+        loadKg: 0,
+        maxLoad: 400,
         currentRide: null
     },
     { 
@@ -116,6 +117,8 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
         status: "BUSY",
         rating: 4.9,
         trips: 2100,
+        loadKg: 850,
+        maxLoad: 1000,
          currentRide: {
             id: 'RIDE-9942',
             passenger: 'Grace O.',
@@ -131,6 +134,8 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
         status: "IDLE",
         rating: 4.7,
         trips: 320,
+        loadKg: 0,
+        maxLoad: 3000,
         currentRide: null
     },
   ]);
@@ -259,6 +264,20 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
                                  <span className="text-gray-500">Vehicle Type:</span>
                                  <span className="font-bold text-gray-700">{d.type}</span>
                              </div>
+                             {/* Weight Sensor Data */}
+                             <div className="border-t pt-2 mt-2">
+                                <div className="flex justify-between text-xs mb-1">
+                                    <span className="text-gray-500">Load (Sensor):</span>
+                                    <span className="font-bold">{d.loadKg}/{d.maxLoad}kg</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div 
+                                        className={`h-1.5 rounded-full ${d.loadKg > d.maxLoad * 0.9 ? 'bg-red-500' : 'bg-blue-500'}`} 
+                                        style={{width: `${Math.min(100, (d.loadKg / d.maxLoad) * 100)}%`}}
+                                    ></div>
+                                </div>
+                             </div>
+
                              {d.currentRide ? (
                                  <div className="bg-gray-50 p-2 rounded border border-gray-100 mt-2">
                                      <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">Current Ride</div>
@@ -299,6 +318,9 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
                         <div className="text-center">
                             <p className="font-bold text-sm">Your {activeRide.vehicleType}</p>
                             <p className="text-xs text-gray-500">In Transit</p>
+                            <p className="text-xs font-mono mt-1 text-emerald-600">
+                                Load: {activeRide.estimatedWeightKg}kg
+                            </p>
                         </div>
                     </Popup>
                 </Marker>

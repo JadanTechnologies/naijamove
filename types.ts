@@ -47,6 +47,10 @@ export interface User {
   licensePlate?: string;
   rating?: number;
   totalTrips?: number;
+  // Weight Sensor Data (Teltonika Simulation)
+  vehicleCapacityKg?: number;
+  currentLoadKg?: number;
+  loadStatus?: 'EMPTY' | 'HALF_LOAD' | 'FULL_LOAD' | 'OVERLOAD';
   // Staff Specific
   token?: string;
   permissions?: string[];
@@ -105,10 +109,15 @@ export interface RideRequest {
   distanceKm: number;
   // Logistics specific
   parcelDescription?: string;
-  parcelWeight?: string;
+  parcelWeight?: string; // e.g. "5kg"
+  parcelWeightValue?: number; // numeric kg
   receiverPhone?: string;
   // Driver specific
   rejectedBy?: string[];
+  // Trip Metadata
+  startTime?: string;
+  endTime?: string;
+  estimatedWeightKg?: number;
 }
 
 export interface PaymentTransaction {
@@ -279,4 +288,17 @@ export interface SystemHealth {
     status: 'OPERATIONAL' | 'ISSUES' | 'DOWN';
     latency: number;
   }[];
+}
+
+// Toast System
+export interface ToastMessage {
+    id: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+    message: string;
+    duration?: number;
+}
+
+export interface StaticPageContent {
+    title: string;
+    content: string;
 }
