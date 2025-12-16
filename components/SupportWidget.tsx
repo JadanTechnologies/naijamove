@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User } from '../types';
-import { MessageSquare, X, Mic, Send, Headphones, Paperclip } from 'lucide-react';
+import { MessageSquare, X, Mic, Send, Headphones, Paperclip, Phone } from 'lucide-react';
 import { createSupportTicket, queryAiAgent, speak } from '../services/mockService';
+import { VoiceCallModal } from './VoiceCallModal';
 
 interface SupportWidgetProps {
     user: User;
@@ -15,6 +16,7 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ user }) => {
     const [input, setInput] = useState('');
     const [isListening, setIsListening] = useState(false);
     const [isThinking, setIsThinking] = useState(false);
+    const [showCall, setShowCall] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -80,7 +82,16 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ user }) => {
                                 <p className="text-[10px] text-emerald-100">AI Agent Active</p>
                             </div>
                         </div>
-                        <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-1 rounded"><X size={18}/></button>
+                        <div className="flex items-center gap-1">
+                             <button 
+                                onClick={() => setShowCall(true)}
+                                className="hover:bg-white/20 p-1.5 rounded transition-colors"
+                                title="Call Support"
+                             >
+                                 <Phone size={18}/>
+                             </button>
+                             <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-1.5 rounded transition-colors"><X size={18}/></button>
+                        </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
@@ -128,6 +139,14 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ user }) => {
             >
                 {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
             </button>
+            
+            {showCall && (
+                <VoiceCallModal 
+                    recipientName="NaijaMove Support"
+                    recipientRole="Agent"
+                    onEndCall={() => setShowCall(false)}
+                />
+            )}
         </div>
     );
 };

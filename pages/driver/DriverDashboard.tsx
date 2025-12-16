@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { User, RideRequest, RideStatus } from '../../types';
-import { getActiveRides, updateRideStatus, rejectRide, withdrawFunds, createSupportTicket } from '../../services/mockService';
+import { User, RideRequest, RideStatus, VehicleType } from '../../types';
+import { getActiveRides, updateRideStatus, rejectRide, withdrawFunds, createSupportTicket, updateUserProfile } from '../../services/mockService';
 import { Button } from '../../components/ui/Button';
 import { CURRENCY_SYMBOL } from '../../constants';
-import { MapPin, Navigation, Package, Phone, CheckCircle, XCircle, MessageSquare, AlertOctagon, TrendingUp, CreditCard, Banknote, Calendar, Clock, Headphones, Send } from 'lucide-react';
+import { MapPin, Navigation, Package, Phone, CheckCircle, XCircle, MessageSquare, AlertOctagon, TrendingUp, CreditCard, Banknote, Calendar, Clock, Headphones, Send, User as UserIcon, Settings, Star, ShieldCheck, Truck } from 'lucide-react';
 import MapMock from '../../components/MapMock';
 import { ChatWindow } from '../../components/ChatWindow';
 import { VoiceCallModal } from '../../components/VoiceCallModal';
@@ -31,6 +31,15 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
   const [supportMessage, setSupportMessage] = useState('');
   const [supportSent, setSupportSent] = useState(false);
   const [showSupportCall, setShowSupportCall] = useState(false);
+
+  // Profile State
+  const [profileData, setProfileData] = useState({
+      phone: user.phone || '',
+      vehicleType: user.vehicleType || VehicleType.OKADA,
+      licensePlate: user.licensePlate || '',
+      nin: user.nin || ''
+  });
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   useEffect(() => {
     // Poll for rides & update data
@@ -113,6 +122,22 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
       setTimeout(() => setSupportSent(false), 3000);
   };
 
+  const handleSaveProfile = async () => {
+      setIsSavingProfile(true);
+      try {
+          await updateUserProfile(user.id, {
+              phone: profileData.phone,
+              vehicleType: profileData.vehicleType,
+              licensePlate: profileData.licensePlate
+          });
+          alert("Profile updated successfully! Some changes may require re-login to reflect.");
+      } catch (e: any) {
+          alert("Failed to update profile: " + e.message);
+      } finally {
+          setIsSavingProfile(false);
+      }
+  };
+
   const handleSOS = () => {
       if(confirm("EMERGENCY: Report security threat? Admin and nearby police stations will be notified.")) {
           alert("Distress signal sent! Help is on the way.");
@@ -120,6 +145,126 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
   };
 
   // --- Views ---
+
+  if (view === 'profile') {
+      return (
+          <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in">
+              <h1 className="text-2xl font-bold text-gray-900">Profile Management</h1>
+              
+              {/* Header Card */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row items-center gap-6">
+                  <div className="relative">
+                      <img src={user.avatar} alt="Profile" className="w-24 h-24 rounded-full border-4 border-emerald-50 object-cover" />
+                      <div className="absolute bottom-0 right-0 bg-emerald-500 text-white p-1 rounded-full border-2 border-white">
+                          <CheckCircle size={14} />
+                      </div>
+                  </div>
+                  <div className="text-center md:text-left flex-1">
+                      <h2 className="text-xl font-bold text-gray-900">{user.name}</h2>
+                      <p className="text-sm text-gray-500">{user.email}</p>
+                      <div className="flex items-center justify-center md:justify-start gap-4 mt-3">
+                          <div className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-1 rounded text-sm font-medium">
+                              <Star size={14} fill="currentColor" /> {user.rating} Rating
+                          </div>
+                          <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-sm font-medium">
+                              <TrendingUp size={14} /> {user.totalTrips} Trips
+                          </div>
+                      </div>
+                  </div>
+              </div>
+
+              {/* Edit Form */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                  <h3 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
+                      <Settings size={20} /> Account Details
+                  </h3>
+                  
+                  <div className="space-y-4">
+                      <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                              <label className="block text-xs font-bold text-gray-500 mb-1">Full Name</label>
+                              <input 
+                                  value={user.name} 
+                                  disabled 
+                                  className="w-full p-2 bg-gray-50 border border-gray-200 rounded text-gray-500 cursor-not-allowed"
+                              />
+                          </div>
+                          <div>
+                              <label className="block text-xs font-bold text-gray-500 mb-1">Email Address</label>
+                              <input 
+                                  value={user.email} 
+                                  disabled 
+                                  className="w-full p-2 bg-gray-50 border border-gray-200 rounded text-gray-500 cursor-not-allowed"
+                              />
+                          </div>
+                      </div>
+
+                      <div>
+                          <label className="block text-xs font-bold text-gray-500 mb-1">Phone Number</label>
+                          <input 
+                              value={profileData.phone}
+                              onChange={e => setProfileData({...profileData, phone: e.target.value})}
+                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
+                              placeholder="+234..."
+                          />
+                      </div>
+
+                      <div>
+                          <label className="block text-xs font-bold text-gray-500 mb-1">NIN (Verified)</label>
+                          <div className="relative">
+                              <ShieldCheck className="absolute left-2 top-2.5 text-emerald-500" size={16} />
+                              <input 
+                                  value={profileData.nin} 
+                                  disabled 
+                                  className="w-full pl-8 p-2 bg-emerald-50 border border-emerald-100 rounded text-emerald-800 font-mono cursor-not-allowed"
+                              />
+                          </div>
+                      </div>
+
+                      <div className="border-t pt-4 mt-4">
+                          <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                              <Truck size={18} /> Vehicle Information
+                          </h4>
+                          <div className="grid md:grid-cols-2 gap-4">
+                              <div>
+                                  <label className="block text-xs font-bold text-gray-500 mb-1">Vehicle Type</label>
+                                  <select 
+                                      value={profileData.vehicleType}
+                                      onChange={e => setProfileData({...profileData, vehicleType: e.target.value as any})}
+                                      className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 outline-none bg-white"
+                                  >
+                                      <option value={VehicleType.OKADA}>Okada (Motorbike)</option>
+                                      <option value={VehicleType.KEKE}>Keke (Tricycle)</option>
+                                      <option value={VehicleType.MINIBUS}>Mini Bus</option>
+                                      <option value={VehicleType.TRUCK}>Logistics Truck</option>
+                                  </select>
+                              </div>
+                              <div>
+                                  <label className="block text-xs font-bold text-gray-500 mb-1">License Plate</label>
+                                  <input 
+                                      value={profileData.licensePlate}
+                                      onChange={e => setProfileData({...profileData, licensePlate: e.target.value})}
+                                      className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 outline-none uppercase font-mono placeholder:normal-case"
+                                      placeholder="e.g. SOK-123-XY"
+                                  />
+                              </div>
+                          </div>
+                      </div>
+
+                      <div className="pt-4 flex justify-end">
+                          <Button 
+                              onClick={handleSaveProfile} 
+                              isLoading={isSavingProfile}
+                              disabled={!profileData.phone || !profileData.licensePlate}
+                          >
+                              Save Changes
+                          </Button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      );
+  }
 
   if (view === 'trips') {
       return (

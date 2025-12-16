@@ -61,6 +61,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
           <LinkItem icon={LayoutDashboard} label="Dashboard" page="dashboard" />
           <LinkItem icon={Car} label="My Trips" page="trips" />
           <LinkItem icon={Wallet} label="Earnings & Wallet" page="wallet" />
+          <LinkItem icon={UserIcon} label="My Profile" page="profile" />
           <LinkItem icon={Headphones} label="Support" page="support" />
         </>
       );

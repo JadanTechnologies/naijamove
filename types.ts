@@ -44,6 +44,7 @@ export interface User {
   // Driver specific
   isOnline?: boolean;
   vehicleType?: VehicleType;
+  licensePlate?: string;
   rating?: number;
   totalTrips?: number;
   // Staff Specific

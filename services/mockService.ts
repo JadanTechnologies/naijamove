@@ -136,6 +136,7 @@ const DEFAULT_USERS: User[] = [
     email: 'musa@naijamove.ng',
     role: UserRole.DRIVER,
     vehicleType: VehicleType.OKADA,
+    licensePlate: 'SOK-123-AB',
     walletBalance: 15000,
     isOnline: true,
     rating: 4.8,
@@ -153,6 +154,7 @@ const DEFAULT_USERS: User[] = [
     email: 'chinedu@naijamove.ng',
     role: UserRole.DRIVER,
     vehicleType: VehicleType.KEKE,
+    licensePlate: 'SOK-555-XY',
     walletBalance: 8200,
     isOnline: true,
     rating: 4.5,
@@ -308,6 +310,17 @@ export const login = async (identifier: string, isToken = false): Promise<User> 
   
   logActivity(user.id, 'LOGIN', `Logged in via ${user.device || 'Web'}`);
   return user;
+};
+
+export const updateUserProfile = async (userId: string, updates: Partial<User>) => {
+    await new Promise(resolve => setTimeout(resolve, 800));
+    const idx = USERS.findIndex(u => u.id === userId);
+    if (idx !== -1) {
+        USERS[idx] = { ...USERS[idx], ...updates };
+        save(STORAGE_KEYS.USERS, USERS);
+        return USERS[idx];
+    }
+    throw new Error("User not found");
 };
 
 export const getSystemSettings = async (): Promise<SystemSettings> => {
