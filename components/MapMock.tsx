@@ -183,8 +183,8 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
             
             <LayersControl.BaseLayer name="Satellite">
                 <TileLayer
-                attribution='Tiles &copy; Esri'
-                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                attribution='Google'
+                url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
                 />
             </LayersControl.BaseLayer>
 

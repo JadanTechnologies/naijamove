@@ -179,6 +179,25 @@ const DEFAULT_SETTINGS: SystemSettings = {
   }
 };
 
+// Helper for bank generation (re-declared for scope)
+const generateVirtualAccount = (name: string) => {
+    return {
+        bankName: "Wema Bank",
+        accountNumber: "9" + Math.floor(100000000 + Math.random() * 900000000), 
+        accountName: `NaijaMove - ${name}`
+    };
+};
+
+const getVehicleCapacity = (type: VehicleType) => {
+    switch (type) {
+        case VehicleType.OKADA: return 150; // kg
+        case VehicleType.KEKE: return 400;
+        case VehicleType.MINIBUS: return 1000;
+        case VehicleType.TRUCK: return 3000;
+        default: return 100;
+    }
+}
+
 const DEFAULT_USERS: User[] = [
   {
     id: 'admin-1',
@@ -210,6 +229,42 @@ const DEFAULT_USERS: User[] = [
     isp: 'MTN',
     location: { lat: 13.0060, lng: 5.2470 },
     permissions: ['SUPPORT', 'VIEW_FINANCE']
+  },
+  // Default Driver for Landing Page Login
+  {
+    id: 'driver-default',
+    name: 'Musa Ibrahim',
+    email: 'musa@naijamove.ng',
+    phone: '+2348012345678',
+    role: UserRole.DRIVER,
+    vehicleType: VehicleType.OKADA,
+    licensePlate: 'SOK-882-AB',
+    walletBalance: 12500,
+    rating: 4.8,
+    totalTrips: 1240,
+    isOnline: true,
+    status: 'ACTIVE',
+    vehicleCapacityKg: 150,
+    currentLoadKg: 0,
+    loadStatus: 'EMPTY',
+    avatar: 'https://ui-avatars.com/api/?name=Musa+Ibrahim&background=f97316&color=fff',
+    bankAccount: generateVirtualAccount("Musa Ibrahim"),
+    location: { lat: 13.0100, lng: 5.2500 },
+    isTotpSetup: true
+  },
+  // Default Passenger for Landing Page Login
+  {
+    id: 'passenger-default',
+    name: 'Tola Adebayo',
+    email: 'tola@gmail.com',
+    phone: '+2348098765432',
+    role: UserRole.PASSENGER,
+    walletBalance: 5000,
+    status: 'ACTIVE',
+    avatar: 'https://ui-avatars.com/api/?name=Tola+Adebayo&background=3b82f6&color=fff',
+    bankAccount: generateVirtualAccount("Tola Adebayo"),
+    location: { lat: 13.0080, lng: 5.2480 },
+    isTotpSetup: true
   }
 ];
 
@@ -289,25 +344,6 @@ const logActivity = (userId: string, action: string, details: string) => {
     ACTIVITIES = [activity, ...ACTIVITIES].slice(0, 1000); // Keep last 1000
     save(STORAGE_KEYS.ACTIVITIES, ACTIVITIES);
 };
-
-// ... (Existing generateVirtualAccount and getVehicleCapacity - keep them) ...
-const generateVirtualAccount = (name: string) => {
-    return {
-        bankName: "Wema Bank",
-        accountNumber: "9" + Math.floor(100000000 + Math.random() * 900000000), // Random 10 digit starting with 9
-        accountName: `NaijaMove - ${name}`
-    };
-};
-
-const getVehicleCapacity = (type: VehicleType) => {
-    switch (type) {
-        case VehicleType.OKADA: return 150; // kg
-        case VehicleType.KEKE: return 400;
-        case VehicleType.MINIBUS: return 1000;
-        case VehicleType.TRUCK: return 3000;
-        default: return 100;
-    }
-}
 
 // --- Auth & Users ---
 
