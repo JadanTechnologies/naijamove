@@ -216,6 +216,10 @@ const AdminSettings: React.FC = () => {
   const updateSecurityList = (listKey: keyof SystemSettings['security'], action: 'ADD' | 'REMOVE', value: string) => {
       if(!settings) return;
       const list = settings.security[listKey];
+      
+      // Fix: Ensure list is an array before spreading, as magicLinkExpiryHours is a number
+      if (!Array.isArray(list)) return;
+
       let newList = [...list];
       if(action === 'ADD' && !list.includes(value)) newList.push(value);
       if(action === 'REMOVE') newList = list.filter(i => i !== value);

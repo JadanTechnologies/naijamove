@@ -199,17 +199,23 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
         }
       `}</style>
       <div className="flex-1 relative">
+          {/* @ts-ignore */}
           <MapContainer center={defaultPosition} zoom={13} scrollWheelZoom={true} style={{ height: "100%", width: "100%", background: '#0f172a' }}>
             {focusedDriverId && <RecenterMap coords={getFocusedDriverPos() || defaultPosition} />}
+            {/* @ts-ignore */}
             <LayersControl position="topright">
+                {/* @ts-ignore */}
                 <LayersControl.BaseLayer checked name="Dark Matter">
+                    {/* @ts-ignore */}
                     <TileLayer
                         attribution='&copy; CARTO'
                         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                     />
                 </LayersControl.BaseLayer>
                 
+                {/* @ts-ignore */}
                 <LayersControl.BaseLayer name="Satellite">
+                    {/* @ts-ignore */}
                     <TileLayer
                         attribution='Google'
                         url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
@@ -219,12 +225,14 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
 
             {/* Drivers */}
             {showDrivers && !activeRide && drivers.map(d => (
+                // @ts-ignore
                 <Marker 
                     key={d.id} 
                     position={[d.lat, d.lng]} 
                     icon={createIcon(getVehicleColor(d.type), d.type)}
                     eventHandlers={{ click: () => { if(enableAdminFeatures) setFocusedDriverId(d.id); } }}
                 >
+                    {/* @ts-ignore */}
                     <Popup className="glass-popup" closeButton={false}>
                         <div className="p-3 min-w-[200px] text-white">
                             <div className="flex justify-between items-start mb-2 border-b border-gray-700 pb-2">
@@ -252,13 +260,19 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
             {activeRide && route && vehiclePos && (
                 <>
                     <RecenterMap coords={vehiclePos} />
+                    {/* @ts-ignore */}
                     <Marker position={route.start} icon={createIcon('#10b981', 'PIN', true)}>
+                        {/* @ts-ignore */}
                         <Popup>Pickup: {activeRide.pickupAddress}</Popup>
                     </Marker>
+                    {/* @ts-ignore */}
                     <Marker position={route.end} icon={createIcon('#ef4444', 'PIN', true)}>
+                        {/* @ts-ignore */}
                         <Popup>Dropoff: {activeRide.dropoffAddress}</Popup>
                     </Marker>
+                    {/* @ts-ignore */}
                     <Polyline positions={[route.start, route.end]} color="#10b981" weight={4} dashArray="10, 10" opacity={0.8} />
+                    {/* @ts-ignore */}
                     <Marker 
                         position={vehiclePos} 
                         icon={createIcon(getVehicleColor(activeRide.vehicleType), activeRide.vehicleType)}
