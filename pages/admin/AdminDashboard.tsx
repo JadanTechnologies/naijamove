@@ -1,19 +1,19 @@
 
 import React, { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { getDashboardStats, getActiveRides, getSystemHealth, getTransactions, getOnlineDrivers, manualAssignDriver, approveTransaction, generateReport } from '../../services/mockService';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from 'recharts';
+import { getDashboardStats, getActiveRides, getSystemHealth, getTransactions, getOnlineDrivers, manualAssignDriver, approveTransaction, generateReport, getSupportTickets } from '../../services/mockService';
 import { CURRENCY_SYMBOL } from '../../constants';
 import MapMock from '../../components/MapMock';
 import { 
   Users, TrendingUp, AlertTriangle, ShieldCheck, Truck, CreditCard, 
   Download, Search, Car, Activity, Server, Database, Radio, 
-  CheckCircle, AlertCircle, XCircle, Cpu, RefreshCw, Briefcase, Map, Phone, Wallet, User as UserIcon, FileText, Check, X
+  CheckCircle, AlertCircle, XCircle, Cpu, RefreshCw, Briefcase, Map, Phone, Wallet, User as UserIcon, FileText, Check, X, Clock, MessageSquare
 } from 'lucide-react';
 import AdminSettings from './AdminSettings';
 import UserManagement from './UserManagement';
 import SupportManagement from './SupportManagement';
 import Automation from './Automation';
-import { RideRequest, UserRole, SystemHealth, DashboardStats, PaymentTransaction, User, RideStatus } from '../../types';
+import { RideRequest, UserRole, SystemHealth, DashboardStats, PaymentTransaction, User, RideStatus, SupportTicket } from '../../types';
 import { VoiceCallModal } from '../../components/VoiceCallModal';
 import { Button } from '../../components/ui/Button';
 import { useToast } from '../../components/ui/Toast';
@@ -25,35 +25,23 @@ interface AdminDashboardProps {
 // Helper Components
 const StatusDot = ({ status }: { status: string }) => {
     let color = 'bg-gray-300';
-    if (['OPTIMAL', 'OPERATIONAL', 'CONNECTED', 'UP', 'SUCCESS', 'ACTIVE', 'ACCEPTED', 'IN_PROGRESS', 'IDLE'].includes(status)) color = 'bg-emerald-500';
+    if (['OPTIMAL', 'OPERATIONAL', 'CONNECTED', 'UP', 'SUCCESS', 'ACTIVE', 'ACCEPTED', 'IN_PROGRESS', 'IDLE', 'OPEN'].includes(status)) color = 'bg-emerald-500';
     else if (['DEGRADED', 'ISSUES', 'PENDING', 'RUNNING', 'PENDING_APPROVAL'].includes(status)) color = 'bg-yellow-500';
-    else if (['DOWN', 'DISCONNECTED', 'FAILED', 'BANNED', 'CANCELLED', 'SUSPENDED'].includes(status)) color = 'bg-red-500';
+    else if (['DOWN', 'DISCONNECTED', 'FAILED', 'BANNED', 'CANCELLED', 'SUSPENDED', 'ESCALATED'].includes(status)) color = 'bg-red-500';
 
     return <span className={`w-3 h-3 rounded-full ${color} inline-block`}></span>;
 };
-
-const ProgressBar = ({ value, label, color = 'bg-blue-600' }: any) => (
-    <div className="mb-2">
-        <div className="flex justify-between text-xs font-medium mb-1">
-            <span>{label}</span>
-            <span>{value}%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className={`${color} h-2 rounded-full transition-all duration-500`} style={{ width: `${value}%` }}></div>
-        </div>
-    </div>
-);
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [allRides, setAllRides] = useState<RideRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [healthData, setHealthData] = useState<SystemHealth | null>(null);
+  const [recentTickets, setRecentTickets] = useState<SupportTicket[]>([]);
   const { addToast } = useToast();
   
   // Payment View State
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
-  const [callRecipient, setCallRecipient] = useState<{name: string, role: string} | null>(null);
   const [paymentActionLoading, setPaymentActionLoading] = useState<string | null>(null);
 
   // Manual Assign State
@@ -71,12 +59,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
 
   const loadData = async () => {
         try {
-            const [s, r] = await Promise.all([
+            const [s, r, t] = await Promise.all([
                 getDashboardStats(),
-                getActiveRides(UserRole.ADMIN, 'admin-1')
+                getActiveRides(UserRole.ADMIN, 'admin-1'),
+                getSupportTickets()
             ]);
             setStats(s);
             setAllRides(r);
+            setRecentTickets(t.slice(0, 5)); // Recent 5 tickets
         } catch(e) {
             console.error("Failed to load admin data", e);
         } finally {
@@ -390,6 +380,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   // System Health View
   if (view === 'health') {
       if (!healthData) return <div className="p-8 text-center animate-pulse">Scanning system health...</div>;
+      
+      const cpuData = [
+          { time: '10:00', value: 30 }, { time: '10:05', value: 45 }, { time: '10:10', value: 35 },
+          { time: '10:15', value: 60 }, { time: '10:20', value: 55 }, { time: '10:25', value: 70 },
+          { time: '10:30', value: healthData.server.cpuUsage }
+      ];
+
       return (
           <div className="space-y-6 animate-in fade-in">
               <div className="flex justify-between items-center">
@@ -398,7 +395,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                       <RefreshCw size={14} /> Refresh
                   </button>
               </div>
-              {/* ... (Charts components from previous version can be reused here) ... */}
+              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
                       <div>
@@ -432,6 +429,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                           <p className="text-xs text-gray-600">Active Sockets: {healthData.realtime.activeSockets.toLocaleString()}</p>
                       </div>
                       <div className="p-3 bg-orange-50 text-orange-600 rounded-lg"><Radio size={24} /></div>
+                  </div>
+              </div>
+
+              {/* Resource Usage Charts - Restored */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-80">
+                      <h3 className="font-bold text-gray-700 mb-4 flex items-center gap-2"><Cpu size={18}/> Server CPU Load</h3>
+                      <ResponsiveContainer width="100%" height="90%">
+                          <AreaChart data={cpuData}>
+                              <defs>
+                                  <linearGradient id="colorCpu" x1="0" y1="0" x2="0" y2="1">
+                                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                  </linearGradient>
+                              </defs>
+                              <XAxis dataKey="time" axisLine={false} tickLine={false} />
+                              <YAxis axisLine={false} tickLine={false} />
+                              <Tooltip />
+                              <Area type="monotone" dataKey="value" stroke="#10b981" fillOpacity={1} fill="url(#colorCpu)" />
+                          </AreaChart>
+                      </ResponsiveContainer>
+                  </div>
+                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-80">
+                      <h3 className="font-bold text-gray-700 mb-4 flex items-center gap-2"><Server size={18}/> Services Status</h3>
+                      <div className="space-y-4 overflow-y-auto h-64">
+                          {healthData.services.map((svc, i) => (
+                              <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                  <div className="flex items-center gap-3">
+                                      <StatusDot status={svc.status} />
+                                      <span className="font-medium text-sm">{svc.name}</span>
+                                  </div>
+                                  <span className="text-xs font-mono text-gray-500">{svc.latency}ms</span>
+                              </div>
+                          ))}
+                      </div>
                   </div>
               </div>
           </div>
@@ -637,29 +669,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
         </div>
 
         <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-[300px]">
+            {/* Revenue Chart */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-[280px]">
                 <h3 className="font-semibold text-gray-800 mb-6">Revenue Overview</h3>
                 <ResponsiveContainer width="100%" height="80%">
                     <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                        <YAxis axisLine={false} tickLine={false} />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
+                        <YAxis axisLine={false} tickLine={false} fontSize={12} />
                         <Tooltip />
                         <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
                     </LineChart>
                 </ResponsiveContainer>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 className="font-semibold text-gray-800 mb-4">Quick Actions</h3>
-                <div className="space-y-3">
-                    <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors flex justify-between items-center">
-                        Review Pending Driver Docs
-                        <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded-full text-xs">5</span>
-                    </button>
-                    <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors">
-                        Manage Surge Pricing (Lagos)
-                    </button>
+            {/* Recent Tickets Widget - "Chats" */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-[200px] overflow-hidden flex flex-col">
+                <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <MessageSquare size={16} /> Recent Support
+                </h3>
+                <div className="flex-1 overflow-y-auto space-y-3">
+                    {recentTickets.length === 0 ? (
+                        <p className="text-sm text-gray-500 italic">No open tickets.</p>
+                    ) : (
+                        recentTickets.map(ticket => (
+                            <div key={ticket.id} className="flex justify-between items-center text-sm border-b pb-2 last:border-0">
+                                <div>
+                                    <p className="font-medium truncate max-w-[150px]">{ticket.subject}</p>
+                                    <p className="text-xs text-gray-500">{ticket.userName}</p>
+                                </div>
+                                <span className={`text-[10px] px-2 py-0.5 rounded ${ticket.status === 'OPEN' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'}`}>
+                                    {ticket.status}
+                                </span>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </div>

@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState } from 'react';
 import { getSystemSettings, updateSystemSettings, getTemplates, saveTemplate, deleteTemplate, getAnnouncements, createAnnouncement, speak } from '../../services/mockService';
 import { SystemSettings, TrackerConfig, NotificationTemplate, Announcement, VehicleType } from '../../types';
 import { Button } from '../../components/ui/Button';
-import { Shield, CreditCard, Bell, Sparkles, Smartphone, Router, Trash2, Megaphone, Eye, EyeOff, X, Monitor, Globe2, LayoutTemplate, Coins, Save, Link, Plus, Check } from 'lucide-react';
+import { Shield, CreditCard, Bell, Sparkles, Smartphone, Router, Trash2, Megaphone, Eye, EyeOff, X, Monitor, Globe2, LayoutTemplate, Coins, Save, Link, Plus, Check, Search, Tag } from 'lucide-react';
 import { CURRENCY_SYMBOL } from '../../constants';
 
 const PasswordInput = ({ value, onChange, placeholder }: { value?: string, onChange: (val: string) => void, placeholder?: string }) => {
@@ -165,6 +166,31 @@ const AdminSettings: React.FC = () => {
       });
   };
 
+  const updateLandingPageStats = (key: string, value: string) => {
+      if(!settings) return;
+      setSettings({
+          ...settings,
+          landingPage: {
+              ...settings.landingPage,
+              stats: {
+                  ...settings.landingPage.stats,
+                  [key]: value
+              }
+          }
+      });
+  };
+
+  const updateSeoField = (key: string, value: string) => {
+      if(!settings) return;
+      setSettings({
+          ...settings,
+          seo: {
+              ...settings.seo,
+              [key]: value
+          }
+      });
+  };
+
     const updateMobileAppField = (key: string, value: any) => {
       if (!settings) return;
       setSettings({
@@ -244,8 +270,8 @@ const AdminSettings: React.FC = () => {
             return (
                 <div className="space-y-6 animate-in fade-in">
                     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><LayoutTemplate size={20}/> Core Branding</h3>
-                        <div className="grid md:grid-cols-2 gap-6">
+                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><LayoutTemplate size={20}/> Identity & CMS</h3>
+                        <div className="grid md:grid-cols-2 gap-6 mb-6">
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 mb-1">Application Name</label>
                                 <input className="w-full p-2 border rounded" value={settings.branding.appName} onChange={e => updateField('branding', 'appName', e.target.value)} />
@@ -254,13 +280,80 @@ const AdminSettings: React.FC = () => {
                                 <label className="block text-xs font-bold text-gray-500 mb-1">Logo URL</label>
                                 <input className="w-full p-2 border rounded" value={settings.branding.logoUrl} onChange={e => updateField('branding', 'logoUrl', e.target.value)} />
                             </div>
+                        </div>
+
+                        <div className="border-t pt-4">
+                            <h4 className="font-bold text-gray-800 mb-4">Landing Page Content</h4>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Hero Title</label>
+                                    <input className="w-full p-2 border rounded font-bold text-lg" value={settings.landingPage.heroTitle} onChange={e => updateLandingPageField('heroTitle', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Hero Subtitle</label>
+                                    <input className="w-full p-2 border rounded" value={settings.landingPage.heroSubtitle} onChange={e => updateLandingPageField('heroSubtitle', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Description</label>
+                                    <textarea className="w-full p-2 border rounded h-20" value={settings.landingPage.heroDescription} onChange={e => updateLandingPageField('heroDescription', e.target.value)} />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="border-t pt-4 mt-4">
+                            <h4 className="font-bold text-gray-800 mb-4">Display Stats</h4>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Total Rides</label>
+                                    <input className="w-full p-2 border rounded" value={settings.landingPage.stats.rides} onChange={e => updateLandingPageStats('rides', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Verified Drivers</label>
+                                    <input className="w-full p-2 border rounded" value={settings.landingPage.stats.drivers} onChange={e => updateLandingPageStats('drivers', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Cities Covered</label>
+                                    <input className="w-full p-2 border rounded" value={settings.landingPage.stats.cities} onChange={e => updateLandingPageStats('cities', e.target.value)} />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="border-t pt-4 mt-4">
+                            <h4 className="font-bold text-gray-800 mb-4">Contact Information</h4>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Support Email</label>
+                                    <input className="w-full p-2 border rounded" value={settings.landingPage.contactEmail} onChange={e => updateLandingPageField('contactEmail', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Support Phone</label>
+                                    <input className="w-full p-2 border rounded" value={settings.landingPage.contactPhone} onChange={e => updateLandingPageField('contactPhone', e.target.value)} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SEO Section */}
+                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Search size={20}/> SEO & Metadata</h3>
+                        <div className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1">Support Email</label>
-                                <input className="w-full p-2 border rounded" value={settings.landingPage.contactEmail} onChange={e => updateLandingPageField('contactEmail', e.target.value)} />
+                                <label className="block text-xs font-bold text-gray-500 mb-1">Meta Title</label>
+                                <input className="w-full p-2 border rounded" value={settings.seo?.metaTitle || ''} onChange={e => updateSeoField('metaTitle', e.target.value)} placeholder="App Name - Slogan" />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1">Support Phone</label>
-                                <input className="w-full p-2 border rounded" value={settings.landingPage.contactPhone} onChange={e => updateLandingPageField('contactPhone', e.target.value)} />
+                                <label className="block text-xs font-bold text-gray-500 mb-1">Meta Description</label>
+                                <textarea className="w-full p-2 border rounded h-20" value={settings.seo?.metaDescription || ''} onChange={e => updateSeoField('metaDescription', e.target.value)} placeholder="Description for search engines..." />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Keywords</label>
+                                    <input className="w-full p-2 border rounded" value={settings.seo?.keywords || ''} onChange={e => updateSeoField('keywords', e.target.value)} placeholder="ride, taxi, logistics" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">OG Image URL</label>
+                                    <input className="w-full p-2 border rounded" value={settings.seo?.ogImage || ''} onChange={e => updateSeoField('ogImage', e.target.value)} placeholder="https://..." />
+                                </div>
                             </div>
                         </div>
                     </div>

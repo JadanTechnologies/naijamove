@@ -95,8 +95,14 @@ export const socketService = new MockSocketService();
 const DEFAULT_SETTINGS: SystemSettings = {
   branding: {
     appName: "NaijaMove",
-    logoUrl: "",
+    logoUrl: "https://cdn-icons-png.flaticon.com/512/2972/2972185.png",
     primaryColor: "#10b981"
+  },
+  seo: {
+      metaTitle: "NaijaMove - Logistics & Ride Hailing",
+      metaDescription: "Reliable transportation for Okada, Keke, and Cargo in Northern Nigeria.",
+      keywords: "logistics, ride hailing, okada, keke, sokoto, transport",
+      ogImage: "https://naijamove.ng/og-image.png"
   },
   landingPage: {
     heroTitle: "The Future of Logistics & Rides",

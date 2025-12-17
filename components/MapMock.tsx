@@ -181,7 +181,7 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
                 />
             </LayersControl.BaseLayer>
             
-            <LayersControl.BaseLayer name="Satellite">
+            <LayersControl.BaseLayer name="Satellite (Hybrid)">
                 <TileLayer
                 attribution='Google'
                 url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"

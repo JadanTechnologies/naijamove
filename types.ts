@@ -232,12 +232,20 @@ export interface LogisticsPricingConfig {
     interstateMultiplier: number;
 }
 
+export interface SeoConfig {
+    metaTitle: string;
+    metaDescription: string;
+    keywords: string;
+    ogImage: string;
+}
+
 export interface SystemSettings {
   branding: {
     appName: string;
     logoUrl: string;
     primaryColor: string;
   };
+  seo: SeoConfig;
   landingPage: LandingPageConfig;
   mobileApps: MobileAppConfig;
   payments: {
