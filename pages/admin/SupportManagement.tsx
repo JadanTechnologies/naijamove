@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { SupportTicket, KnowledgeBaseItem } from '../../types';
-import { getSupportTickets, getKnowledgeBase, saveKBItem, deleteKBItem, addTicketMessage } from '../../services/mockService';
+import { getSupportTickets, getKnowledgeBase, saveKBItem, deleteKBItem, addTicketMessage, speak } from '../../services/mockService';
 import { Button } from '../../components/ui/Button';
-import { MessageSquare, BookOpen, Send, Trash2, CheckCircle, Search, Plus, User, Phone } from 'lucide-react';
+import { MessageSquare, BookOpen, Send, Trash2, CheckCircle, Search, Plus, User, Phone, Mic, Volume2 } from 'lucide-react';
 import { VoiceCallModal } from '../../components/VoiceCallModal';
 
 const SupportManagement: React.FC = () => {
@@ -51,6 +52,7 @@ const SupportManagement: React.FC = () => {
         setNewKb({});
         setIsEditingKb(false);
         refresh();
+        speak("Training data added successfully.");
     };
 
     return (
@@ -68,7 +70,7 @@ const SupportManagement: React.FC = () => {
                         onClick={() => setActiveTab('KB')}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'KB' ? 'bg-white shadow text-emerald-700' : 'text-gray-600'}`}
                     >
-                        Knowledge Base (AI Training)
+                        Voice Agent Training
                     </button>
                 </div>
             </div>
@@ -171,7 +173,7 @@ const SupportManagement: React.FC = () => {
                     <div className="w-1/3 space-y-4">
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                             <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <Plus size={18} className="text-emerald-600"/> Add Training Data
+                                <Mic size={18} className="text-emerald-600"/> Train AI Voice Agent
                             </h3>
                             <div className="space-y-4">
                                 <div>
@@ -184,10 +186,10 @@ const SupportManagement: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-1">AI Answer</label>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Voice Answer</label>
                                     <textarea 
                                         className="w-full p-2 border rounded text-sm h-32" 
-                                        placeholder="The answer the AI should give..."
+                                        placeholder="The spoken answer the AI should give..."
                                         value={newKb.answer || ''}
                                         onChange={e => setNewKb({...newKb, answer: e.target.value})}
                                     />
@@ -200,31 +202,49 @@ const SupportManagement: React.FC = () => {
                                         onChange={e => setNewKb({...newKb, tags: e.target.value.split(',').map(t => t.trim())})}
                                     />
                                 </div>
-                                <Button className="w-full" onClick={handleSaveKb}>Train AI</Button>
+                                <Button className="w-full" onClick={handleSaveKb}>Add Training Data</Button>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                        <div className="p-4 border-b bg-gray-50 font-bold text-gray-700">Current Knowledge Base ({kb.length})</div>
+                        <div className="p-4 border-b bg-gray-50 font-bold text-gray-700 flex justify-between items-center">
+                            <span>Knowledge Base ({kb.length})</span>
+                            <span className="text-xs font-normal text-gray-500">Live Training Data</span>
+                        </div>
                         <div className="flex-1 overflow-y-auto p-4 grid gap-4">
+                            {kb.length === 0 && (
+                                <div className="text-center text-gray-400 py-10">No training data available. Add some questions.</div>
+                            )}
                             {kb.map(item => (
-                                <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative group">
-                                    <h4 className="font-bold text-gray-900 mb-2 flex gap-2">
+                                <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative group bg-white">
+                                    <h4 className="font-bold text-gray-900 mb-2 flex gap-2 pr-10">
                                         <span className="text-emerald-600">Q:</span> {item.question}
                                     </h4>
-                                    <p className="text-gray-600 text-sm pl-6 mb-3"><span className="font-bold text-gray-400">A:</span> {item.answer}</p>
+                                    <p className="text-gray-600 text-sm pl-6 mb-3 pr-10">
+                                        <span className="font-bold text-gray-400">A:</span> {item.answer}
+                                    </p>
                                     <div className="pl-6 flex gap-2">
                                         {item.tags.map(tag => (
                                             <span key={tag} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] rounded-full">{tag}</span>
                                         ))}
                                     </div>
-                                    <button 
-                                        onClick={() => deleteKBItem(item.id).then(refresh)}
-                                        className="absolute top-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+                                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white pl-2">
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); speak(item.answer); }}
+                                            className="p-1.5 text-gray-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors"
+                                            title="Preview Audio"
+                                        >
+                                            <Volume2 size={18} />
+                                        </button>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); deleteKBItem(item.id).then(refresh); }}
+                                            className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                                            title="Delete Rule"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
