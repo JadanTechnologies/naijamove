@@ -12,7 +12,7 @@ const PasswordInput = ({ value, onChange, placeholder }: { value?: string, onCha
         <div className="relative flex-1">
             <input 
                 type={show ? "text" : "password"}
-                className="w-full p-2 border rounded font-mono text-sm pr-10"
+                className="w-full p-2 border rounded font-mono text-sm pr-10 dark:bg-gray-900 dark:border-white/10 dark:text-white bg-white border-gray-200"
                 placeholder={placeholder}
                 value={value || ''}
                 onChange={(e) => onChange(e.target.value)}
@@ -20,7 +20,7 @@ const PasswordInput = ({ value, onChange, placeholder }: { value?: string, onCha
             <button 
                 type="button"
                 onClick={() => setShow(!show)}
-                className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
+                className="absolute right-2 top-2 text-gray-400 hover:text-gray-600 dark:hover:text-white"
             >
                 {show ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -53,14 +53,14 @@ const BlockListManager = ({
     };
 
     return (
-        <div className="bg-white p-4 rounded-xl border border-gray-200">
-            <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <Icon size={18} className="text-gray-500" />
+        <div className="glass-panel p-4 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50">
+            <h4 className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                <Icon size={18} className="text-gray-500 dark:text-gray-400" />
                 {title}
             </h4>
             <div className="flex gap-2 mb-4">
                 <input 
-                    className="flex-1 p-2 border rounded text-sm"
+                    className="flex-1 p-2 border rounded text-sm dark:bg-gray-900 dark:border-white/10 dark:text-white bg-white border-gray-200"
                     placeholder={placeholder}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
@@ -71,9 +71,9 @@ const BlockListManager = ({
             <div className="flex flex-wrap gap-2">
                 {items.length === 0 && <span className="text-xs text-gray-400 italic">No restrictions active.</span>}
                 {items.map(item => (
-                    <div key={item} className="flex items-center gap-1 bg-red-50 text-red-700 px-2 py-1 rounded text-sm border border-red-100">
+                    <div key={item} className="flex items-center gap-1 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-400 px-2 py-1 rounded text-sm border border-red-100 dark:border-red-500/30">
                         <span>{item}</span>
-                        <button onClick={() => onRemove(item)} className="hover:text-red-900"><X size={14}/></button>
+                        <button onClick={() => onRemove(item)} className="hover:text-red-900 dark:hover:text-red-200"><X size={14}/></button>
                     </div>
                 ))}
             </div>
@@ -104,7 +104,7 @@ const AdminSettings: React.FC = () => {
 
   useEffect(() => {
     getSystemSettings().then(setSettings);
-    getTemplates().then(() => {}); // Preload templates if needed
+    getTemplates().then(() => {}); 
     getAnnouncements().then(setAnnouncements);
   }, []);
 
@@ -275,95 +275,96 @@ const AdminSettings: React.FC = () => {
 
   if (!settings) return <div>Loading settings...</div>;
 
+  const inputClass = "w-full p-2 border rounded dark:bg-gray-900 dark:border-white/10 dark:text-white bg-white border-gray-200";
+
   const renderTabContent = () => {
     switch(activeTab) {
         case 'branding':
             return (
                 <div className="space-y-6 animate-in fade-in">
-                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><LayoutTemplate size={20}/> Identity & CMS</h3>
+                    <div className="glass-panel p-6 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50">
+                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-white"><LayoutTemplate size={20}/> Identity & CMS</h3>
                         <div className="grid md:grid-cols-2 gap-6 mb-6">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1">Application Name</label>
-                                <input className="w-full p-2 border rounded" value={settings.branding.appName} onChange={e => updateField('branding', 'appName', e.target.value)} />
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Application Name</label>
+                                <input className={inputClass} value={settings.branding.appName} onChange={e => updateField('branding', 'appName', e.target.value)} />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1">Logo URL</label>
-                                <input className="w-full p-2 border rounded" value={settings.branding.logoUrl} onChange={e => updateField('branding', 'logoUrl', e.target.value)} />
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Logo URL</label>
+                                <input className={inputClass} value={settings.branding.logoUrl} onChange={e => updateField('branding', 'logoUrl', e.target.value)} />
                             </div>
                         </div>
 
-                        <div className="border-t pt-4">
-                            <h4 className="font-bold text-gray-800 mb-4">Landing Page Content</h4>
+                        <div className="border-t border-gray-200 dark:border-white/10 pt-4">
+                            <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-4">Landing Page Content</h4>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1">Hero Title</label>
-                                    <input className="w-full p-2 border rounded font-bold text-lg" value={settings.landingPage.heroTitle} onChange={e => updateLandingPageField('heroTitle', e.target.value)} />
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Hero Title</label>
+                                    <input className={inputClass} value={settings.landingPage.heroTitle} onChange={e => updateLandingPageField('heroTitle', e.target.value)} />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1">Hero Subtitle</label>
-                                    <input className="w-full p-2 border rounded" value={settings.landingPage.heroSubtitle} onChange={e => updateLandingPageField('heroSubtitle', e.target.value)} />
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Hero Subtitle</label>
+                                    <input className={inputClass} value={settings.landingPage.heroSubtitle} onChange={e => updateLandingPageField('heroSubtitle', e.target.value)} />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1">Description</label>
-                                    <textarea className="w-full p-2 border rounded h-20" value={settings.landingPage.heroDescription} onChange={e => updateLandingPageField('heroDescription', e.target.value)} />
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Description</label>
+                                    <textarea className={inputClass + " h-20"} value={settings.landingPage.heroDescription} onChange={e => updateLandingPageField('heroDescription', e.target.value)} />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="border-t pt-4 mt-4">
-                            <h4 className="font-bold text-gray-800 mb-4">Display Stats</h4>
+                        <div className="border-t border-gray-200 dark:border-white/10 pt-4 mt-4">
+                            <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-4">Display Stats</h4>
                             <div className="grid grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1">Total Rides</label>
-                                    <input className="w-full p-2 border rounded" value={settings.landingPage.stats.rides} onChange={e => updateLandingPageStats('rides', e.target.value)} />
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Total Rides</label>
+                                    <input className={inputClass} value={settings.landingPage.stats.rides} onChange={e => updateLandingPageStats('rides', e.target.value)} />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1">Verified Drivers</label>
-                                    <input className="w-full p-2 border rounded" value={settings.landingPage.stats.drivers} onChange={e => updateLandingPageStats('drivers', e.target.value)} />
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Verified Drivers</label>
+                                    <input className={inputClass} value={settings.landingPage.stats.drivers} onChange={e => updateLandingPageStats('drivers', e.target.value)} />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1">Cities Covered</label>
-                                    <input className="w-full p-2 border rounded" value={settings.landingPage.stats.cities} onChange={e => updateLandingPageStats('cities', e.target.value)} />
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Cities Covered</label>
+                                    <input className={inputClass} value={settings.landingPage.stats.cities} onChange={e => updateLandingPageStats('cities', e.target.value)} />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="border-t pt-4 mt-4">
-                            <h4 className="font-bold text-gray-800 mb-4">Contact Information</h4>
+                        <div className="border-t border-gray-200 dark:border-white/10 pt-4 mt-4">
+                            <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-4">Contact Information</h4>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1">Support Email</label>
-                                    <input className="w-full p-2 border rounded" value={settings.landingPage.contactEmail} onChange={e => updateLandingPageField('contactEmail', e.target.value)} />
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Support Email</label>
+                                    <input className={inputClass} value={settings.landingPage.contactEmail} onChange={e => updateLandingPageField('contactEmail', e.target.value)} />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1">Support Phone</label>
-                                    <input className="w-full p-2 border rounded" value={settings.landingPage.contactPhone} onChange={e => updateLandingPageField('contactPhone', e.target.value)} />
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Support Phone</label>
+                                    <input className={inputClass} value={settings.landingPage.contactPhone} onChange={e => updateLandingPageField('contactPhone', e.target.value)} />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* SEO Section */}
-                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Search size={20}/> SEO & Metadata</h3>
+                    <div className="glass-panel p-6 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50">
+                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-white"><Search size={20}/> SEO & Metadata</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1">Meta Title</label>
-                                <input className="w-full p-2 border rounded" value={settings.seo?.metaTitle || ''} onChange={e => updateSeoField('metaTitle', e.target.value)} placeholder="App Name - Slogan" />
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Meta Title</label>
+                                <input className={inputClass} value={settings.seo?.metaTitle || ''} onChange={e => updateSeoField('metaTitle', e.target.value)} placeholder="App Name - Slogan" />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1">Meta Description</label>
-                                <textarea className="w-full p-2 border rounded h-20" value={settings.seo?.metaDescription || ''} onChange={e => updateSeoField('metaDescription', e.target.value)} placeholder="Description for search engines..." />
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Meta Description</label>
+                                <textarea className={inputClass + " h-20"} value={settings.seo?.metaDescription || ''} onChange={e => updateSeoField('metaDescription', e.target.value)} placeholder="Description for search engines..." />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1">Keywords</label>
-                                    <input className="w-full p-2 border rounded" value={settings.seo?.keywords || ''} onChange={e => updateSeoField('keywords', e.target.value)} placeholder="ride, taxi, logistics" />
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Keywords</label>
+                                    <input className={inputClass} value={settings.seo?.keywords || ''} onChange={e => updateSeoField('keywords', e.target.value)} placeholder="ride, taxi, logistics" />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1">OG Image URL</label>
-                                    <input className="w-full p-2 border rounded" value={settings.seo?.ogImage || ''} onChange={e => updateSeoField('ogImage', e.target.value)} placeholder="https://..." />
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">OG Image URL</label>
+                                    <input className={inputClass} value={settings.seo?.ogImage || ''} onChange={e => updateSeoField('ogImage', e.target.value)} placeholder="https://..." />
                                 </div>
                             </div>
                         </div>
@@ -374,25 +375,25 @@ const AdminSettings: React.FC = () => {
         case 'mobile':
             return (
                 <div className="space-y-6 animate-in fade-in">
-                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Smartphone size={20}/> Mobile App Distribution</h3>
+                    <div className="glass-panel p-6 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50">
+                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-white"><Smartphone size={20}/> Mobile App Distribution</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1">Android Play Store URL</label>
-                                <input className="w-full p-2 border rounded" value={settings.mobileApps.androidUrl} onChange={e => updateMobileAppField('androidUrl', e.target.value)} />
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Android Play Store URL</label>
+                                <input className={inputClass} value={settings.mobileApps.androidUrl} onChange={e => updateMobileAppField('androidUrl', e.target.value)} />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1">iOS App Store URL</label>
-                                <input className="w-full p-2 border rounded" value={settings.mobileApps.iosUrl} onChange={e => updateMobileAppField('iosUrl', e.target.value)} />
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">iOS App Store URL</label>
+                                <input className={inputClass} value={settings.mobileApps.iosUrl} onChange={e => updateMobileAppField('iosUrl', e.target.value)} />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1">Current Version</label>
-                                    <input className="w-full p-2 border rounded" value={settings.mobileApps.version} onChange={e => updateMobileAppField('version', e.target.value)} />
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Current Version</label>
+                                    <input className={inputClass} value={settings.mobileApps.version} onChange={e => updateMobileAppField('version', e.target.value)} />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1">Release Notes</label>
-                                    <input className="w-full p-2 border rounded" value={settings.mobileApps.releaseNotes} onChange={e => updateMobileAppField('releaseNotes', e.target.value)} />
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Release Notes</label>
+                                    <input className={inputClass} value={settings.mobileApps.releaseNotes} onChange={e => updateMobileAppField('releaseNotes', e.target.value)} />
                                 </div>
                             </div>
                         </div>
@@ -403,27 +404,27 @@ const AdminSettings: React.FC = () => {
         case 'pricing':
             return (
                 <div className="space-y-6 animate-in fade-in">
-                    <h3 className="text-lg font-bold flex items-center gap-2"><Coins size={20}/> Fare & Pricing Model</h3>
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-gray-900 dark:text-white"><Coins size={20}/> Fare & Pricing Model</h3>
                     
                     <div className="grid md:grid-cols-2 gap-6">
                         {Object.keys(settings.pricing).filter(k => k !== 'logistics').map((vType) => (
-                            <div key={vType} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                                <h4 className="font-bold text-gray-900 mb-3 capitalize">{vType.toLowerCase()} Fares</h4>
+                            <div key={vType} className="glass-panel p-4 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50">
+                                <h4 className="font-bold text-gray-900 dark:text-white mb-3 capitalize">{vType.toLowerCase()} Fares</h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 mb-1">Base Fare ({CURRENCY_SYMBOL})</label>
+                                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Base Fare ({CURRENCY_SYMBOL})</label>
                                         <input 
                                             type="number"
-                                            className="w-full p-2 border rounded"
+                                            className={inputClass}
                                             value={settings.pricing[vType as VehicleType].base}
                                             onChange={e => updatePricing(vType as VehicleType, 'base', parseInt(e.target.value))}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 mb-1">Per KM ({CURRENCY_SYMBOL})</label>
+                                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Per KM ({CURRENCY_SYMBOL})</label>
                                         <input 
                                             type="number"
-                                            className="w-full p-2 border rounded"
+                                            className={inputClass}
                                             value={settings.pricing[vType as VehicleType].perKm}
                                             onChange={e => updatePricing(vType as VehicleType, 'perKm', parseInt(e.target.value))}
                                         />
@@ -433,42 +434,42 @@ const AdminSettings: React.FC = () => {
                         ))}
                     </div>
 
-                    <div className="bg-orange-50 p-6 rounded-xl border border-orange-100">
-                        <h4 className="font-bold text-orange-900 mb-4">Logistics & Cargo Pricing</h4>
+                    <div className="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-xl border border-orange-100 dark:border-orange-500/30">
+                        <h4 className="font-bold text-orange-900 dark:text-orange-400 mb-4">Logistics & Cargo Pricing</h4>
                         <div className="grid md:grid-cols-4 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-orange-800 mb-1">Base Fee</label>
+                                <label className="block text-xs font-bold text-orange-800 dark:text-orange-300 mb-1">Base Fee</label>
                                 <input 
                                     type="number"
-                                    className="w-full p-2 border border-orange-200 rounded"
+                                    className="w-full p-2 border border-orange-200 dark:border-orange-800 rounded dark:bg-gray-900 dark:text-white"
                                     value={settings.pricing.logistics.baseFare}
                                     onChange={e => updateLogisticsPricing('baseFare', parseInt(e.target.value))}
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-orange-800 mb-1">Per KG</label>
+                                <label className="block text-xs font-bold text-orange-800 dark:text-orange-300 mb-1">Per KG</label>
                                 <input 
                                     type="number"
-                                    className="w-full p-2 border border-orange-200 rounded"
+                                    className="w-full p-2 border border-orange-200 dark:border-orange-800 rounded dark:bg-gray-900 dark:text-white"
                                     value={settings.pricing.logistics.perKg}
                                     onChange={e => updateLogisticsPricing('perKg', parseInt(e.target.value))}
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-orange-800 mb-1">Per KM</label>
+                                <label className="block text-xs font-bold text-orange-800 dark:text-orange-300 mb-1">Per KM</label>
                                 <input 
                                     type="number"
-                                    className="w-full p-2 border border-orange-200 rounded"
+                                    className="w-full p-2 border border-orange-200 dark:border-orange-800 rounded dark:bg-gray-900 dark:text-white"
                                     value={settings.pricing.logistics.perKm}
                                     onChange={e => updateLogisticsPricing('perKm', parseInt(e.target.value))}
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-orange-800 mb-1">Interstate Multiplier</label>
+                                <label className="block text-xs font-bold text-orange-800 dark:text-orange-300 mb-1">Interstate Multiplier</label>
                                 <input 
                                     type="number"
                                     step="0.1"
-                                    className="w-full p-2 border border-orange-200 rounded"
+                                    className="w-full p-2 border border-orange-200 dark:border-orange-800 rounded dark:bg-gray-900 dark:text-white"
                                     value={settings.pricing.logistics.interstateMultiplier}
                                     onChange={e => updateLogisticsPricing('interstateMultiplier', parseFloat(e.target.value))}
                                 />
@@ -482,25 +483,25 @@ const AdminSettings: React.FC = () => {
             return (
                 <div className="space-y-6 animate-in fade-in">
                     <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-bold flex items-center gap-2"><Router size={20}/> GPS Tracker Integrations</h3>
+                        <h3 className="text-lg font-bold flex items-center gap-2 text-gray-900 dark:text-white"><Router size={20}/> GPS Tracker Integrations</h3>
                         <Button onClick={() => setIsAddingTracker(!isAddingTracker)} size="sm">
                             {isAddingTracker ? 'Cancel' : 'Add Tracker'}
                         </Button>
                     </div>
 
                     {isAddingTracker && (
-                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4 animate-in slide-in-from-top-2">
-                            <h4 className="font-bold text-gray-700 mb-3">Configure New Device Stream</h4>
+                        <div className="glass-panel p-4 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50 mb-4 animate-in slide-in-from-top-2">
+                            <h4 className="font-bold text-gray-700 dark:text-gray-300 mb-3">Configure New Device Stream</h4>
                             <div className="grid md:grid-cols-4 gap-4 mb-4">
-                                <input placeholder="Integration Name" className="p-2 border rounded" value={newTracker.name} onChange={e => setNewTracker({...newTracker, name: e.target.value})} />
-                                <select className="p-2 border rounded" value={newTracker.provider} onChange={e => setNewTracker({...newTracker, provider: e.target.value as any})}>
+                                <input placeholder="Integration Name" className={inputClass} value={newTracker.name} onChange={e => setNewTracker({...newTracker, name: e.target.value})} />
+                                <select className={inputClass} value={newTracker.provider} onChange={e => setNewTracker({...newTracker, provider: e.target.value as any})}>
                                     <option value="TELTONIKA">Teltonika</option>
                                     <option value="CONCOX">Concox</option>
                                     <option value="RUPTELA">Ruptela</option>
                                     <option value="QUECLINK">Queclink</option>
                                 </select>
-                                <input placeholder="Server IP" className="p-2 border rounded" value={newTracker.serverIp} onChange={e => setNewTracker({...newTracker, serverIp: e.target.value})} />
-                                <input placeholder="Port" type="number" className="p-2 border rounded" value={newTracker.port} onChange={e => setNewTracker({...newTracker, port: parseInt(e.target.value)})} />
+                                <input placeholder="Server IP" className={inputClass} value={newTracker.serverIp} onChange={e => setNewTracker({...newTracker, serverIp: e.target.value})} />
+                                <input placeholder="Port" type="number" className={inputClass} value={newTracker.port} onChange={e => setNewTracker({...newTracker, port: parseInt(e.target.value)})} />
                             </div>
                             <Button onClick={addTracker}>Establish Connection</Button>
                         </div>
@@ -508,16 +509,16 @@ const AdminSettings: React.FC = () => {
 
                     <div className="grid gap-4">
                         {settings.trackers.integrations.map(tracker => (
-                            <div key={tracker.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <div key={tracker.id} className="flex items-center justify-between p-4 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg shadow-sm">
                                 <div className="flex items-center gap-4">
-                                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Router size={24}/></div>
+                                    <div className="p-2 bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg"><Router size={24}/></div>
                                     <div>
-                                        <h4 className="font-bold text-gray-900">{tracker.name}</h4>
-                                        <p className="text-xs text-gray-500">{tracker.provider} • {tracker.protocol} • Port {tracker.port}</p>
+                                        <h4 className="font-bold text-gray-900 dark:text-white">{tracker.name}</h4>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">{tracker.provider} • {tracker.protocol} • Port {tracker.port}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                                    <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/20 px-2 py-1 rounded-full">
                                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                                         Active
                                     </span>
@@ -532,14 +533,14 @@ const AdminSettings: React.FC = () => {
         case 'notifications':
             return (
                 <div className="space-y-6 animate-in fade-in">
-                    <h3 className="text-lg font-bold flex items-center gap-2"><Bell size={20}/> Communication Center</h3>
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-gray-900 dark:text-white"><Bell size={20}/> Communication Center</h3>
                     
                     <div className="grid md:grid-cols-3 gap-6">
                         {/* Email Provider */}
-                        <div className="bg-white p-4 rounded-xl border border-gray-200">
-                            <h4 className="font-bold text-gray-700 mb-3">Email Gateway</h4>
+                        <div className="glass-panel p-4 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50">
+                            <h4 className="font-bold text-gray-700 dark:text-gray-300 mb-3">Email Gateway</h4>
                             <select 
-                                className="w-full p-2 border rounded mb-2"
+                                className={inputClass + " mb-2"}
                                 value={settings.communication.emailProvider}
                                 onChange={e => updateField('communication', 'emailProvider', e.target.value)}
                             >
@@ -550,7 +551,7 @@ const AdminSettings: React.FC = () => {
                             </select>
                             <input 
                                 type="password" 
-                                className="w-full p-2 border rounded" 
+                                className={inputClass}
                                 placeholder="API Key" 
                                 value={settings.communication.emailApiKey} 
                                 onChange={e => updateField('communication', 'emailApiKey', e.target.value)}
@@ -558,10 +559,10 @@ const AdminSettings: React.FC = () => {
                         </div>
 
                         {/* SMS Provider */}
-                        <div className="bg-white p-4 rounded-xl border border-gray-200">
-                            <h4 className="font-bold text-gray-700 mb-3">SMS Gateway</h4>
+                        <div className="glass-panel p-4 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50">
+                            <h4 className="font-bold text-gray-700 dark:text-gray-300 mb-3">SMS Gateway</h4>
                             <select 
-                                className="w-full p-2 border rounded mb-2"
+                                className={inputClass + " mb-2"}
                                 value={settings.communication.smsProvider}
                                 onChange={e => updateField('communication', 'smsProvider', e.target.value)}
                             >
@@ -572,7 +573,7 @@ const AdminSettings: React.FC = () => {
                             </select>
                             <input 
                                 type="password" 
-                                className="w-full p-2 border rounded" 
+                                className={inputClass}
                                 placeholder="API Key" 
                                 value={settings.communication.smsApiKey} 
                                 onChange={e => updateField('communication', 'smsApiKey', e.target.value)}
@@ -580,10 +581,10 @@ const AdminSettings: React.FC = () => {
                         </div>
 
                         {/* Push Provider */}
-                        <div className="bg-white p-4 rounded-xl border border-gray-200">
-                            <h4 className="font-bold text-gray-700 mb-3">Push Notifications</h4>
+                        <div className="glass-panel p-4 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50">
+                            <h4 className="font-bold text-gray-700 dark:text-gray-300 mb-3">Push Notifications</h4>
                             <select 
-                                className="w-full p-2 border rounded mb-2"
+                                className={inputClass + " mb-2"}
                                 value={settings.communication.pushProvider}
                                 onChange={e => updateField('communication', 'pushProvider', e.target.value)}
                             >
@@ -592,7 +593,7 @@ const AdminSettings: React.FC = () => {
                             </select>
                             <input 
                                 type="password" 
-                                className="w-full p-2 border rounded" 
+                                className={inputClass}
                                 placeholder="API Key / Server Key" 
                                 value={settings.communication.pushApiKey} 
                                 onChange={e => updateField('communication', 'pushApiKey', e.target.value)}
@@ -600,17 +601,17 @@ const AdminSettings: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 mt-6">
-                        <h4 className="font-bold text-blue-900 mb-4 flex items-center gap-2"><Megaphone size={18}/> Send Broadcast</h4>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-500/30 mt-6">
+                        <h4 className="font-bold text-blue-900 dark:text-blue-300 mb-4 flex items-center gap-2"><Megaphone size={18}/> Send Broadcast</h4>
                         <div className="grid md:grid-cols-2 gap-4 mb-4">
                             <input 
-                                className="p-2 border rounded" 
+                                className={inputClass}
                                 placeholder="Title" 
                                 value={newAnnouncement.title}
                                 onChange={e => setNewAnnouncement({...newAnnouncement, title: e.target.value})}
                             />
                             <select 
-                                className="p-2 border rounded"
+                                className={inputClass}
                                 value={newAnnouncement.target}
                                 onChange={e => setNewAnnouncement({...newAnnouncement, target: e.target.value as any})}
                             >
@@ -620,7 +621,7 @@ const AdminSettings: React.FC = () => {
                             </select>
                         </div>
                         <textarea 
-                            className="w-full p-2 border rounded h-20 mb-4" 
+                            className={inputClass + " h-20 mb-4"}
                             placeholder="Message body..."
                             value={newAnnouncement.message}
                             onChange={e => setNewAnnouncement({...newAnnouncement, message: e.target.value})}
@@ -633,17 +634,17 @@ const AdminSettings: React.FC = () => {
         case 'integrations':
             return (
                 <div className="space-y-6 animate-in fade-in">
-                    <h3 className="text-lg font-bold flex items-center gap-2"><Plug size={20}/> Third-Party Integrations</h3>
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-gray-900 dark:text-white"><Plug size={20}/> Third-Party Integrations</h3>
                     
-                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                        <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><Mic size={18}/> Voice & AI Agent Providers</h4>
-                        <p className="text-sm text-gray-500 mb-4">Configure the backend for the AI Support Agent voice capabilities.</p>
+                    <div className="glass-panel p-6 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50">
+                        <h4 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2"><Mic size={18}/> Voice & AI Agent Providers</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Configure the backend for the AI Support Agent voice capabilities.</p>
                         
                         <div className="grid md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1">Voice Provider</label>
+                                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Voice Provider</label>
                                 <select 
-                                    className="w-full p-2 border rounded"
+                                    className={inputClass}
                                     value={settings.integrations.voiceProvider}
                                     onChange={e => updateIntegrationField('voiceProvider', e.target.value)}
                                 >
@@ -652,16 +653,16 @@ const AdminSettings: React.FC = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1">App ID</label>
+                                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">App ID</label>
                                 <input 
-                                    className="w-full p-2 border rounded"
+                                    className={inputClass}
                                     placeholder="123456789"
                                     value={settings.integrations.voiceAppId}
                                     onChange={e => updateIntegrationField('voiceAppId', e.target.value)}
                                 />
                             </div>
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-gray-700 mb-1">App Sign / Certificate</label>
+                                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">App Sign / Certificate</label>
                                 <PasswordInput 
                                     value={settings.integrations.voiceAppSign}
                                     onChange={v => updateIntegrationField('voiceAppSign', v)}
@@ -671,10 +672,10 @@ const AdminSettings: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mt-6">
-                        <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><Shield size={18}/> Identity Verification</h4>
+                    <div className="glass-panel p-6 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50 mt-6">
+                        <h4 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2"><Shield size={18}/> Identity Verification</h4>
                         <div className="max-w-md">
-                            <label className="block text-xs font-bold text-gray-700 mb-1">NIN Verification API Key</label>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">NIN Verification API Key</label>
                             <PasswordInput 
                                 value={settings.integrations.ninApiKey}
                                 onChange={v => updateIntegrationField('ninApiKey', v)}
@@ -688,21 +689,21 @@ const AdminSettings: React.FC = () => {
         case 'security':
             return (
                 <div className="space-y-6 animate-in fade-in">
-                    <h3 className="text-lg font-bold flex items-center gap-2"><Shield size={20}/> Firewall & Access Control</h3>
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-gray-900 dark:text-white"><Shield size={20}/> Firewall & Access Control</h3>
                     
-                    <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 mb-6">
-                        <h4 className="font-bold text-indigo-900 mb-2 flex items-center gap-2"><Link size={18}/> Staff Access Security</h4>
-                        <p className="text-sm text-indigo-700 mb-4">Configure security parameters for staff magic link generation.</p>
+                    <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-xl border border-indigo-100 dark:border-indigo-500/30 mb-6">
+                        <h4 className="font-bold text-indigo-900 dark:text-indigo-300 mb-2 flex items-center gap-2"><Link size={18}/> Staff Access Security</h4>
+                        <p className="text-sm text-indigo-700 dark:text-indigo-400 mb-4">Configure security parameters for staff magic link generation.</p>
                         <div className="max-w-xs">
-                            <label className="block text-xs font-bold text-indigo-800 mb-1">Magic Link Expiry (Hours)</label>
+                            <label className="block text-xs font-bold text-indigo-800 dark:text-indigo-300 mb-1">Magic Link Expiry (Hours)</label>
                             <input 
                                 type="number" 
                                 min="1"
-                                className="w-full p-2 border border-indigo-200 rounded text-sm"
+                                className="w-full p-2 border border-indigo-200 dark:border-indigo-500/50 rounded text-sm dark:bg-gray-900 dark:text-white"
                                 value={settings.security.magicLinkExpiryHours}
                                 onChange={e => setSettings({...settings, security: {...settings.security, magicLinkExpiryHours: parseInt(e.target.value)}})}
                             />
-                            <p className="text-[10px] text-indigo-600 mt-1">Default is 24 hours.</p>
+                            <p className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-1">Default is 24 hours.</p>
                         </div>
                     </div>
 
@@ -730,23 +731,23 @@ const AdminSettings: React.FC = () => {
         case 'ai':
             return (
                 <div className="space-y-6 animate-in fade-in">
-                    <h3 className="text-lg font-bold flex items-center gap-2"><Sparkles size={20}/> Artificial Intelligence</h3>
-                    <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-6 rounded-xl border border-emerald-100">
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-gray-900 dark:text-white"><Sparkles size={20}/> Artificial Intelligence</h3>
+                    <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10 p-6 rounded-xl border border-emerald-100 dark:border-emerald-500/30">
                         <div className="flex items-center justify-between mb-6">
                             <div>
-                                <h4 className="font-bold text-gray-900">AI Engine</h4>
-                                <p className="text-sm text-gray-600">Powers fraud detection, route optimization, and chat support.</p>
+                                <h4 className="font-bold text-gray-900 dark:text-white">AI Engine</h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Powers fraud detection, route optimization, and chat support.</p>
                             </div>
-                            <div onClick={() => updateField('ai', 'geminiEnabled', !settings.ai.geminiEnabled)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${settings.ai.geminiEnabled ? 'bg-emerald-500' : 'bg-gray-300'}`}>
+                            <div onClick={() => updateField('ai', 'geminiEnabled', !settings.ai.geminiEnabled)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${settings.ai.geminiEnabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
                                 <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform ${settings.ai.geminiEnabled ? 'translate-x-6' : ''}`}></div>
                             </div>
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1">Provider</label>
+                                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Provider</label>
                                 <select 
-                                    className="w-full p-2 border rounded"
+                                    className={inputClass}
                                     value={settings.ai.provider}
                                     onChange={e => updateField('ai', 'provider', e.target.value)}
                                 >
@@ -756,7 +757,7 @@ const AdminSettings: React.FC = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1">API Key</label>
+                                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">API Key</label>
                                 <PasswordInput 
                                     value={settings.ai.apiKey}
                                     onChange={v => updateField('ai', 'apiKey', v)}
@@ -768,21 +769,20 @@ const AdminSettings: React.FC = () => {
                 </div>
             );
 
-        // Payments (Default)
         default:
             return (
                 <div className="space-y-6 animate-in fade-in">
-                    <h3 className="text-lg font-bold flex items-center gap-2"><CreditCard size={20}/> Payment Gateways</h3>
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-gray-900 dark:text-white"><CreditCard size={20}/> Payment Gateways</h3>
                     <div className="grid md:grid-cols-2 gap-6">
-                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
+                        <div className="glass-panel p-6 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50 relative overflow-hidden">
                             <div className="flex justify-between items-center mb-4">
-                                <h4 className="font-bold text-gray-900">Paystack</h4>
-                                <div onClick={() => updateField('payments', 'paystackEnabled', !settings.payments.paystackEnabled)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${settings.payments.paystackEnabled ? 'bg-emerald-500' : 'bg-gray-300'}`}>
+                                <h4 className="font-bold text-gray-900 dark:text-white">Paystack</h4>
+                                <div onClick={() => updateField('payments', 'paystackEnabled', !settings.payments.paystackEnabled)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${settings.payments.paystackEnabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
                                     <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform ${settings.payments.paystackEnabled ? 'translate-x-6' : ''}`}></div>
                                 </div>
                             </div>
                             <div className="space-y-3">
-                                <label className="block text-xs font-bold text-gray-500">Secret Key</label>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">Secret Key</label>
                                 <PasswordInput 
                                     value={settings.payments.paystackSecretKey} 
                                     onChange={(v) => updateField('payments', 'paystackSecretKey', v)} 
@@ -791,15 +791,15 @@ const AdminSettings: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
+                        <div className="glass-panel p-6 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50 relative overflow-hidden">
                             <div className="flex justify-between items-center mb-4">
-                                <h4 className="font-bold text-gray-900">Flutterwave</h4>
-                                <div onClick={() => updateField('payments', 'flutterwaveEnabled', !settings.payments.flutterwaveEnabled)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${settings.payments.flutterwaveEnabled ? 'bg-emerald-500' : 'bg-gray-300'}`}>
+                                <h4 className="font-bold text-gray-900 dark:text-white">Flutterwave</h4>
+                                <div onClick={() => updateField('payments', 'flutterwaveEnabled', !settings.payments.flutterwaveEnabled)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${settings.payments.flutterwaveEnabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
                                     <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform ${settings.payments.flutterwaveEnabled ? 'translate-x-6' : ''}`}></div>
                                 </div>
                             </div>
                             <div className="space-y-3">
-                                <label className="block text-xs font-bold text-gray-500">Secret Key</label>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">Secret Key</label>
                                 <PasswordInput 
                                     value={settings.payments.flutterwaveSecretKey} 
                                     onChange={(v) => updateField('payments', 'flutterwaveSecretKey', v)} 
@@ -808,17 +808,17 @@ const AdminSettings: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm md:col-span-2">
+                        <div className="glass-panel p-6 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50 md:col-span-2">
                             <div className="flex justify-between items-center mb-4">
-                                <h4 className="font-bold text-gray-900">Manual Bank Transfer</h4>
-                                <div onClick={() => updateField('payments', 'manualEnabled', !settings.payments.manualEnabled)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${settings.payments.manualEnabled ? 'bg-emerald-500' : 'bg-gray-300'}`}>
+                                <h4 className="font-bold text-gray-900 dark:text-white">Manual Bank Transfer</h4>
+                                <div onClick={() => updateField('payments', 'manualEnabled', !settings.payments.manualEnabled)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${settings.payments.manualEnabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
                                     <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform ${settings.payments.manualEnabled ? 'translate-x-6' : ''}`}></div>
                                 </div>
                             </div>
                             <div className="space-y-3">
-                                <label className="block text-xs font-bold text-gray-500">Bank Account Instructions</label>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">Bank Account Instructions</label>
                                 <textarea 
-                                    className="w-full p-3 border rounded text-sm h-24"
+                                    className={inputClass + " h-24"}
                                     value={settings.payments.manualBankDetails}
                                     onChange={(e) => updateField('payments', 'manualBankDetails', e.target.value)}
                                     placeholder="e.g. GTBank - 0123456789 - NaijaMove Ltd"
@@ -834,9 +834,9 @@ const AdminSettings: React.FC = () => {
   return (
     <div className="flex gap-6 h-[calc(100vh-140px)]">
         {/* Sidebar */}
-        <div className="w-64 flex-shrink-0 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full flex flex-col">
-            <div className="p-4 border-b border-gray-100 bg-gray-50">
-                <h2 className="font-bold text-gray-700">System Configuration</h2>
+        <div className="w-64 flex-shrink-0 bg-white dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden h-full flex flex-col">
+            <div className="p-4 border-b border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5">
+                <h2 className="font-bold text-gray-700 dark:text-gray-200">System Configuration</h2>
             </div>
             <nav className="flex-1 overflow-y-auto p-2 space-y-1">
                 {[
@@ -853,20 +853,20 @@ const AdminSettings: React.FC = () => {
                     <button
                         key={item.id}
                         onClick={() => setActiveTab(item.id)}
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === item.id ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === item.id ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'}`}
                     >
                         <item.icon size={18} />
                         {item.label}
                     </button>
                 ))}
             </nav>
-            <div className="p-4 border-t border-gray-100">
+            <div className="p-4 border-t border-gray-100 dark:border-white/10">
                 <Button className="w-full" onClick={handleSave}><Save size={16} className="mr-2"/> Save Changes</Button>
             </div>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto pb-10">
+        <div className="flex-1 overflow-y-auto pb-10 custom-scrollbar">
             {renderTabContent()}
         </div>
     </div>

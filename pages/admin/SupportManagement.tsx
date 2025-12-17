@@ -11,15 +11,12 @@ const SupportManagement: React.FC = () => {
     const [tickets, setTickets] = useState<SupportTicket[]>([]);
     const [kb, setKb] = useState<KnowledgeBaseItem[]>([]);
     
-    // Ticket State
     const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
     const [reply, setReply] = useState('');
 
-    // KB State
     const [newKb, setNewKb] = useState<Partial<KnowledgeBaseItem>>({});
     const [isEditingKb, setIsEditingKb] = useState(false);
 
-    // Call State
     const [showCallModal, setShowCallModal] = useState(false);
 
     useEffect(() => {
@@ -36,7 +33,6 @@ const SupportManagement: React.FC = () => {
         await addTicketMessage(selectedTicket.id, 'admin-1', 'Super Admin', reply);
         setReply('');
         refresh();
-        // Optimistic update
         const updated = await getSupportTickets();
         setSelectedTicket(updated.find(t => t.id === selectedTicket.id) || null);
     };
@@ -58,17 +54,17 @@ const SupportManagement: React.FC = () => {
     return (
         <div className="space-y-6 h-[calc(100vh-140px)] flex flex-col">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Support Center</h1>
-                <div className="flex bg-gray-100 p-1 rounded-lg">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Support Center</h1>
+                <div className="flex bg-gray-100 dark:bg-white/10 p-1 rounded-lg">
                     <button 
                         onClick={() => setActiveTab('TICKETS')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'TICKETS' ? 'bg-white shadow text-emerald-700' : 'text-gray-600'}`}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'TICKETS' ? 'bg-white dark:bg-gray-800 shadow text-emerald-700 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-400'}`}
                     >
                         Tickets
                     </button>
                     <button 
                         onClick={() => setActiveTab('KB')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'KB' ? 'bg-white shadow text-emerald-700' : 'text-gray-600'}`}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'KB' ? 'bg-white dark:bg-gray-800 shadow text-emerald-700 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-400'}`}
                     >
                         Voice Agent Training
                     </button>
@@ -78,29 +74,29 @@ const SupportManagement: React.FC = () => {
             {activeTab === 'TICKETS' ? (
                 <div className="flex gap-6 flex-1 overflow-hidden">
                     {/* Ticket List */}
-                    <div className="w-1/3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-y-auto">
-                        <div className="p-4 border-b bg-gray-50 sticky top-0 z-10">
+                    <div className="w-1/3 bg-white dark:bg-gray-900/50 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-y-auto">
+                        <div className="p-4 border-b bg-gray-50 dark:bg-white/5 dark:border-white/10 sticky top-0 z-10">
                             <div className="relative">
                                 <Search className="absolute left-3 top-2.5 text-gray-400" size={16}/>
-                                <input className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm" placeholder="Search tickets..." />
+                                <input className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm dark:bg-gray-900 dark:border-white/10 dark:text-white" placeholder="Search tickets..." />
                             </div>
                         </div>
-                        <div className="divide-y">
+                        <div className="divide-y divide-gray-200 dark:divide-white/5">
                             {tickets.length === 0 && <div className="p-6 text-center text-gray-500">No tickets found.</div>}
                             {tickets.map(t => (
                                 <div 
                                     key={t.id} 
                                     onClick={() => setSelectedTicket(t)}
-                                    className={`p-4 cursor-pointer hover:bg-blue-50 transition-colors ${selectedTicket?.id === t.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''}`}
+                                    className={`p-4 cursor-pointer hover:bg-blue-50 dark:hover:bg-white/5 transition-colors ${selectedTicket?.id === t.id ? 'bg-blue-50 dark:bg-white/10 border-l-4 border-blue-500' : ''}`}
                                 >
                                     <div className="flex justify-between items-start mb-1">
-                                        <span className="font-bold text-gray-900 truncate">{t.userName}</span>
+                                        <span className="font-bold text-gray-900 dark:text-white truncate">{t.userName}</span>
                                         <span className="text-[10px] text-gray-400">{new Date(t.createdAt).toLocaleDateString()}</span>
                                     </div>
-                                    <p className="text-sm font-medium text-gray-800 truncate">{t.subject}</p>
+                                    <p className="text-sm font-medium text-gray-800 dark:text-gray-300 truncate">{t.subject}</p>
                                     <p className="text-xs text-gray-500 truncate">{t.messages[t.messages.length-1]?.content}</p>
                                     <div className="mt-2 flex gap-2">
-                                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${t.status === 'OPEN' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{t.status}</span>
+                                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${t.status === 'OPEN' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-400'}`}>{t.status}</span>
                                     </div>
                                 </div>
                             ))}
@@ -108,12 +104,12 @@ const SupportManagement: React.FC = () => {
                     </div>
 
                     {/* Chat Area */}
-                    <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+                    <div className="flex-1 bg-white dark:bg-gray-900/50 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 flex flex-col overflow-hidden">
                         {selectedTicket ? (
                             <>
-                                <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+                                <div className="p-4 border-b dark:border-white/10 flex justify-between items-center bg-gray-50 dark:bg-white/5">
                                     <div>
-                                        <h3 className="font-bold text-lg">{selectedTicket.subject}</h3>
+                                        <h3 className="font-bold text-lg dark:text-white">{selectedTicket.subject}</h3>
                                         <div className="flex items-center gap-2 text-xs text-gray-500">
                                             <span>ID: {selectedTicket.id}</span>
                                             <span>•</span>
@@ -127,10 +123,10 @@ const SupportManagement: React.FC = () => {
                                         <Button variant="outline" size="sm">Mark Resolved</Button>
                                     </div>
                                 </div>
-                                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
+                                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50 dark:bg-black/20">
                                     {selectedTicket.messages.map(msg => (
                                         <div key={msg.id} className={`flex ${msg.senderId === 'admin-1' ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-[80%] rounded-xl p-3 text-sm shadow-sm ${msg.senderId === 'admin-1' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border text-gray-800 rounded-bl-none'}`}>
+                                            <div className={`max-w-[80%] rounded-xl p-3 text-sm shadow-sm ${msg.senderId === 'admin-1' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-800 border dark:border-white/10 text-gray-800 dark:text-gray-200 rounded-bl-none'}`}>
                                                 <p>{msg.content}</p>
                                                 <span className={`text-[10px] block mt-1 opacity-70`}>
                                                     {new Date(msg.timestamp).toLocaleTimeString()} • {msg.senderName}
@@ -139,10 +135,10 @@ const SupportManagement: React.FC = () => {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="p-4 bg-white border-t">
+                                <div className="p-4 bg-white dark:bg-gray-900 border-t dark:border-white/10">
                                     <div className="flex gap-2">
                                         <input 
-                                            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                                            className="flex-1 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-sm dark:bg-gray-800 dark:text-white"
                                             placeholder="Type your reply..."
                                             value={reply}
                                             onChange={(e) => setReply(e.target.value)}
@@ -171,33 +167,33 @@ const SupportManagement: React.FC = () => {
                 // Knowledge Base Tab
                 <div className="flex gap-6 flex-1 overflow-hidden">
                     <div className="w-1/3 space-y-4">
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <div className="glass-panel p-6 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 dark:bg-gray-900/50">
+                            <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                 <Mic size={18} className="text-emerald-600"/> Train AI Voice Agent
                             </h3>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-1">User Question</label>
+                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">User Question</label>
                                     <input 
-                                        className="w-full p-2 border rounded text-sm" 
+                                        className="w-full p-2 border rounded text-sm dark:bg-gray-800 dark:border-white/10 dark:text-white" 
                                         placeholder="e.g. How to reset password?"
                                         value={newKb.question || ''}
                                         onChange={e => setNewKb({...newKb, question: e.target.value})}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-1">Voice Answer</label>
+                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Voice Answer</label>
                                     <textarea 
-                                        className="w-full p-2 border rounded text-sm h-32" 
+                                        className="w-full p-2 border rounded text-sm h-32 dark:bg-gray-800 dark:border-white/10 dark:text-white" 
                                         placeholder="The spoken answer the AI should give..."
                                         value={newKb.answer || ''}
                                         onChange={e => setNewKb({...newKb, answer: e.target.value})}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-1">Tags (comma separated)</label>
+                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Tags (comma separated)</label>
                                     <input 
-                                        className="w-full p-2 border rounded text-sm" 
+                                        className="w-full p-2 border rounded text-sm dark:bg-gray-800 dark:border-white/10 dark:text-white" 
                                         placeholder="account, security, password"
                                         onChange={e => setNewKb({...newKb, tags: e.target.value.split(',').map(t => t.trim())})}
                                     />
@@ -207,8 +203,8 @@ const SupportManagement: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                        <div className="p-4 border-b bg-gray-50 font-bold text-gray-700 flex justify-between items-center">
+                    <div className="flex-1 glass-panel rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden flex flex-col dark:bg-gray-900/50">
+                        <div className="p-4 border-b bg-gray-50 dark:bg-white/5 dark:border-white/10 font-bold text-gray-700 dark:text-white flex justify-between items-center">
                             <span>Knowledge Base ({kb.length})</span>
                             <span className="text-xs font-normal text-gray-500">Live Training Data</span>
                         </div>
@@ -217,29 +213,29 @@ const SupportManagement: React.FC = () => {
                                 <div className="text-center text-gray-400 py-10">No training data available. Add some questions.</div>
                             )}
                             {kb.map(item => (
-                                <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative group bg-white">
-                                    <h4 className="font-bold text-gray-900 mb-2 flex gap-2 pr-10">
+                                <div key={item.id} className="border border-gray-200 dark:border-white/10 rounded-lg p-4 hover:shadow-md transition-shadow relative group bg-white dark:bg-gray-800">
+                                    <h4 className="font-bold text-gray-900 dark:text-white mb-2 flex gap-2 pr-10">
                                         <span className="text-emerald-600">Q:</span> {item.question}
                                     </h4>
-                                    <p className="text-gray-600 text-sm pl-6 mb-3 pr-10">
+                                    <p className="text-gray-600 dark:text-gray-300 text-sm pl-6 mb-3 pr-10">
                                         <span className="font-bold text-gray-400">A:</span> {item.answer}
                                     </p>
                                     <div className="pl-6 flex gap-2">
                                         {item.tags.map(tag => (
-                                            <span key={tag} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] rounded-full">{tag}</span>
+                                            <span key={tag} className="px-2 py-0.5 bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 text-[10px] rounded-full">{tag}</span>
                                         ))}
                                     </div>
-                                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white pl-2">
+                                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-gray-800 pl-2">
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); speak(item.answer); }}
-                                            className="p-1.5 text-gray-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors"
+                                            className="p-1.5 text-gray-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/20 transition-colors"
                                             title="Preview Audio"
                                         >
                                             <Volume2 size={18} />
                                         </button>
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); deleteKBItem(item.id).then(refresh); }}
-                                            className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                                            className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/20 transition-colors"
                                             title="Delete Rule"
                                         >
                                             <Trash2 size={18} />

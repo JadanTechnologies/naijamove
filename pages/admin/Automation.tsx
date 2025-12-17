@@ -34,10 +34,10 @@ const Automation: React.FC = () => {
         <div className="space-y-6 animate-in fade-in">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Automation & Jobs</h1>
-                    <p className="text-sm text-gray-500">Manage recurring system tasks and background processes.</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Automation & Jobs</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Manage recurring system tasks and background processes.</p>
                 </div>
-                <div className="flex items-center gap-2 bg-gray-100 p-2 rounded-lg text-sm text-gray-600">
+                <div className="flex items-center gap-2 bg-gray-100 dark:bg-white/10 p-2 rounded-lg text-sm text-gray-600 dark:text-gray-300">
                     <Server size={16}/>
                     <span className="font-mono">Cron Daemon: Active</span>
                 </div>
@@ -45,14 +45,14 @@ const Automation: React.FC = () => {
 
             <div className="grid gap-4">
                 {jobs.map(job => (
-                    <div key={job.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
+                    <div key={job.id} className="glass-panel p-6 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50 shadow-sm flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className={`p-3 rounded-full ${job.status === 'RUNNING' ? 'bg-blue-100 text-blue-600 animate-spin' : job.enabled ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-400'}`}>
                                 {job.status === 'RUNNING' ? <RefreshCw size={24}/> : <Zap size={24}/>}
                             </div>
                             <div>
-                                <h3 className="font-bold text-gray-900">{job.name}</h3>
-                                <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                                <h3 className="font-bold text-gray-900 dark:text-white">{job.name}</h3>
+                                <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mt-1">
                                     <span className="flex items-center gap-1"><Clock size={14}/> {job.schedule}</span>
                                     <span>Next: {new Date(job.nextRun).toLocaleTimeString()}</span>
                                     {job.lastRun && <span>Last: {new Date(job.lastRun).toLocaleTimeString()}</span>}
@@ -67,7 +67,7 @@ const Automation: React.FC = () => {
                                 <>
                                     <button 
                                         onClick={() => handleToggle(job.id)}
-                                        className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${job.enabled ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}
+                                        className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${job.enabled ? 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/20 dark:text-red-400' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/20 dark:text-emerald-400'}`}
                                     >
                                         {job.enabled ? 'Disable' : 'Enable'}
                                     </button>
@@ -75,6 +75,7 @@ const Automation: React.FC = () => {
                                         onClick={() => handleRunNow(job.id)} 
                                         variant="outline" 
                                         disabled={!job.enabled || runningId !== null}
+                                        className="dark:border-white/20 dark:text-white dark:hover:bg-white/10"
                                     >
                                         <Play size={16} className="mr-2"/> Run Now
                                     </Button>

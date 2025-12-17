@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, UserRole } from './types';
 import { login } from './services/mockService';
 import { Layout } from './components/Layout';
@@ -17,6 +17,25 @@ const MainApp: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [staticPage, setStaticPage] = useState<string | null>(null);
   const { addToast } = useToast();
+  
+  // Theme Management
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+      // Check local storage or preference
+      const saved = localStorage.getItem('naijamove_theme');
+      return saved ? saved === 'dark' : true; // Default to dark
+  });
+
+  useEffect(() => {
+      if (isDarkMode) {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('naijamove_theme', 'dark');
+      } else {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('naijamove_theme', 'light');
+      }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
   const handleLogin = async (identifier: string, isToken = false) => {
     setLoading(true);
@@ -43,7 +62,13 @@ const MainApp: React.FC = () => {
   if (!user) {
     return (
         <>
-            <LandingPage onLogin={handleLogin} loading={loading} onOpenStatic={setStaticPage} />
+            <LandingPage 
+                onLogin={handleLogin} 
+                loading={loading} 
+                onOpenStatic={setStaticPage} 
+                isDarkMode={isDarkMode}
+                toggleTheme={toggleTheme}
+            />
             {staticPage && <StaticContent page={staticPage} onClose={() => setStaticPage(null)} />}
         </>
     );
