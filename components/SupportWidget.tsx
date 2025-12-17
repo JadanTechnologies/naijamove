@@ -4,7 +4,6 @@ import { User } from '../types';
 import { MessageSquare, X, Mic, Send, Headphones, Paperclip, Phone, Globe, MicOff, Signal } from 'lucide-react';
 import { createSupportTicket, queryAiAgent, speak } from '../services/mockService';
 import { VoiceCallModal } from './VoiceCallModal';
-// @ts-ignore
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 
 interface SupportWidgetProps {
