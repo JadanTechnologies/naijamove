@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, MessageSquare } from 'lucide-react';
+import { X, Send, MessageSquare, Mic, MicOff } from 'lucide-react';
 import { VoiceCallModal } from './VoiceCallModal';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { User } from '../types';
 
 interface SupportWidgetProps {
@@ -86,6 +87,16 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ user }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isThinking]);
 
+  useEffect(() => {
+    if (isListening) {
+      // Mock voice recognition - in real implementation, use Web Speech API or Google AI
+      setTimeout(() => {
+        setMessages(prev => [...prev, { text: "Hello! I'm your AI assistant. How can I help you with your ride or delivery today?", isBot: true }]);
+        setIsListening(false);
+      }, 2000);
+    }
+  }, [isListening]);
+
   const handleSend = () => {
     if (!input.trim()) return;
 
@@ -136,7 +147,14 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ user }) => {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSend()}
+              placeholder="Type your message..."
             />
+            <button
+              onClick={() => setIsListening(!isListening)}
+              className={`px-3 py-2 rounded ${isListening ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-600'}`}
+            >
+              {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+            </button>
             <button
               onClick={handleSend}
               className="bg-emerald-600 text-white px-3 rounded"
