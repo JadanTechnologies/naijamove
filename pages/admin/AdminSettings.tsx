@@ -217,12 +217,11 @@ const AdminSettings: React.FC = () => {
       if(!settings) return;
       const list = settings.security[listKey];
       
+      // Explicitly ensure list is an array and cast it to string[] to satisfy TypeScript
       if (!Array.isArray(list)) return;
-
-      // Explicitly cast list to string[] to satisfy TypeScript compiler
       const listArray = list as string[];
+
       let newList = [...listArray];
-      
       if(action === 'ADD' && !listArray.includes(value)) newList.push(value);
       if(action === 'REMOVE') newList = listArray.filter(i => i !== value);
       

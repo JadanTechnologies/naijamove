@@ -336,8 +336,11 @@ const UserManagement: React.FC = () => {
                         {/* Location Map */}
                         <div className="h-48 rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 relative">
                              {selectedUser.location ? (
+                                // @ts-ignore
                                 <MapContainer center={[selectedUser.location.lat, selectedUser.location.lng]} zoom={13} style={{height: '100%', width: '100%'}}>
+                                    {/* @ts-ignore */}
                                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                    {/* @ts-ignore */}
                                     <Marker position={[selectedUser.location.lat, selectedUser.location.lng]} icon={icon} />
                                 </MapContainer>
                              ) : (
