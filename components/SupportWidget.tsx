@@ -1,20 +1,87 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, MessageSquare } from 'lucide-react';
 import { VoiceCallModal } from './VoiceCallModal';
+// @ts-ignore
+import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 
-interface Message {
-  text: string;
-  isBot: boolean;
+interface SupportWidgetProps {
+    user: User;
 }
 
-const SupportWidget = (): JSX.Element => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [isThinking, setIsThinking] = useState(false);
-  const [showCall, setShowCall] = useState(false);
+// Helpers for Audio (from system prompt guidelines)
+function createBlob(data: Float32Array): { data: string; mimeType: string } {
+  const l = data.length;
+  const int16 = new Int16Array(l);
+  for (let i = 0; i < l; i++) {
+    int16[i] = data[i] * 32768;
+  }
+  return {
+    data: encode(new Uint8Array(int16.buffer)),
+    mimeType: 'audio/pcm;rate=16000',
+  };
+}
 
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+function encode(bytes: Uint8Array) {
+  let binary = '';
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+function decode(base64: string) {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+async function decodeAudioData(
+  data: Uint8Array,
+  ctx: AudioContext,
+  sampleRate: number,
+  numChannels: number,
+): Promise<AudioBuffer> {
+  const dataInt16 = new Int16Array(data.buffer);
+  const frameCount = dataInt16.length / numChannels;
+  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+
+  for (let channel = 0; channel < numChannels; channel++) {
+    const channelData = buffer.getChannelData(channel);
+    for (let i = 0; i < frameCount; i++) {
+      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+    }
+  }
+  return buffer;
+}
+
+export const SupportWidget: React.FC<SupportWidgetProps> = ({ user }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [messages, setMessages] = useState<{text: string, isBot: boolean}[]>([]);
+    const [input, setInput] = useState('');
+    const [isListening, setIsListening] = useState(false);
+    const [isThinking, setIsThinking] = useState(false);
+    const [showCall, setShowCall] = useState(false);
+    const [language, setLanguage] = useState<'en' | 'ha'>('en');
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [hasGreeted, setHasGreeted] = useState(false);
+
+    // Live API State
+    const [isLiveConnected, setIsLiveConnected] = useState(false);
+    const [liveStatus, setLiveStatus] = useState<'DISCONNECTED' | 'CONNECTING' | 'CONNECTED'>('DISCONNECTED');
+    const [liveMuted, setLiveMuted] = useState(false);
+    
+    // Live API Refs
+    const sessionPromiseRef = useRef<Promise<any> | null>(null);
+    const inputAudioContextRef = useRef<AudioContext | null>(null);
+    const outputAudioContextRef = useRef<AudioContext | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+    const nextStartTimeRef = useRef(0);
+    const sourcesRef = useRef(new Set<AudioBufferSourceNode>());
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
