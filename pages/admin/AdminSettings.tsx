@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { getSystemSettings, updateSystemSettings, getTemplates, saveTemplate, deleteTemplate, getAnnouncements, createAnnouncement, speak } from '../../services/mockService';
 import { SystemSettings, TrackerConfig, NotificationTemplate, Announcement, VehicleType } from '../../types';
@@ -215,15 +214,16 @@ const AdminSettings: React.FC = () => {
 
   const updateSecurityList = (listKey: keyof SystemSettings['security'], action: 'ADD' | 'REMOVE', value: string) => {
       if(!settings) return;
-      const list = settings.security[listKey];
+      const currentVal = settings.security[listKey];
       
-      // Explicitly ensure list is an array and cast it to string[] to satisfy TypeScript
-      if (!Array.isArray(list)) return;
-      const listArray = list as string[];
-
-      let newList = [...listArray];
-      if(action === 'ADD' && !listArray.includes(value)) newList.push(value);
-      if(action === 'REMOVE') newList = listArray.filter(i => i !== value);
+      // Strict Type Guard: Only proceed if it is an array
+      if (!Array.isArray(currentVal)) return;
+      
+      const list = currentVal as string[];
+      let newList = [...list];
+      
+      if(action === 'ADD' && !list.includes(value)) newList.push(value);
+      if(action === 'REMOVE') newList = list.filter(i => i !== value);
       
       setSettings({
           ...settings,
@@ -837,44 +837,42 @@ const AdminSettings: React.FC = () => {
   };
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-140px)]">
-        {/* Sidebar */}
-        <div className="w-64 flex-shrink-0 bg-white dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden h-full flex flex-col">
-            <div className="p-4 border-b border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5">
-                <h2 className="font-bold text-gray-700 dark:text-gray-200">System Configuration</h2>
-            </div>
-            <nav className="flex-1 overflow-y-auto p-2 space-y-1">
-                {[
-                    { id: 'branding', icon: LayoutTemplate, label: 'Branding & CMS' },
-                    { id: 'mobile', icon: Smartphone, label: 'Mobile Apps' },
-                    { id: 'pricing', icon: Coins, label: 'Fares & Pricing' },
-                    { id: 'payments', icon: CreditCard, label: 'Payment Gateways' },
-                    { id: 'trackers', icon: Router, label: 'GPS Integrations' },
-                    { id: 'notifications', icon: Bell, label: 'Notifications' },
-                    { id: 'security', icon: Shield, label: 'Security & Access' },
-                    { id: 'ai', icon: Sparkles, label: 'AI Settings' },
-                    { id: 'integrations', icon: Plug, label: 'Integrations' },
-                ].map((item) => (
-                    <button
-                        key={item.id}
-                        onClick={() => setActiveTab(item.id)}
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === item.id ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'}`}
-                    >
-                        <item.icon size={18} />
-                        {item.label}
-                    </button>
-                ))}
-            </nav>
-            <div className="p-4 border-t border-gray-100 dark:border-white/10">
-                <Button className="w-full" onClick={handleSave}><Save size={16} className="mr-2"/> Save Changes</Button>
-            </div>
-        </div>
+      <div className="max-w-4xl mx-auto pb-10">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 no-scrollbar mask-fade-right">
+              {[
+                  { id: 'branding', label: 'Branding', icon: LayoutTemplate },
+                  { id: 'mobile', label: 'Mobile App', icon: Smartphone },
+                  { id: 'pricing', label: 'Pricing', icon: Coins },
+                  { id: 'trackers', label: 'Trackers', icon: Router },
+                  { id: 'notifications', label: 'Notifications', icon: Bell },
+                  { id: 'integrations', label: 'Integrations', icon: Plug },
+                  { id: 'security', label: 'Security', icon: Shield },
+                  { id: 'ai', label: 'AI', icon: Sparkles },
+                  { id: 'payments', label: 'Payments', icon: CreditCard },
+              ].map((tab) => (
+                  <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-all ${
+                          activeTab === tab.id 
+                          ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30' 
+                          : 'bg-white dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/10 border border-gray-200 dark:border-white/5'
+                      }`}
+                  >
+                      <tab.icon size={16} />
+                      {tab.label}
+                  </button>
+              ))}
+          </div>
+          
+          {renderTabContent()}
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto pb-10 custom-scrollbar">
-            {renderTabContent()}
-        </div>
-    </div>
+          <div className="fixed bottom-6 right-6 z-30">
+              <Button size="lg" onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700 shadow-xl shadow-emerald-600/40 rounded-full px-8 py-4 h-auto text-lg font-bold border-2 border-emerald-400/50">
+                  <Save size={24} className="mr-2" /> Save Changes
+              </Button>
+          </div>
+      </div>
   );
 };
 
