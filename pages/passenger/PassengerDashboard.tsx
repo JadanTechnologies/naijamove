@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, VehicleType, RideRequest, RideStatus } from '../../types';
-import { calculateFare, createRide, getActiveRides, updateRideStatus } from '../../services/mockService';
+import { User, VehicleType, RideRequest, RideStatus, PaymentTransaction } from '../../types';
+import { calculateFare, createRide, getActiveRides, updateRideStatus, getUserTransactions, simulateDeposit } from '../../services/mockService';
 import { Button } from '../../components/ui/Button';
 import { CURRENCY_SYMBOL } from '../../constants';
 import MapMock from '../../components/MapMock';
-import { Bike, Car, Box, Truck, MapPin, Phone, MessageSquare, History, Clock, Bell, X, Star, CheckCircle, Navigation } from 'lucide-react';
+import { Bike, Car, Box, Truck, MapPin, Phone, MessageSquare, History, Clock, Bell, X, Star, CheckCircle, Navigation, Wallet, Copy, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { ChatWindow } from '../../components/ChatWindow';
 import { VoiceCallModal } from '../../components/VoiceCallModal';
 import { useToast } from '../../components/ui/Toast';
@@ -15,7 +15,7 @@ interface PassengerDashboardProps {
 }
 
 const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
-  const [view, setView] = useState<'BOOKING' | 'HISTORY'>('BOOKING');
+  const [view, setView] = useState<'BOOKING' | 'HISTORY' | 'WALLET'>('BOOKING');
   const [mode, setMode] = useState<'RIDE' | 'LOGISTICS'>('RIDE');
   const [pickup, setPickup] = useState('Sokoto Central Market');
   const [dropoff, setDropoff] = useState('');
@@ -25,6 +25,11 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
   const [activeRide, setActiveRide] = useState<RideRequest | null>(null);
   const [history, setHistory] = useState<RideRequest[]>([]);
   const { addToast } = useToast();
+  
+  // Wallet State
+  const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
+  const [isDepositing, setIsDepositing] = useState(false);
+  const [balance, setBalance] = useState(user.walletBalance);
   
   // Modals
   const [showChat, setShowChat] = useState(false);
@@ -62,6 +67,16 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
         setHistory(past);
     });
   }, [user.id, user.role, activeRide]); // Re-run when activeRide changes locally to sync
+
+  // Load Transactions for Wallet View
+  useEffect(() => {
+      if (view === 'WALLET') {
+          getUserTransactions(user.id).then(setTransactions);
+      }
+  }, [view, user.id, balance]);
+
+  // Sync initial balance
+  useEffect(() => setBalance(user.walletBalance), [user.walletBalance]);
 
   // Simulate distance calculation when dropoff changes
   useEffect(() => {
@@ -110,6 +125,24 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
       }
   };
 
+  const handleSimulateDeposit = async () => {
+      setIsDepositing(true);
+      try {
+          await simulateDeposit(user.id, 5000);
+          setBalance(prev => prev + 5000);
+          addToast("Wallet funded with ₦5,000!", 'success');
+      } catch (e) {
+          addToast("Deposit failed", 'error');
+      } finally {
+          setIsDepositing(false);
+      }
+  };
+
+  const copyToClipboard = (text: string) => {
+      navigator.clipboard.writeText(text);
+      addToast("Copied to clipboard", 'success');
+  };
+
   const handleProgressUpdate = (progress: number) => {
       setRideProgress(progress);
 
@@ -117,12 +150,6 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
       if (progress > 0.9 && !hasNotifiedArrival && activeRide?.status === RideStatus.IN_PROGRESS) {
           setNotification(`Your driver is approaching ${activeRide.dropoffAddress}. Please get ready.`);
           setHasNotifiedArrival(true);
-      }
-      
-      // Auto-complete simulation for demo purposes if we reach 100%
-      if (progress >= 1 && activeRide?.status === RideStatus.IN_PROGRESS) {
-          // In real app, driver finishes. Here we can simulate it or wait for driver action.
-          // For now, let driver finish it in DriverDashboard or user waits.
       }
   };
 
@@ -385,7 +412,7 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
                 onClick={() => setView('BOOKING')}
                 className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${view === 'BOOKING' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
              >
-                 Book Ride
+                 Book
              </button>
              <button 
                 onClick={() => setView('HISTORY')}
@@ -393,9 +420,76 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
              >
                  History
              </button>
+             <button 
+                onClick={() => setView('WALLET')}
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${view === 'WALLET' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
+             >
+                 Wallet
+             </button>
         </div>
 
-        {view === 'BOOKING' ? (
+        {view === 'WALLET' ? (
+            <div className="space-y-6 animate-in fade-in">
+                {/* Balance Card */}
+                <div className="bg-emerald-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                    <div className="absolute -right-6 -top-6 text-white/10 rotate-12">
+                        <Wallet size={100} />
+                    </div>
+                    <p className="text-emerald-100 font-medium mb-1">Available Balance</p>
+                    <h2 className="text-3xl font-bold mb-4">{CURRENCY_SYMBOL}{balance.toLocaleString()}</h2>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 text-xs border border-white/20">
+                        <p className="font-bold opacity-80 mb-2">Fund via Bank Transfer:</p>
+                        <p className="text-[10px] opacity-70 mb-1">Transfer to this dedicated account number:</p>
+                        {user.bankAccount ? (
+                            <div className="flex flex-col gap-1">
+                                <span className="font-bold text-sm">Wema Bank</span>
+                                <div className="flex items-center justify-between bg-black/20 p-2 rounded">
+                                    <span className="font-mono text-lg tracking-widest">{user.bankAccount.accountNumber}</span>
+                                    <button onClick={() => copyToClipboard(user.bankAccount!.accountNumber)} className="hover:text-emerald-200"><Copy size={14}/></button>
+                                </div>
+                                <span className="text-[10px] opacity-70">{user.bankAccount.accountName}</span>
+                            </div>
+                        ) : (
+                            <p className="text-red-300">Account not generated.</p>
+                        )}
+                    </div>
+                    <Button 
+                        onClick={handleSimulateDeposit}
+                        isLoading={isDepositing}
+                        className="w-full mt-4 bg-white text-emerald-700 hover:bg-emerald-50 border-none font-bold"
+                    >
+                        Simulate Deposit (+₦5,000)
+                    </Button>
+                </div>
+
+                {/* Transactions */}
+                <div>
+                    <h3 className="font-bold text-gray-800 mb-3">Recent Transactions</h3>
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                        {transactions.length === 0 ? (
+                            <div className="text-center py-8 text-gray-400 text-sm">No transactions yet.</div>
+                        ) : (
+                            transactions.map(txn => (
+                                <div key={txn.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-full ${txn.type === 'DEPOSIT' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                            {txn.type === 'DEPOSIT' ? <ArrowDownLeft size={16}/> : <ArrowUpRight size={16}/>}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-800">{txn.type === 'DEPOSIT' ? 'Wallet Funding' : 'Ride Payment'}</p>
+                                            <p className="text-[10px] text-gray-500">{new Date(txn.date).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                    <span className={`font-bold text-sm ${txn.type === 'DEPOSIT' ? 'text-emerald-600' : 'text-gray-800'}`}>
+                                        {txn.type === 'DEPOSIT' ? '+' : '-'}{CURRENCY_SYMBOL}{txn.amount.toLocaleString()}
+                                    </span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
+        ) : view === 'BOOKING' ? (
             <>
                 {/* Toggle Mode */}
                 <div className="flex gap-4 mb-6">

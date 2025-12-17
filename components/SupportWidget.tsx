@@ -140,6 +140,16 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ user }) => {
         try {
             setLiveStatus('CONNECTING');
             
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (err) {
+                console.error("Microphone access denied:", err);
+                alert("Microphone permission is required for the Voice Agent. Please allow access in your browser settings.");
+                setLiveStatus('DISCONNECTED');
+                return;
+            }
+            
             // Initialize Audio Contexts
             const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
             const inputCtx = new AudioContextClass({ sampleRate: 16000 });
@@ -148,7 +158,6 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ user }) => {
             outputAudioContextRef.current = outputCtx;
             nextStartTimeRef.current = 0;
 
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             streamRef.current = stream;
 
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });

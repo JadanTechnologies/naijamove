@@ -798,6 +798,34 @@ export const getUserTransactions = async (userId: string) => {
     return (await getTransactions()).filter(t => t.passengerId === userId || t.driverId === userId);
 }
 
+// NEW: Simulate Deposit for Passengers
+export const simulateDeposit = async (userId: string, amount: number) => {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const userIdx = USERS.findIndex(u => u.id === userId);
+    if(userIdx === -1) throw new Error("User not found");
+
+    USERS[userIdx].walletBalance += amount;
+    
+    const transaction: PaymentTransaction = {
+        id: `txn-dep-${Date.now()}`,
+        type: 'DEPOSIT',
+        passengerId: userId,
+        passengerName: USERS[userIdx].name,
+        amount: amount,
+        channel: 'TRANSFER',
+        status: 'SUCCESS',
+        date: new Date().toISOString(),
+        reference: `DEP-${Math.random().toString(36).substring(7).toUpperCase()}`,
+        bankDetails: 'Simulated Transfer'
+    };
+    
+    TRANSACTIONS = [transaction, ...TRANSACTIONS];
+    save(STORAGE_KEYS.USERS, USERS);
+    save(STORAGE_KEYS.TRANSACTIONS, TRANSACTIONS);
+    logActivity(userId, 'DEPOSIT', `Simulated deposit of ${amount}`);
+    return transaction;
+};
+
 // --- Notifications ---
 
 export const createNotification = (title: string, message: string) => {
