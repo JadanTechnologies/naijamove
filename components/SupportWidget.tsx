@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, MessageSquare } from 'lucide-react';
 import { VoiceCallModal } from './VoiceCallModal';
-// @ts-ignore
-import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
+import { User } from '../types';
 
 interface SupportWidgetProps {
     user: User;
