@@ -244,7 +244,7 @@ const DEFAULT_USERS: User[] = [
     location: { lat: 13.0060, lng: 5.2470 },
     permissions: ['SUPPORT', 'VIEW_FINANCE']
   },
-  // Default Driver for Landing Page Login
+  // Default Driver for Landing Page Login (Okada)
   {
     id: 'driver-default',
     name: 'Musa Ibrahim',
@@ -265,6 +265,61 @@ const DEFAULT_USERS: User[] = [
     bankAccount: generateVirtualAccount("Musa Ibrahim"),
     location: { lat: 13.0100, lng: 5.2500 },
     isTotpSetup: true
+  },
+  // Additional Drivers for Manual Assignment Testing
+  {
+    id: 'driver-2',
+    name: 'Sani Abacha',
+    email: 'sani@naijamove.ng',
+    role: UserRole.DRIVER,
+    vehicleType: VehicleType.KEKE,
+    licensePlate: 'SOK-KEK-01',
+    walletBalance: 5000,
+    rating: 4.5,
+    totalTrips: 890,
+    isOnline: true,
+    status: 'ACTIVE',
+    vehicleCapacityKg: 400,
+    currentLoadKg: 0,
+    loadStatus: 'EMPTY',
+    avatar: 'https://ui-avatars.com/api/?name=Sani+Abacha&background=3b82f6&color=fff',
+    location: { lat: 13.0050, lng: 5.2480 }
+  },
+  {
+    id: 'driver-3',
+    name: 'Dangote Logistics',
+    email: 'truck@dangote.com',
+    role: UserRole.DRIVER,
+    vehicleType: VehicleType.TRUCK,
+    licensePlate: 'LAG-TRK-99',
+    walletBalance: 500000,
+    rating: 5.0,
+    totalTrips: 150,
+    isOnline: true,
+    status: 'ACTIVE',
+    vehicleCapacityKg: 3000,
+    currentLoadKg: 0,
+    loadStatus: 'EMPTY',
+    avatar: 'https://ui-avatars.com/api/?name=Dangote&background=8b5cf6&color=fff',
+    location: { lat: 13.0200, lng: 5.2300 }
+  },
+  {
+    id: 'driver-4',
+    name: 'Chinedu Okeke',
+    email: 'chinedu@naijamove.ng',
+    role: UserRole.DRIVER,
+    vehicleType: VehicleType.MINIBUS,
+    licensePlate: 'ABJ-BUS-44',
+    walletBalance: 22000,
+    rating: 4.9,
+    totalTrips: 2100,
+    isOnline: true,
+    status: 'ACTIVE',
+    vehicleCapacityKg: 1000,
+    currentLoadKg: 0,
+    loadStatus: 'EMPTY',
+    avatar: 'https://ui-avatars.com/api/?name=Chinedu+Okeke&background=f43f5e&color=fff',
+    location: { lat: 13.0120, lng: 5.2400 }
   },
   // Default Passenger for Landing Page Login
   {
@@ -341,7 +396,12 @@ let NOTIFICATIONS = load<NotificationItem[]>(STORAGE_KEYS.NOTIFICATIONS, []);
 
 export const speak = (text: string) => {
   if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel(); // Stop any current speech
     const utterance = new SpeechSynthesisUtterance(text);
+    // Try to find a suitable voice, ideally standard English or one that sounds neutral
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find(v => v.lang.includes('en') && v.name.includes('Google'));
+    if(preferredVoice) utterance.voice = preferredVoice;
     window.speechSynthesis.speak(utterance);
   }
 };
@@ -830,13 +890,55 @@ export const saveKBItem = async (item: KnowledgeBaseItem) => {
     save(STORAGE_KEYS.KB, KB);
 };
 export const deleteKBItem = async (id: string) => { KB = KB.filter(k => k.id !== id); save(STORAGE_KEYS.KB, KB); };
-export const queryAiAgent = async (question: string): Promise<{answer?: string, escalate?: boolean}> => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
+
+// Updated AI Agent to support Roles and Hausa
+export const queryAiAgent = async (question: string, role: string = 'PASSENGER', lang: 'en' | 'ha' = 'en'): Promise<{answer: string, escalate?: boolean}> => {
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate thinking
     const qLower = question.toLowerCase();
+
+    // Hausa Responses
+    const hausa = {
+        greeting: "Sannu! Yaya zan taimake ka?",
+        escalate: "Ina hada ka da wakili yanzu. Don Allah jira.",
+        driverNav: "Kada ka damu. Ina duba taswirar. Don Allah juya dama a gaba.",
+        passengerHelp: "Zan taimake ka da wannan. Bari in duba...",
+        default: "Ban gane ba sosai. Za ku iya maimaitawa?"
+    };
+
+    const english = {
+        greeting: "Hello! How can I help you today?",
+        escalate: "I am connecting you with an available human agent shortly. Please hold on.",
+        driverNav: "Don't worry, I'm checking the route. Please proceed to the highlighted route on your map.",
+        passengerHelp: "I can help with that. Let me check the details for you.",
+        default: "I didn't quite catch that. Could you rephrase?"
+    };
+
+    const responses = lang === 'ha' ? hausa : english;
+
+    // Greeting Keyword (Mock)
+    if (qLower.includes('hello') || qLower.includes('hi') || qLower.includes('sannu')) {
+        return { answer: responses.greeting };
+    }
+
+    // Escalation
+    if (qLower.includes('human') || qLower.includes('agent') || qLower.includes('support') || qLower.includes('mutum') || qLower.includes('wakili')) {
+        return { answer: responses.escalate, escalate: true };
+    }
+
+    // Driver Specific
+    if (role === 'DRIVER') {
+        if (qLower.includes('lost') || qLower.includes('way') || qLower.includes('route') || qLower.includes('hanya') || qLower.includes('missed')) {
+            return { answer: responses.driverNav };
+        }
+    }
+
+    // Knowledge Base Lookup (Currently English only KB for simplicity in mock)
     const match = KB.find(k => qLower.includes(k.question.toLowerCase()) || k.tags.some(t => qLower.includes(t)));
-    if (match) return { answer: match.answer };
-    return { escalate: true };
+    if (match) return { answer: match.answer }; 
+
+    return { answer: responses.default };
 };
+
 export const getSystemHealth = async (): Promise<SystemHealth> => {
     await new Promise(resolve => setTimeout(resolve, 300));
     return {
