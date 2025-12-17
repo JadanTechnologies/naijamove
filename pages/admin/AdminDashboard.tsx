@@ -1,13 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { getDashboardStats, getActiveRides, getSystemHealth, getTransactions, getOnlineDrivers, manualAssignDriver } from '../../services/mockService';
+import { getDashboardStats, getActiveRides, getSystemHealth, getTransactions, getOnlineDrivers, manualAssignDriver, approveTransaction, generateReport } from '../../services/mockService';
 import { CURRENCY_SYMBOL } from '../../constants';
 import MapMock from '../../components/MapMock';
 import { 
   Users, TrendingUp, AlertTriangle, ShieldCheck, Truck, CreditCard, 
   Download, Search, Car, Activity, Server, Database, Radio, 
-  CheckCircle, AlertCircle, XCircle, Cpu, RefreshCw, Briefcase, Map, Phone, Wallet, User as UserIcon
+  CheckCircle, AlertCircle, XCircle, Cpu, RefreshCw, Briefcase, Map, Phone, Wallet, User as UserIcon, FileText, Check, X
 } from 'lucide-react';
 import AdminSettings from './AdminSettings';
 import UserManagement from './UserManagement';
@@ -26,7 +26,7 @@ interface AdminDashboardProps {
 const StatusDot = ({ status }: { status: string }) => {
     let color = 'bg-gray-300';
     if (['OPTIMAL', 'OPERATIONAL', 'CONNECTED', 'UP', 'SUCCESS', 'ACTIVE', 'ACCEPTED', 'IN_PROGRESS', 'IDLE'].includes(status)) color = 'bg-emerald-500';
-    else if (['DEGRADED', 'ISSUES', 'PENDING', 'RUNNING'].includes(status)) color = 'bg-yellow-500';
+    else if (['DEGRADED', 'ISSUES', 'PENDING', 'RUNNING', 'PENDING_APPROVAL'].includes(status)) color = 'bg-yellow-500';
     else if (['DOWN', 'DISCONNECTED', 'FAILED', 'BANNED', 'CANCELLED', 'SUSPENDED'].includes(status)) color = 'bg-red-500';
 
     return <span className={`w-3 h-3 rounded-full ${color} inline-block`}></span>;
@@ -54,6 +54,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   // Payment View State
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [callRecipient, setCallRecipient] = useState<{name: string, role: string} | null>(null);
+  const [paymentActionLoading, setPaymentActionLoading] = useState<string | null>(null);
 
   // Manual Assign State
   const [assignModalOpen, setAssignModalOpen] = useState(false);
@@ -61,9 +62,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   const [availableDrivers, setAvailableDrivers] = useState<User[]>([]);
   const [assigning, setAssigning] = useState(false);
 
+  // Reports State
+  const [generatingReport, setGeneratingReport] = useState<string | null>(null);
+
   useEffect(() => {
     loadData();
-  }, [view]); // Reload when view changes to refresh lists
+  }, [view]);
 
   const loadData = async () => {
         try {
@@ -80,7 +84,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
         }
   };
 
-  // Poll health data when in health view
   useEffect(() => {
       let interval: any;
       if (view === 'health') {
@@ -93,7 +96,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
       };
   }, [view]);
 
-  // Load transactions when in finance view
   useEffect(() => {
       if (view === 'finance') {
           getTransactions().then(setTransactions);
@@ -103,7 +105,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   const openAssignModal = async (ride: RideRequest) => {
       setSelectedRideForAssign(ride);
       const drivers = await getOnlineDrivers();
-      // Filter drivers matching vehicle type if possible, or show all
       setAvailableDrivers(drivers.filter(d => d.vehicleType === ride.vehicleType));
       setAssignModalOpen(true);
   };
@@ -115,11 +116,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
           await manualAssignDriver(selectedRideForAssign.id, driverId);
           addToast("Driver assigned successfully", 'success');
           setAssignModalOpen(false);
-          loadData(); // Refresh list
+          loadData(); 
       } catch (e: any) {
           addToast(e.message, 'error');
       } finally {
           setAssigning(false);
+      }
+  };
+
+  const handlePaymentApproval = async (txnId: string, approved: boolean) => {
+      setPaymentActionLoading(txnId);
+      try {
+          await approveTransaction(txnId, 'admin-1', approved);
+          addToast(approved ? "Transaction Approved" : "Transaction Rejected", approved ? 'success' : 'info');
+          setTransactions(await getTransactions()); // Refresh
+      } catch (e: any) {
+          addToast(e.message, 'error');
+      } finally {
+          setPaymentActionLoading(null);
+      }
+  };
+
+  const handleGenerateReport = async (type: 'FINANCE' | 'GROWTH' | 'TRIPS') => {
+      setGeneratingReport(type);
+      try {
+          const result = await generateReport(type, 'LAST_30_DAYS');
+          addToast(`Report Generated: ${type}`, 'success');
+          // Mock download
+          window.open(result.url, '_blank');
+      } catch (e: any) {
+          addToast("Report generation failed", 'error');
+      } finally {
+          setGeneratingReport(null);
       }
   };
 
@@ -138,6 +166,59 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   if (view === 'support') return <SupportManagement />;
   if (view === 'automation') return <Automation />;
   
+  if (view === 'reports') {
+      return (
+          <div className="space-y-6 animate-in fade-in">
+              <h1 className="text-2xl font-bold text-gray-900">System Reports</h1>
+              <p className="text-gray-500">Generate comprehensive reports for audits and analysis.</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Financial Report */}
+                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-64">
+                      <div>
+                          <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-4">
+                              <CreditCard size={24} />
+                          </div>
+                          <h3 className="font-bold text-lg text-gray-900">Financial Statement</h3>
+                          <p className="text-sm text-gray-500 mt-2">Revenue, payouts, commissions, and manual transaction logs.</p>
+                      </div>
+                      <Button onClick={() => handleGenerateReport('FINANCE')} isLoading={generatingReport === 'FINANCE'} className="w-full">
+                          <Download size={18} className="mr-2"/> Download PDF
+                      </Button>
+                  </div>
+
+                  {/* Growth Report */}
+                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-64">
+                      <div>
+                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4">
+                              <TrendingUp size={24} />
+                          </div>
+                          <h3 className="font-bold text-lg text-gray-900">User Growth</h3>
+                          <p className="text-sm text-gray-500 mt-2">New signups, active users, driver retention rates, and churn analysis.</p>
+                      </div>
+                      <Button onClick={() => handleGenerateReport('GROWTH')} isLoading={generatingReport === 'GROWTH'} className="w-full">
+                          <Download size={18} className="mr-2"/> Download CSV
+                      </Button>
+                  </div>
+
+                  {/* Operational Report */}
+                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-64">
+                      <div>
+                          <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 mb-4">
+                              <Map size={24} />
+                          </div>
+                          <h3 className="font-bold text-lg text-gray-900">Trip & Logistics</h3>
+                          <p className="text-sm text-gray-500 mt-2">Completed trips, cancellation reasons, heatmaps, and logistics volume.</p>
+                      </div>
+                      <Button onClick={() => handleGenerateReport('TRIPS')} isLoading={generatingReport === 'TRIPS'} className="w-full">
+                          <Download size={18} className="mr-2"/> Download PDF
+                      </Button>
+                  </div>
+              </div>
+          </div>
+      );
+  }
+
   // Logistics View
   if (view === 'logistics') {
       const logisticsRides = allRides.filter(r => r.type === 'LOGISTICS');
@@ -151,9 +232,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                     </button>
                 </div>
               </div>
-              
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                {/* ... (Search bar same as before) ... */}
                 <table className="w-full text-left border-collapse">
                     <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-semibold">
                         <tr>
@@ -193,8 +272,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                     </tbody>
                 </table>
               </div>
-              
-              {/* Assign Driver Modal */}
               {assignModalOpen && (
                   <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95">
@@ -273,8 +350,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                     </tbody>
                 </table>
              </div>
-             
-             {/* Re-use assign modal logic */}
              {assignModalOpen && (
                   <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95">
@@ -315,7 +390,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   // System Health View
   if (view === 'health') {
       if (!healthData) return <div className="p-8 text-center animate-pulse">Scanning system health...</div>;
-
       return (
           <div className="space-y-6 animate-in fade-in">
               <div className="flex justify-between items-center">
@@ -324,10 +398,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                       <RefreshCw size={14} /> Refresh
                   </button>
               </div>
-
-              {/* Top Level Cards */}
+              {/* ... (Charts components from previous version can be reused here) ... */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Database */}
                   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
                       <div>
                           <p className="text-sm font-bold text-gray-500 mb-1">Database Cluster</p>
@@ -336,14 +408,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                               <span className="text-xl font-bold">{healthData.database.status}</span>
                           </div>
                           <p className="text-xs text-gray-600">Latency: {healthData.database.latency}ms</p>
-                          <p className="text-xs text-gray-600">Active Conn: {healthData.database.activeConnections}</p>
                       </div>
-                      <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                          <Database size={24} />
-                      </div>
+                      <div className="p-3 bg-blue-50 text-blue-600 rounded-lg"><Database size={24} /></div>
                   </div>
-
-                  {/* API */}
                   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
                       <div>
                           <p className="text-sm font-bold text-gray-500 mb-1">API Gateway</p>
@@ -352,14 +419,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                               <span className="text-xl font-bold">{healthData.api.uptime}% Uptime</span>
                           </div>
                           <p className="text-xs text-gray-600">Req/sec: {healthData.api.requestsPerSecond}</p>
-                          <p className="text-xs text-gray-600">Avg Resp: {healthData.api.avgResponseTime}ms</p>
                       </div>
-                      <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
-                          <Activity size={24} />
-                      </div>
+                      <div className="p-3 bg-purple-50 text-purple-600 rounded-lg"><Activity size={24} /></div>
                   </div>
-
-                  {/* Realtime */}
                   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
                       <div>
                           <p className="text-sm font-bold text-gray-500 mb-1">WebSocket Server</p>
@@ -368,77 +430,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                               <span className="text-xl font-bold">{healthData.realtime.status}</span>
                           </div>
                           <p className="text-xs text-gray-600">Active Sockets: {healthData.realtime.activeSockets.toLocaleString()}</p>
-                          <p className="text-xs text-gray-600">Msg/sec: {healthData.realtime.messagesPerSecond}</p>
                       </div>
-                      <div className="p-3 bg-orange-50 text-orange-600 rounded-lg">
-                          <Radio size={24} />
-                      </div>
-                  </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Microservices Status Table */}
-                  <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
-                      <div className="p-4 border-b border-gray-100 bg-gray-50">
-                          <h3 className="font-bold text-gray-700">Microservices Status</h3>
-                      </div>
-                      <table className="w-full text-left">
-                          <thead className="bg-white text-gray-500 text-xs uppercase font-semibold">
-                              <tr>
-                                  <th className="px-6 py-3">Service Name</th>
-                                  <th className="px-6 py-3">Status</th>
-                                  <th className="px-6 py-3">Latency</th>
-                                  <th className="px-6 py-3">Last Check</th>
-                              </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100 text-sm">
-                              {healthData.services.map((svc, idx) => (
-                                  <tr key={idx} className="hover:bg-gray-50">
-                                      <td className="px-6 py-4 font-medium">{svc.name}</td>
-                                      <td className="px-6 py-4">
-                                          <div className="flex items-center gap-2">
-                                              {svc.status === 'OPERATIONAL' ? <CheckCircle size={16} className="text-emerald-500"/> : 
-                                               svc.status === 'ISSUES' ? <AlertCircle size={16} className="text-yellow-500"/> :
-                                               <XCircle size={16} className="text-red-500"/>}
-                                              <span>{svc.status}</span>
-                                          </div>
-                                      </td>
-                                      <td className="px-6 py-4 font-mono">{svc.latency}ms</td>
-                                      <td className="px-6 py-4 text-gray-500">Just now</td>
-                                  </tr>
-                              ))}
-                          </tbody>
-                      </table>
-                  </div>
-
-                  {/* Server Load */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                      <div className="flex items-center gap-3 mb-6">
-                          <Cpu size={24} className="text-gray-400" />
-                          <h3 className="font-bold text-gray-700">Server Load</h3>
-                      </div>
-                      <div className="space-y-4">
-                          <ProgressBar 
-                            value={healthData.server.cpuUsage} 
-                            label="CPU Usage" 
-                            color={healthData.server.cpuUsage > 80 ? 'bg-red-500' : 'bg-blue-600'} 
-                          />
-                          <ProgressBar 
-                            value={healthData.server.memoryUsage} 
-                            label="Memory (RAM)" 
-                            color={healthData.server.memoryUsage > 85 ? 'bg-red-500' : 'bg-purple-600'} 
-                          />
-                          <ProgressBar 
-                            value={healthData.server.diskUsage} 
-                            label="SSD Storage" 
-                            color="bg-emerald-600" 
-                          />
-                      </div>
-                      <div className="mt-6 pt-4 border-t border-gray-100">
-                          <div className="text-xs text-gray-500 mb-2">Error Rate (5xx)</div>
-                          <div className="text-3xl font-bold text-gray-900">{healthData.api.errorRate}%</div>
-                          <div className="text-xs text-emerald-600 mt-1">Within SLA limits (&lt;1.0%)</div>
-                      </div>
+                      <div className="p-3 bg-orange-50 text-orange-600 rounded-lg"><Radio size={24} /></div>
                   </div>
               </div>
           </div>
@@ -447,11 +440,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
 
   // Finance / Payment Management View
   if (view === 'finance') {
+    const pendingTransactions = transactions.filter(t => t.status === 'PENDING_APPROVAL');
+    
     return (
       <div className="space-y-6 animate-in fade-in relative">
           <h1 className="text-2xl font-bold text-gray-900">Payment Management</h1>
           
-          {/* Revenue Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                   <div className="flex justify-between items-start">
@@ -482,17 +476,68 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
               </div>
           </div>
 
+          {/* Pending Approvals Section */}
+          {pendingTransactions.length > 0 && (
+              <div className="bg-yellow-50 rounded-xl shadow-sm border border-yellow-200 overflow-hidden">
+                  <div className="p-4 border-b border-yellow-200 flex justify-between items-center">
+                      <h3 className="font-bold text-yellow-900 flex items-center gap-2">
+                          <AlertTriangle size={20}/> Pending Manual Approvals
+                      </h3>
+                      <span className="bg-yellow-200 text-yellow-800 px-2 py-1 rounded text-xs font-bold">{pendingTransactions.length} Pending</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                          <thead className="bg-yellow-100/50 text-yellow-800 text-xs uppercase font-semibold">
+                              <tr>
+                                  <th className="px-6 py-3">Reference</th>
+                                  <th className="px-6 py-3">User</th>
+                                  <th className="px-6 py-3">Type</th>
+                                  <th className="px-6 py-3">Amount</th>
+                                  <th className="px-6 py-3">Details</th>
+                                  <th className="px-6 py-3 text-right">Action</th>
+                              </tr>
+                          </thead>
+                          <tbody className="divide-y divide-yellow-100">
+                              {pendingTransactions.map(txn => (
+                                  <tr key={txn.id} className="hover:bg-yellow-100/20">
+                                      <td className="px-6 py-4 font-mono text-xs">{txn.reference}</td>
+                                      <td className="px-6 py-4 text-sm font-bold">{txn.passengerName || txn.driverName}</td>
+                                      <td className="px-6 py-4 text-xs font-medium">{txn.type}</td>
+                                      <td className="px-6 py-4 font-bold">{CURRENCY_SYMBOL}{txn.amount.toLocaleString()}</td>
+                                      <td className="px-6 py-4 text-xs text-gray-500 max-w-xs truncate">{txn.bankDetails || 'Proof Uploaded'}</td>
+                                      <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                          <Button 
+                                            size="sm" 
+                                            className="bg-red-500 hover:bg-red-600 h-8 px-2"
+                                            onClick={() => handlePaymentApproval(txn.id, false)}
+                                            isLoading={paymentActionLoading === txn.id}
+                                            disabled={!!paymentActionLoading}
+                                          >
+                                              <X size={14}/>
+                                          </Button>
+                                          <Button 
+                                            size="sm" 
+                                            className="bg-emerald-500 hover:bg-emerald-600 h-8 px-2"
+                                            onClick={() => handlePaymentApproval(txn.id, true)}
+                                            isLoading={paymentActionLoading === txn.id}
+                                            disabled={!!paymentActionLoading}
+                                          >
+                                              <Check size={14}/>
+                                          </Button>
+                                      </td>
+                                  </tr>
+                              ))}
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          )}
+
           {/* Transactions Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
               <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 justify-between items-center">
                   <h3 className="font-bold text-gray-800">Recent Transactions</h3>
                   <div className="flex gap-2">
-                       <select className="px-3 py-2 border rounded-lg text-sm bg-white outline-none">
-                           <option>All Channels</option>
-                           <option>Paystack</option>
-                           <option>Wallet</option>
-                           <option>Cash</option>
-                       </select>
                        <input placeholder="Search Reference..." className="px-3 py-2 border rounded-lg text-sm outline-none" />
                   </div>
               </div>
@@ -501,8 +546,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                     <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-semibold">
                         <tr>
                             <th className="px-6 py-4">Reference</th>
-                            <th className="px-6 py-4">Passenger</th>
-                            <th className="px-6 py-4">Driver</th>
+                            <th className="px-6 py-4">User</th>
                             <th className="px-6 py-4">Channel</th>
                             <th className="px-6 py-4">Amount</th>
                             <th className="px-6 py-4">Status</th>
@@ -510,33 +554,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {transactions.map(txn => (
+                        {transactions.filter(t => t.status !== 'PENDING_APPROVAL').map(txn => (
                             <tr key={txn.id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 font-mono text-xs text-gray-500">{txn.reference}</td>
-                                <td className="px-6 py-4 text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-medium text-gray-900">{txn.passengerName}</span>
-                                        <button 
-                                            onClick={() => setCallRecipient({name: txn.passengerName || 'Passenger', role: 'Passenger'})}
-                                            className="text-gray-400 hover:text-emerald-600 p-1" title="Call Passenger"
-                                        >
-                                            <Phone size={14}/>
-                                        </button>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-gray-600">{txn.driverName}</span>
-                                        {txn.driverId && (
-                                            <button 
-                                                onClick={() => setCallRecipient({name: txn.driverName || 'Driver', role: 'Driver'})}
-                                                className="text-gray-400 hover:text-emerald-600 p-1" title="Call Driver"
-                                            >
-                                                <Phone size={14}/>
-                                            </button>
-                                        )}
-                                    </div>
-                                </td>
+                                <td className="px-6 py-4 text-sm font-medium">{txn.passengerName || txn.driverName}</td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2 py-1 rounded text-[10px] font-bold border ${
                                         txn.channel === 'PAYSTACK' ? 'bg-blue-50 text-blue-700 border-blue-100' :
@@ -557,14 +578,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                 </table>
               </div>
           </div>
-          
-          {callRecipient && (
-              <VoiceCallModal 
-                  recipientName={callRecipient.name}
-                  recipientRole={callRecipient.role}
-                  onEndCall={() => setCallRecipient(null)}
-              />
-          )}
       </div>
     );
   }
@@ -581,10 +594,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
         </div>
       </div>
 
-      {/* Stats Grid - EXPANDED as requested */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        
-        {/* Total Users */}
         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-gray-500 uppercase">Total Users</span>
@@ -592,8 +602,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
             </div>
             <p className="text-2xl font-bold text-gray-900">{stats.totalUsers.toLocaleString()}</p>
         </div>
-
-        {/* Active Users */}
         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-gray-500 uppercase">Active Users</span>
@@ -601,8 +609,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
             </div>
             <p className="text-2xl font-bold text-gray-900">{stats.activeUsers.toLocaleString()}</p>
         </div>
-
-        {/* Total Trips */}
         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-gray-500 uppercase">Total Trips</span>
@@ -610,20 +616,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
             </div>
             <p className="text-2xl font-bold text-gray-900">{stats.totalTrips.toLocaleString()}</p>
         </div>
-
-        {/* Live Trips */}
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-gray-500 uppercase">Live Trips</span>
-                <div className="relative">
-                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
-                    <Map size={18} className="text-red-500"/>
-                </div>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.liveTrips}</p>
-        </div>
-
-        {/* Total Drivers */}
         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-gray-500 uppercase">Total Drivers</span>
@@ -631,49 +623,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
             </div>
             <p className="text-2xl font-bold text-gray-900">{stats.totalDrivers.toLocaleString()}</p>
         </div>
-
-        {/* Total Staff */}
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-gray-500 uppercase">Total Staff</span>
-                <Briefcase size={18} className="text-gray-600"/>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.totalStaff}</p>
-        </div>
-
-        {/* Regions */}
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
-            <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-gray-500 uppercase">Service Regions</span>
-                <Map size={18} className="text-teal-500"/>
-            </div>
-            <div className="flex items-end justify-between">
-                <p className="text-2xl font-bold text-gray-900">{stats.totalRegions} Cities</p>
-                <div className="flex gap-1">
-                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px]">Sokoto</span>
-                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px]">Lagos</span>
-                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px]">Abuja</span>
-                </div>
-            </div>
-        </div>
-
       </div>
 
-      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Live Map - Takes up 2 columns */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[500px]">
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <h3 className="font-semibold text-gray-800">Live Fleet Tracking</h3>
                 <span className="text-xs font-mono bg-emerald-100 text-emerald-800 px-2 py-1 rounded">LIVE UPDATES</span>
             </div>
             <div className="flex-1">
-                {/* Only render MapMock when explicitly on dashboard view to avoid remount issues */}
                 <MapMock />
             </div>
         </div>
 
-        {/* Charts & Actions */}
         <div className="space-y-6">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-[300px]">
                 <h3 className="font-semibold text-gray-800 mb-6">Revenue Overview</h3>
@@ -697,9 +659,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                     </button>
                     <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors">
                         Manage Surge Pricing (Lagos)
-                    </button>
-                    <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors">
-                        Broadcast Message to Riders
                     </button>
                 </div>
             </div>

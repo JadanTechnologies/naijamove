@@ -21,7 +21,7 @@ export enum RideStatus {
   CANCELLED = 'CANCELLED',
 }
 
-export type StaffPermission = 'MANAGE_USERS' | 'MANAGE_RIDES' | 'VIEW_FINANCE' | 'MANAGE_SETTINGS' | 'SUPPORT';
+export type StaffPermission = 'MANAGE_USERS' | 'MANAGE_RIDES' | 'VIEW_FINANCE' | 'MANAGE_SETTINGS' | 'SUPPORT' | 'VIEW_REPORTS' | 'MANAGE_PAYMENTS';
 
 export interface CronJob {
     id: string;
@@ -141,18 +141,19 @@ export interface RideRequest {
 
 export interface PaymentTransaction {
     id: string;
-    type: 'EARNING' | 'WITHDRAWAL' | 'PAYMENT';
+    type: 'EARNING' | 'WITHDRAWAL' | 'PAYMENT' | 'DEPOSIT';
     rideId?: string;
     passengerId?: string;
     passengerName?: string;
     driverId?: string;
     driverName?: string;
     amount: number;
-    channel: 'PAYSTACK' | 'WALLET' | 'CASH' | 'TRANSFER';
-    status: 'SUCCESS' | 'PENDING' | 'FAILED';
+    channel: 'PAYSTACK' | 'WALLET' | 'CASH' | 'TRANSFER' | 'FLUTTERWAVE';
+    status: 'SUCCESS' | 'PENDING' | 'FAILED' | 'PENDING_APPROVAL';
     date: string;
     reference: string;
     bankDetails?: string; // For withdrawals
+    proofUrl?: string; // For manual deposits
 }
 
 export interface DashboardStats {
@@ -249,15 +250,17 @@ export interface SystemSettings {
     manualBankDetails?: string;
   };
   communication: {
-    emailProvider: 'RESEND' | 'SMTP';
+    emailProvider: 'RESEND' | 'SMTP' | 'MAILGUN' | 'SENDGRID';
     emailApiKey?: string;
-    smsProvider: 'TWILIO' | 'INFOBIP' | 'TERMII';
+    smsProvider: 'TWILIO' | 'INFOBIP' | 'TERMII' | 'AFRICASTALKING';
     smsApiKey?: string;
     pushProvider: 'ONESIGNAL' | 'FIREBASE';
     pushApiKey?: string;
   };
   ai: {
     geminiEnabled: boolean;
+    provider: 'GEMINI' | 'OPENAI' | 'ANTHROPIC';
+    apiKey?: string;
   };
   trackers: {
       enabled: boolean;
@@ -265,6 +268,7 @@ export interface SystemSettings {
   };
   maintenanceMode: boolean;
   security: {
+    magicLinkExpiryHours: number;
     blockedIps: string[];
     blockedCountries: string[];
     blockedRegions: string[];
@@ -331,4 +335,12 @@ export interface ToastMessage {
 export interface StaticPageContent {
     title: string;
     content: string;
+}
+
+export interface NotificationItem {
+    id: string;
+    title: string;
+    message: string;
+    isRead: boolean;
+    createdAt: string;
 }
