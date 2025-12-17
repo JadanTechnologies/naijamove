@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, MessageSquare, Mic, MicOff } from 'lucide-react';
 import { VoiceCallModal } from './VoiceCallModal';
+// @ts-ignore
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { User } from '../types';
 
 // Speech Recognition
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 const recognition = SpeechRecognition ? new SpeechRecognition() : null;
 if (recognition) {
   recognition.continuous = false;
