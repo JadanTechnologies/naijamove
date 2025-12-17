@@ -663,8 +663,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
                 <h3 className="font-semibold text-gray-800">Live Fleet Tracking</h3>
                 <span className="text-xs font-mono bg-emerald-100 text-emerald-800 px-2 py-1 rounded">LIVE UPDATES</span>
             </div>
-            <div className="flex-1">
-                <MapMock />
+            <div className="flex-1 relative">
+                {/* Enable Admin Features on Map */}
+                <MapMock enableAdminFeatures={true} />
             </div>
         </div>
 

@@ -60,14 +60,22 @@ class MockSocketService {
         // Simulate movement around Sokoto
         const baseLat = 13.0059;
         const baseLng = 5.2476;
+        const actions = ["Cruising", "Stopped at Light", "Picking up Pax", "En Route to Dropoff", "Idle", "Refueling"];
         
         const updates = [];
-        for(let i=0; i<5; i++) {
+        // Simulate updates for the hardcoded driver IDs in MapMock
+        const driverIds = ['1', '2', '3', '4', '5']; 
+        
+        for(const id of driverIds) {
+            const isMoving = Math.random() > 0.3;
             updates.push({
-                id: `driver-${i}`,
-                lat: baseLat + (Math.random() - 0.5) * 0.05,
-                lng: baseLng + (Math.random() - 0.5) * 0.05,
-                heading: Math.random() * 360
+                id: id,
+                lat: baseLat + (Math.random() - 0.5) * 0.04,
+                lng: baseLng + (Math.random() - 0.5) * 0.04,
+                heading: Math.floor(Math.random() * 360),
+                speed: isMoving ? Math.floor(Math.random() * 60) + 10 : 0,
+                action: isMoving ? actions[Math.floor(Math.random() * 4)] : "Stopped",
+                status: isMoving ? 'BUSY' : 'IDLE'
             });
         }
         return updates;

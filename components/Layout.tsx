@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserRole, NotificationItem } from '../types';
 import { APP_NAME } from '../constants';
-import { Menu, X, LogOut, LayoutDashboard, Car, Package, Settings, CreditCard, User as UserIcon, Users, Activity, ChevronLeft, ChevronRight, Headphones, Wallet, Zap, Bell, Wifi, WifiOff, Clock, FileBarChart } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard, Car, Package, Settings, CreditCard, User as UserIcon, Users, Activity, ChevronLeft, ChevronRight, Headphones, Wallet, Zap, Bell, Wifi, WifiOff, Clock, FileBarChart, Moon, Sun } from 'lucide-react';
 import { getSystemSettings, getNotifications, markNotificationRead } from '../services/mockService';
 import { SupportWidget } from './SupportWidget';
 
@@ -24,10 +24,23 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
+  
+  // Dark Mode State
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     getSystemSettings().then(s => setAppName(s.branding.appName));
     
+    // Check Local Storage for Theme
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        setIsDarkMode(true);
+        document.documentElement.classList.add('dark');
+    } else {
+        setIsDarkMode(false);
+        document.documentElement.classList.remove('dark');
+    }
+
     // Clock Interval
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     
@@ -57,6 +70,18 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
         window.removeEventListener('offline', handleOffline);
     };
   }, [notifications.length]);
+
+  const toggleTheme = () => {
+      if (isDarkMode) {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('theme', 'light');
+          setIsDarkMode(false);
+      } else {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('theme', 'dark');
+          setIsDarkMode(true);
+      }
+  };
 
   const hasPermission = (permission: string) => {
       if (user.role === UserRole.ADMIN) return true;
@@ -125,7 +150,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden transition-colors duration-200">
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-20 lg:hidden"
@@ -191,20 +216,20 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="flex items-center justify-between h-16 px-6 bg-white border-b border-gray-200 shadow-sm z-10">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+        <header className="flex items-center justify-between h-16 px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm z-10 transition-colors duration-200">
           <div className="flex items-center gap-3">
               <button 
                 onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-md"
+                className="lg:hidden p-2 -ml-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
               >
                 <Menu size={24} />
               </button>
               
               {/* Digital Clock */}
-              <div className="hidden sm:flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
-                  <Clock size={16} className="text-gray-500" />
-                  <span className="font-mono text-sm font-medium text-gray-700">
+              <div className="hidden sm:flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600">
+                  <Clock size={16} className="text-gray-500 dark:text-gray-400" />
+                  <span className="font-mono text-sm font-medium text-gray-700 dark:text-gray-200">
                       {currentTime.toLocaleTimeString()}
                   </span>
               </div>
@@ -212,41 +237,50 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
           
           <div className="flex items-center gap-4 ml-auto">
              {/* Internet Indicator */}
-             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${isOnline ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
                  {isOnline ? <Wifi size={14} /> : <WifiOff size={14} />}
                  <span className="hidden sm:inline">{isOnline ? 'Online' : 'Offline'}</span>
              </div>
+
+             {/* Theme Toggle */}
+             <button 
+                onClick={toggleTheme}
+                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                title="Toggle Dark Mode"
+             >
+                 {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+             </button>
 
              {/* Notifications */}
              <div className="relative">
                  <button 
                     onClick={() => setShowNotifs(!showNotifs)}
-                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative transition-colors"
+                    className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full relative transition-colors"
                  >
                      <Bell size={20} />
                      {unreadCount > 0 && (
-                         <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
+                         <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-gray-800"></span>
                      )}
                  </button>
                  {showNotifs && (
-                     <div className="absolute right-0 top-12 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50 animate-in fade-in slide-in-from-top-2 overflow-hidden">
-                         <div className="p-3 border-b bg-gray-50 flex justify-between items-center">
-                             <h4 className="font-bold text-sm text-gray-700">Notifications</h4>
-                             <button onClick={() => setShowNotifs(false)} className="text-gray-400 hover:text-gray-600"><X size={16}/></button>
+                     <div className="absolute right-0 top-12 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 animate-in fade-in slide-in-from-top-2 overflow-hidden">
+                         <div className="p-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-750 flex justify-between items-center">
+                             <h4 className="font-bold text-sm text-gray-700 dark:text-gray-200">Notifications</h4>
+                             <button onClick={() => setShowNotifs(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X size={16}/></button>
                          </div>
                          <div className="max-h-80 overflow-y-auto">
                              {notifications.length === 0 ? (
-                                 <div className="p-6 text-center text-gray-500 text-xs">No notifications.</div>
+                                 <div className="p-6 text-center text-gray-500 dark:text-gray-400 text-xs">No notifications.</div>
                              ) : (
                                  notifications.map(n => (
                                      <div 
                                         key={n.id} 
                                         onClick={() => markNotificationRead(n.id)}
-                                        className={`p-3 border-b hover:bg-gray-50 cursor-pointer transition-colors ${n.isRead ? 'opacity-60' : 'bg-blue-50/50'}`}
+                                        className={`p-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors ${n.isRead ? 'opacity-60' : 'bg-blue-50/50 dark:bg-blue-900/10'}`}
                                      >
-                                         <p className="text-sm font-bold text-gray-800">{n.title}</p>
-                                         <p className="text-xs text-gray-600 mt-1">{n.message}</p>
-                                         <p className="text-[10px] text-gray-400 mt-2 text-right">{new Date(n.createdAt).toLocaleTimeString()}</p>
+                                         <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{n.title}</p>
+                                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{n.message}</p>
+                                         <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2 text-right">{new Date(n.createdAt).toLocaleTimeString()}</p>
                                      </div>
                                  ))
                              )}
@@ -257,7 +291,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
 
              {user.role === UserRole.DRIVER && (
                <div className="flex items-center gap-3">
-                 <span className={`px-3 py-1 text-xs font-bold rounded-full ${user.isOnline ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-600'}`}>
+                 <span className={`px-3 py-1 text-xs font-bold rounded-full ${user.isOnline ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
                    {user.isOnline ? 'ONLINE' : 'OFFLINE'}
                  </span>
                </div>
@@ -265,7 +299,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50 scroll-smooth relative">
+        <main className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50 dark:bg-gray-900 scroll-smooth relative transition-colors duration-200">
           {children}
           {user.role !== UserRole.ADMIN && user.role !== UserRole.STAFF && currentPage !== 'support' && (
               <SupportWidget user={user} />

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { getSystemSettings, updateSystemSettings, getTemplates, saveTemplate, deleteTemplate, getAnnouncements, createAnnouncement, speak } from '../../services/mockService';
 import { SystemSettings, TrackerConfig, NotificationTemplate, Announcement, VehicleType } from '../../types';
 import { Button } from '../../components/ui/Button';
-import { Shield, CreditCard, Bell, Sparkles, Smartphone, Router, Trash2, Megaphone, Eye, EyeOff, X, Monitor, Globe2, LayoutTemplate, Coins, Save, Link, Plus, Check, Search, Tag } from 'lucide-react';
+import { Shield, CreditCard, Bell, Sparkles, Smartphone, Router, Trash2, Megaphone, Eye, EyeOff, X, Monitor, Globe2, LayoutTemplate, Coins, Save, Link, Plus, Check, Search, Tag, Mic, Plug } from 'lucide-react';
 import { CURRENCY_SYMBOL } from '../../constants';
 
 const PasswordInput = ({ value, onChange, placeholder }: { value?: string, onChange: (val: string) => void, placeholder?: string }) => {
@@ -199,6 +199,17 @@ const AdminSettings: React.FC = () => {
             ...settings.mobileApps,
             [key]: value
         }
+      });
+  };
+
+  const updateIntegrationField = (key: string, value: any) => {
+      if (!settings) return;
+      setSettings({
+          ...settings,
+          integrations: {
+              ...settings.integrations,
+              [key]: value
+          }
       });
   };
 
@@ -619,6 +630,61 @@ const AdminSettings: React.FC = () => {
                 </div>
             );
 
+        case 'integrations':
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                    <h3 className="text-lg font-bold flex items-center gap-2"><Plug size={20}/> Third-Party Integrations</h3>
+                    
+                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                        <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><Mic size={18}/> Voice & AI Agent Providers</h4>
+                        <p className="text-sm text-gray-500 mb-4">Configure the backend for the AI Support Agent voice capabilities.</p>
+                        
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Voice Provider</label>
+                                <select 
+                                    className="w-full p-2 border rounded"
+                                    value={settings.integrations.voiceProvider}
+                                    onChange={e => updateIntegrationField('voiceProvider', e.target.value)}
+                                >
+                                    <option value="ZEGOCLOUD">ZegoCloud (Recommended)</option>
+                                    <option value="AGORA">Agora.io</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">App ID</label>
+                                <input 
+                                    className="w-full p-2 border rounded"
+                                    placeholder="123456789"
+                                    value={settings.integrations.voiceAppId}
+                                    onChange={e => updateIntegrationField('voiceAppId', e.target.value)}
+                                />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-bold text-gray-700 mb-1">App Sign / Certificate</label>
+                                <PasswordInput 
+                                    value={settings.integrations.voiceAppSign}
+                                    onChange={v => updateIntegrationField('voiceAppSign', v)}
+                                    placeholder="0x..."
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mt-6">
+                        <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><Shield size={18}/> Identity Verification</h4>
+                        <div className="max-w-md">
+                            <label className="block text-xs font-bold text-gray-700 mb-1">NIN Verification API Key</label>
+                            <PasswordInput 
+                                value={settings.integrations.ninApiKey}
+                                onChange={v => updateIntegrationField('ninApiKey', v)}
+                                placeholder="sk_live_..."
+                            />
+                        </div>
+                    </div>
+                </div>
+            );
+
         case 'security':
             return (
                 <div className="space-y-6 animate-in fade-in">
@@ -782,6 +848,7 @@ const AdminSettings: React.FC = () => {
                     { id: 'notifications', icon: Bell, label: 'Notifications' },
                     { id: 'security', icon: Shield, label: 'Security & Access' },
                     { id: 'ai', icon: Sparkles, label: 'AI Settings' },
+                    { id: 'integrations', icon: Plug, label: 'Integrations' },
                 ].map((item) => (
                     <button
                         key={item.id}
