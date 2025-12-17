@@ -28,7 +28,6 @@ const createIcon = (color: string, type: VehicleType | 'PIN' = 'PIN', animated =
   const size = isVehicle ? 32 : 16;
   const iconContent = isVehicle ? ICONS[type as VehicleType] : ICONS.PIN;
   
-  // Animation classes
   let animationClass = '';
   if (animated && !isVehicle) {
       animationClass = 'marker-drop-anim';
@@ -45,7 +44,7 @@ const createIcon = (color: string, type: VehicleType | 'PIN' = 'PIN', animated =
         height: ${size}px; 
         border-radius: 50%; 
         border: 2px solid white; 
-        box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        box-shadow: 0 0 15px ${color};
         display: flex;
         align-items: center;
         justify-content: center;
@@ -113,93 +112,30 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
             dest: 'Sokoto Market'
         }
     },
+    // ... (Keep other drivers unchanged for brevity, reusing state)
     { 
-        id: '2', 
-        type: VehicleType.KEKE, 
-        lat: 13.0050, 
-        lng: 5.2480, 
-        name: "Sani Abacha", 
-        status: "IDLE", 
-        rating: 4.5, 
-        trips: 890, 
-        loadKg: 0, 
-        maxLoad: 400,
-        speed: 0,
-        heading: 90,
-        action: "Stopped",
-        currentRide: null 
+        id: '2', type: VehicleType.KEKE, lat: 13.0050, lng: 5.2480, name: "Sani Abacha", status: "IDLE", rating: 4.5, trips: 890, loadKg: 0, maxLoad: 400, speed: 0, heading: 90, action: "Stopped", currentRide: null 
     },
     { 
-        id: '3', 
-        type: VehicleType.MINIBUS, 
-        lat: 13.0120, 
-        lng: 5.2400, 
-        name: "Chinedu Okeke", 
-        status: "BUSY", 
-        rating: 4.9, 
-        trips: 2100, 
-        loadKg: 800, 
-        maxLoad: 1000,
-        speed: 30,
-        heading: 180,
-        action: "Turning",
-        currentRide: { id: 'RIDE-9912', passenger: 'Fatima Z.', dest: 'University' }
+        id: '3', type: VehicleType.MINIBUS, lat: 13.0120, lng: 5.2400, name: "Chinedu Okeke", status: "BUSY", rating: 4.9, trips: 2100, loadKg: 800, maxLoad: 1000, speed: 30, heading: 180, action: "Turning", currentRide: { id: 'RIDE-9912', passenger: 'Fatima Z.', dest: 'University' }
     },
     { 
-        id: '4', 
-        type: VehicleType.OKADA, 
-        lat: 13.0010, 
-        lng: 5.2550, 
-        name: "Aliyu Gombe", 
-        status: "IDLE", 
-        rating: 4.2, 
-        trips: 400, 
-        loadKg: 0, 
-        maxLoad: 150,
-        speed: 0,
-        heading: 270,
-        action: "Stopped",
-        currentRide: null
+        id: '4', type: VehicleType.OKADA, lat: 13.0010, lng: 5.2550, name: "Aliyu Gombe", status: "IDLE", rating: 4.2, trips: 400, loadKg: 0, maxLoad: 150, speed: 0, heading: 270, action: "Stopped", currentRide: null
     },
     { 
-        id: '5', 
-        type: VehicleType.TRUCK, 
-        lat: 13.0200, 
-        lng: 5.2300, 
-        name: "Dangote Logistics 01", 
-        status: "BUSY", 
-        rating: 5.0, 
-        trips: 150, 
-        loadKg: 2500, 
-        maxLoad: 3000,
-        speed: 55,
-        heading: 45,
-        action: "En Route to Dropoff",
-        currentRide: { id: 'LOG-1122', passenger: 'Cement Depot', dest: 'Construction Site B' }
+        id: '5', type: VehicleType.TRUCK, lat: 13.0200, lng: 5.2300, name: "Dangote Logistics 01", status: "BUSY", rating: 5.0, trips: 150, loadKg: 2500, maxLoad: 3000, speed: 55, heading: 45, action: "En Route to Dropoff", currentRide: { id: 'LOG-1122', passenger: 'Cement Depot', dest: 'Construction Site B' }
     }
   ]);
 
   const [route, setRoute] = useState<{start: [number,number], end: [number,number]} | null>(null);
   const [progress, setProgress] = useState(0);
 
-  // Subscribe to real-time socket
   useEffect(() => {
       const unsubscribe = socketService.subscribe('DRIVER_LOCATIONS', (updates: any[]) => {
-          setDrivers(prev => {
-              // Merge updates with existing driver data
-              return prev.map(d => {
-                  const update = updates.find((u: any) => u.id === d.id);
-                  return update ? { 
-                      ...d, 
-                      lat: update.lat, 
-                      lng: update.lng, 
-                      speed: update.speed || d.speed,
-                      heading: update.heading || d.heading,
-                      action: update.action || d.action,
-                      status: update.status || d.status
-                  } : d;
-              });
-          });
+          setDrivers(prev => prev.map(d => {
+              const update = updates.find((u: any) => u.id === d.id);
+              return update ? { ...d, ...update } : d;
+          }));
       });
       return unsubscribe;
   }, []);
@@ -208,15 +144,11 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
       if (activeRide) {
           const seed1 = activeRide.pickupAddress.length;
           const seed2 = activeRide.dropoffAddress.length;
-          
           const startLat = 13.0059 + (seed1 % 20 - 10) * 0.003;
           const startLng = 5.2476 + (seed2 % 20 - 10) * 0.003;
-          
           const endLat = 13.0059 + (seed2 % 20 - 10) * 0.003;
           const endLng = 5.2476 + (seed1 % 20 - 10) * 0.003;
-
           setRoute({ start: [startLat, startLng], end: [endLat, endLng] });
-          
           if (activeRide.status === RideStatus.COMPLETED) setProgress(1);
           else if (activeRide.status === RideStatus.PENDING || activeRide.status === RideStatus.ACCEPTED) setProgress(0);
           else if (activeRide.status === RideStatus.IN_PROGRESS) setProgress(0.1);
@@ -230,10 +162,9 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
       if (activeRide?.status === RideStatus.IN_PROGRESS && route && progress < 1) {
           const interval = setInterval(() => {
               setProgress(prev => {
-                  const next = prev + 0.005; // Move 0.5% every 100ms
+                  const next = prev + 0.005;
                   if (onProgressUpdate) onProgressUpdate(next);
-                  if (next >= 1) return 1;
-                  return next;
+                  return next >= 1 ? 1 : next;
               });
           }, 100);
           return () => clearInterval(interval);
@@ -245,13 +176,12 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
       route.start[1] + (route.end[1] - route.start[1]) * progress
   ] : null;
 
-  // Helper to get color based on vehicle type
   const getVehicleColor = (type: VehicleType) => {
       switch(type) {
-          case VehicleType.OKADA: return '#10b981'; // Emerald
-          case VehicleType.KEKE: return '#f97316'; // Orange
-          case VehicleType.MINIBUS: return '#3b82f6'; // Blue
-          case VehicleType.TRUCK: return '#8b5cf6'; // Purple
+          case VehicleType.OKADA: return '#10b981';
+          case VehicleType.KEKE: return '#f97316';
+          case VehicleType.MINIBUS: return '#3b82f6';
+          case VehicleType.TRUCK: return '#8b5cf6';
           default: return '#6b7280';
       }
   };
@@ -264,10 +194,10 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
       return null;
   }
 
-  if (!isMounted) return <div className="w-full h-full bg-gray-100 animate-pulse rounded-lg"></div>;
+  if (!isMounted) return <div className="w-full h-full bg-gray-900 animate-pulse rounded-lg border border-gray-800"></div>;
 
   return (
-    <div className="w-full h-full rounded-lg overflow-hidden border border-gray-200 z-0 relative isolate flex">
+    <div className="w-full h-full rounded-xl overflow-hidden border border-gray-800 z-0 relative isolate flex bg-gray-900 shadow-2xl">
       <style>{`
         @keyframes marker-drop {
             0% { transform: translateY(-50px); opacity: 0; }
@@ -275,114 +205,67 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
             100% { transform: translateY(0); }
         }
         @keyframes pulse-ring {
-            0% { transform: scale(0.5); opacity: 1; }
-            100% { transform: scale(2.5); opacity: 0; }
+            0% { transform: scale(0.5); opacity: 1; border-color: rgba(16, 185, 129, 0.8); }
+            100% { transform: scale(2.5); opacity: 0; border-color: rgba(16, 185, 129, 0); }
         }
-        .marker-drop-anim {
-            animation: marker-drop 0.6s ease-out forwards;
-        }
+        .marker-drop-anim { animation: marker-drop 0.6s ease-out forwards; }
         .pulse-ring {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 2px solid #10b981;
-            animation: pulse-ring 2s infinite;
-            z-index: -1;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 100%; height: 100%; border-radius: 50%; border: 2px solid #10b981;
+            animation: pulse-ring 2s infinite; z-index: -1;
         }
       `}</style>
       <div className="flex-1 relative">
-          <MapContainer center={defaultPosition} zoom={13} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
+          <MapContainer center={defaultPosition} zoom={13} scrollWheelZoom={true} style={{ height: "100%", width: "100%", background: '#0f172a' }}>
             {focusedDriverId && <RecenterMap coords={getFocusedDriverPos() || defaultPosition} />}
             <LayersControl position="topright">
-                <LayersControl.BaseLayer checked name="Street View">
+                <LayersControl.BaseLayer checked name="Dark Matter">
                     <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                     />
                 </LayersControl.BaseLayer>
                 
-                <LayersControl.BaseLayer name="Satellite (Hybrid)">
+                <LayersControl.BaseLayer name="Satellite">
                     <TileLayer
-                    attribution='Google'
-                    url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+                        attribution='Google'
+                        url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
                     />
                 </LayersControl.BaseLayer>
-
-                <LayersControl.Overlay name="Live Traffic" checked>
-                    <TileLayer
-                        url="https://mt0.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}"
-                        attribution="Google Traffic"
-                    />
-                </LayersControl.Overlay>
             </LayersControl>
 
-            {/* --- Background Fleet with Detailed Popups --- */}
+            {/* Drivers */}
             {showDrivers && !activeRide && drivers.map(d => (
                 <Marker 
                     key={d.id} 
                     position={[d.lat, d.lng]} 
                     icon={createIcon(getVehicleColor(d.type), d.type)}
-                    eventHandlers={{
-                        click: () => {
-                            if(enableAdminFeatures) setFocusedDriverId(d.id);
-                        }
-                    }}
+                    eventHandlers={{ click: () => { if(enableAdminFeatures) setFocusedDriverId(d.id); } }}
                 >
-                    <Popup className="driver-popup">
-                        <div className="p-1 min-w-[200px]">
-                            <div className="flex justify-between items-start mb-2 border-b pb-2">
+                    <Popup className="glass-popup" closeButton={false}>
+                        <div className="p-3 min-w-[200px] bg-gray-900/90 text-white rounded-lg backdrop-blur-md border border-gray-700">
+                            <div className="flex justify-between items-start mb-2 border-b border-gray-700 pb-2">
                                 <div>
-                                    <h3 className="font-bold text-gray-900">{d.name}</h3>
-                                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                                        <span>{d.rating}★</span>
-                                        <span>•</span>
-                                        <span>{d.trips} Trips</span>
+                                    <h3 className="font-bold text-emerald-400">{d.name}</h3>
+                                    <div className="flex items-center gap-1 text-xs text-gray-400">
+                                        <span>{d.rating}★</span><span>•</span><span>{d.trips} Trips</span>
                                     </div>
                                 </div>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                    d.status === 'BUSY' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'
-                                }`}>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${d.status === 'BUSY' ? 'bg-orange-500/20 text-orange-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
                                     {d.status}
                                 </span>
                             </div>
-                            
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-xs">
-                                    <span className="text-gray-500">Vehicle Type:</span>
-                                    <span className="font-bold text-gray-700">{d.type}</span>
-                                </div>
-                                <div className="flex justify-between text-xs items-center">
-                                    <span className="text-gray-500">Telemetry:</span>
-                                    <span className="font-mono text-[10px] bg-gray-100 px-1 rounded">{d.speed}km/h • {d.heading}°</span>
-                                </div>
-                                <div className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                                    Action: <strong>{d.action}</strong>
-                                </div>
-                                {d.currentRide ? (
-                                    <div className="bg-gray-50 p-2 rounded border border-gray-100 mt-2">
-                                        <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">Current Ride</div>
-                                        <div className="text-xs">
-                                            <div className="font-mono text-emerald-600 mb-0.5">{d.currentRide.id}</div>
-                                            <div className="font-medium truncate">To: {d.currentRide.dest}</div>
-                                            <div className="text-gray-500">Pass: {d.currentRide.passenger}</div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="text-xs text-gray-400 italic text-center py-2">
-                                        Waiting for requests...
-                                    </div>
-                                )}
+                            <div className="text-xs space-y-1">
+                                <div className="flex justify-between"><span className="text-gray-500">Type:</span> <span className="font-bold">{d.type}</span></div>
+                                <div className="flex justify-between"><span className="text-gray-500">Speed:</span> <span className="font-mono">{d.speed}km/h</span></div>
+                                <div className="mt-2 text-blue-400 bg-blue-900/20 px-2 py-1 rounded">{d.action}</div>
                             </div>
                         </div>
                     </Popup>
                 </Marker>
             ))}
 
-            {/* --- Active Ride Navigation --- */}
+            {/* Active Ride Route */}
             {activeRide && route && vehiclePos && (
                 <>
                     <RecenterMap coords={vehiclePos} />
@@ -392,67 +275,52 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
                     <Marker position={route.end} icon={createIcon('#ef4444', 'PIN', true)}>
                         <Popup>Dropoff: {activeRide.dropoffAddress}</Popup>
                     </Marker>
-                    <Polyline positions={[route.start, route.end]} color="#6366f1" weight={4} dashArray="10, 10" opacity={0.6} />
+                    <Polyline positions={[route.start, route.end]} color="#10b981" weight={4} dashArray="10, 10" opacity={0.8} />
                     <Marker 
                         position={vehiclePos} 
                         icon={createIcon(getVehicleColor(activeRide.vehicleType), activeRide.vehicleType)}
                         zIndexOffset={1000}
-                    >
-                        <Popup>
-                            <div className="text-center">
-                                <p className="font-bold text-sm">Your {activeRide.vehicleType}</p>
-                                <p className="text-xs text-gray-500">In Transit</p>
-                                <p className="text-xs font-mono mt-1 text-emerald-600">
-                                    Load: {activeRide.estimatedWeightKg}kg
-                                </p>
-                            </div>
-                        </Popup>
-                    </Marker>
+                    />
                 </>
             )}
-
           </MapContainer>
       </div>
 
       {/* Admin Fleet Sidebar */}
       {enableAdminFeatures && showDrivers && (
-          <div className={`absolute top-4 left-4 bottom-4 w-64 bg-white rounded-xl shadow-2xl z-[1000] flex flex-col transition-transform duration-300 transform ${showFleetSidebar ? 'translate-x-0' : '-translate-x-72'}`}>
-              <div className="p-4 border-b bg-gray-50 rounded-t-xl flex justify-between items-center">
-                  <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                      <Radio size={16} className="text-red-500 animate-pulse"/> Live Fleet
+          <div className={`absolute top-4 left-4 bottom-4 w-64 glass-panel rounded-xl shadow-2xl z-[1000] flex flex-col transition-transform duration-300 transform ${showFleetSidebar ? 'translate-x-0' : '-translate-x-72'}`}>
+              <div className="p-4 border-b border-white/10 flex justify-between items-center">
+                  <h3 className="font-bold text-white flex items-center gap-2">
+                      <Radio size={16} className="text-emerald-500 animate-pulse"/> Live Fleet
                   </h3>
-                  <span className="text-xs bg-gray-200 px-2 py-0.5 rounded-full">{drivers.length}</span>
+                  <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">{drivers.length}</span>
               </div>
               <div className="flex-1 overflow-y-auto">
                   {drivers.map(d => (
                       <div 
                         key={d.id} 
                         onClick={() => setFocusedDriverId(d.id)}
-                        className={`p-3 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors ${focusedDriverId === d.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}
+                        className={`p-3 border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${focusedDriverId === d.id ? 'bg-white/10 border-l-4 border-l-emerald-500' : ''}`}
                       >
                           <div className="flex justify-between items-start mb-1">
-                              <span className="font-bold text-sm text-gray-900">{d.name}</span>
-                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${d.status === 'BUSY' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>{d.status}</span>
+                              <span className="font-bold text-sm text-gray-200">{d.name}</span>
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${d.status === 'BUSY' ? 'text-orange-400 bg-orange-900/30' : 'text-emerald-400 bg-emerald-900/30'}`}>{d.status}</span>
                           </div>
                           <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
                               <span className="capitalize">{d.type.toLowerCase()}</span>
-                              <span>•</span>
                               <span className="flex items-center gap-1"><Gauge size={10}/> {d.speed}km/h</span>
                           </div>
-                          <div className="text-[10px] text-blue-600 bg-blue-50/50 p-1 rounded truncate">
-                              {d.action}
-                          </div>
+                          <div className="text-[10px] text-blue-400 truncate">{d.action}</div>
                       </div>
                   ))}
               </div>
           </div>
       )}
       
-      {/* Sidebar Toggle Button for Admin */}
       {enableAdminFeatures && showDrivers && (
           <button 
             onClick={() => setShowFleetSidebar(!showFleetSidebar)}
-            className="absolute top-1/2 left-0 z-[1001] bg-white p-1 rounded-r-lg shadow-md border border-l-0 border-gray-200 hover:bg-gray-50"
+            className="absolute top-1/2 left-0 z-[1001] glass-panel p-2 rounded-r-lg border-l-0 text-white hover:bg-white/10"
             style={{ left: showFleetSidebar ? '256px' : '0' }}
           >
               {showFleetSidebar ? <ChevronLeft size={16}/> : <ChevronRight size={16}/>}

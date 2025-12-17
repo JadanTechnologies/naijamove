@@ -25,40 +25,26 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
   
-  // Dark Mode State
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  // Dark Mode State - Enforced
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
   useEffect(() => {
     getSystemSettings().then(s => setAppName(s.branding.appName));
-    
-    // Check Local Storage for Theme
-    const storedTheme = localStorage.getItem('theme');
-    if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        setIsDarkMode(true);
-        document.documentElement.classList.add('dark');
-    } else {
-        setIsDarkMode(false);
-        document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.add('dark'); // Force dark mode class
 
-    // Clock Interval
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     
-    // Network Listeners
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Notifications Poll
     const notifInterval = setInterval(async () => {
         const notifs = await getNotifications();
         const unreadCount = notifs.filter(n => !n.isRead).length;
-        
-        // Play sound if new unread exists compared to previous state
         if (unreadCount > notifications.filter(n => !n.isRead).length) {
             const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-            audio.play().catch(() => {}); // catch autoplay policy errors
+            audio.play().catch(() => {});
         }
         setNotifications(notifs);
     }, 5000);
@@ -71,18 +57,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
     };
   }, [notifications.length]);
 
-  const toggleTheme = () => {
-      if (isDarkMode) {
-          document.documentElement.classList.remove('dark');
-          localStorage.setItem('theme', 'light');
-          setIsDarkMode(false);
-      } else {
-          document.documentElement.classList.add('dark');
-          localStorage.setItem('theme', 'dark');
-          setIsDarkMode(true);
-      }
-  };
-
   const hasPermission = (permission: string) => {
       if (user.role === UserRole.ADMIN) return true;
       if (user.role === UserRole.STAFF && user.permissions?.includes(permission as any)) return true;
@@ -90,8 +64,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
   };
 
   const renderNavLinks = () => {
-    const commonClasses = `flex items-center gap-3 px-3 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors cursor-pointer w-full text-left ${isCollapsed ? 'justify-center' : ''}`;
-    const activeClasses = "bg-emerald-600 text-white shadow-md";
+    const commonClasses = `flex items-center gap-3 px-3 py-3 text-gray-400 hover:bg-white/10 hover:text-white rounded-lg transition-all cursor-pointer w-full text-left border border-transparent ${isCollapsed ? 'justify-center' : ''}`;
+    const activeClasses = "bg-emerald-600/20 text-emerald-400 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]";
 
     const LinkItem = ({ icon: Icon, label, page, permission }: any) => {
         if (permission && !hasPermission(permission)) return null;
@@ -105,7 +79,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
                 title={isCollapsed ? label : ''}
             >
                 <Icon size={20} className="min-w-[20px]" />
-                {!isCollapsed && <span className="truncate">{label}</span>}
+                {!isCollapsed && <span className="truncate text-sm font-medium">{label}</span>}
             </button>
         );
     };
@@ -150,64 +124,64 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden transition-colors duration-200">
+    <div className="flex h-screen bg-transparent overflow-hidden">
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-20 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       <aside className={`
-        fixed inset-y-0 left-0 z-30 bg-gray-900 text-white transform transition-all duration-300 ease-in-out
-        lg:relative lg:translate-x-0
+        fixed inset-y-0 left-0 z-30 glass-panel transform transition-all duration-300 ease-in-out border-r border-white/10
+        lg:relative lg:translate-x-0 lg:my-4 lg:ml-4 lg:rounded-2xl
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         ${isCollapsed ? 'w-20' : 'w-64'}
       `}>
-        <div className={`flex items-center h-16 bg-gray-950 border-b border-gray-800 ${isCollapsed ? 'justify-center px-0' : 'justify-between px-6'}`}>
+        <div className={`flex items-center h-16 border-b border-white/10 ${isCollapsed ? 'justify-center px-0' : 'justify-between px-6'}`}>
           {!isCollapsed && (
              <div className="flex items-center gap-2 overflow-hidden">
-                <div className="w-8 h-8 bg-white rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden p-1">
-                    <img src="https://cdn-icons-png.flaticon.com/512/2972/2972185.png" alt="Logo" className="w-full h-full object-contain" />
+                <div className="w-8 h-8 bg-white/10 rounded-lg flex-shrink-0 flex items-center justify-center border border-white/10">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2972/2972185.png" alt="Logo" className="w-5 h-5 object-contain" />
                 </div>
-                <span className="font-bold text-lg tracking-tight truncate">{appName}</span>
+                <span className="font-bold text-lg tracking-tight truncate text-white">{appName}</span>
              </div>
           )}
           {isCollapsed && (
-             <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1">
-                 <img src="https://cdn-icons-png.flaticon.com/512/2972/2972185.png" alt="Logo" className="w-full h-full object-contain" />
+             <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center border border-white/10">
+                 <img src="https://cdn-icons-png.flaticon.com/512/2972/2972185.png" alt="Logo" className="w-5 h-5 object-contain" />
              </div>
           )}
           
-          <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-gray-400">
+          <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-gray-400 hover:text-white">
             <X size={24} />
           </button>
         </div>
 
-        <nav className="flex flex-col gap-2 p-3 mt-4">
+        <nav className="flex flex-col gap-2 p-3 mt-4 overflow-y-auto max-h-[calc(100vh-160px)]">
           {renderNavLinks()}
         </nav>
 
         <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden lg:flex absolute top-[70px] -right-3 w-6 h-6 bg-emerald-600 rounded-full items-center justify-center text-white shadow-md hover:bg-emerald-700 transition-colors z-50"
+            className="hidden lg:flex absolute top-[70px] -right-3 w-6 h-6 bg-emerald-600 rounded-full items-center justify-center text-white shadow-lg shadow-emerald-600/30 hover:bg-emerald-500 transition-colors z-50 border border-emerald-400"
         >
             {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
 
-        <div className={`absolute bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 ${isCollapsed ? 'p-2' : 'p-4'}`}>
+        <div className={`absolute bottom-0 left-0 right-0 bg-black/20 border-t border-white/10 backdrop-blur-md ${isCollapsed ? 'p-2' : 'p-4'} rounded-b-2xl`}>
           <div className={`flex items-center gap-3 mb-4 ${isCollapsed ? 'justify-center' : ''}`}>
-            <img src={user.avatar} alt="User" className="w-8 h-8 rounded-full border border-gray-700" />
+            <img src={user.avatar} alt="User" className="w-8 h-8 rounded-full border border-emerald-500/50" />
             {!isCollapsed && (
                 <div className="overflow-hidden">
-                <p className="text-sm font-medium truncate">{user.name}</p>
-                <p className="text-xs text-gray-400 truncate capitalize">{user.role.toLowerCase()}</p>
+                <p className="text-sm font-medium text-white truncate">{user.name}</p>
+                <p className="text-xs text-emerald-400 truncate capitalize">{user.role.toLowerCase()}</p>
                 </div>
             )}
           </div>
           <button 
             onClick={onLogout}
-            className={`flex items-center gap-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-gray-800 rounded-md transition-colors ${isCollapsed ? 'justify-center' : ''}`}
+            className={`flex items-center gap-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-md transition-colors ${isCollapsed ? 'justify-center' : ''}`}
             title="Sign Out"
           >
             <LogOut size={16} />
@@ -216,71 +190,59 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-        <header className="flex items-center justify-between h-16 px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm z-10 transition-colors duration-200">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header className="flex items-center justify-between h-16 px-6 glass-header m-4 rounded-xl shadow-lg z-10">
           <div className="flex items-center gap-3">
               <button 
                 onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden p-2 -ml-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                className="lg:hidden p-2 -ml-2 text-gray-300 hover:bg-white/10 rounded-md"
               >
                 <Menu size={24} />
               </button>
               
-              {/* Digital Clock */}
-              <div className="hidden sm:flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600">
-                  <Clock size={16} className="text-gray-500 dark:text-gray-400" />
-                  <span className="font-mono text-sm font-medium text-gray-700 dark:text-gray-200">
+              <div className="hidden sm:flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 text-emerald-400">
+                  <Clock size={16} />
+                  <span className="font-mono text-sm font-bold">
                       {currentTime.toLocaleTimeString()}
                   </span>
               </div>
           </div>
           
           <div className="flex items-center gap-4 ml-auto">
-             {/* Internet Indicator */}
-             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${isOnline ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border ${isOnline ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
                  {isOnline ? <Wifi size={14} /> : <WifiOff size={14} />}
                  <span className="hidden sm:inline">{isOnline ? 'Online' : 'Offline'}</span>
              </div>
 
-             {/* Theme Toggle */}
-             <button 
-                onClick={toggleTheme}
-                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                title="Toggle Dark Mode"
-             >
-                 {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-             </button>
-
-             {/* Notifications */}
              <div className="relative">
                  <button 
                     onClick={() => setShowNotifs(!showNotifs)}
-                    className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full relative transition-colors"
+                    className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-full relative transition-colors"
                  >
                      <Bell size={20} />
                      {unreadCount > 0 && (
-                         <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-gray-800"></span>
+                         <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-black shadow-lg shadow-red-500/50"></span>
                      )}
                  </button>
                  {showNotifs && (
-                     <div className="absolute right-0 top-12 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 animate-in fade-in slide-in-from-top-2 overflow-hidden">
-                         <div className="p-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-750 flex justify-between items-center">
-                             <h4 className="font-bold text-sm text-gray-700 dark:text-gray-200">Notifications</h4>
-                             <button onClick={() => setShowNotifs(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X size={16}/></button>
+                     <div className="absolute right-0 top-12 w-80 glass-panel rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 overflow-hidden border border-white/10">
+                         <div className="p-3 border-b border-white/10 bg-white/5 flex justify-between items-center">
+                             <h4 className="font-bold text-sm text-white">Notifications</h4>
+                             <button onClick={() => setShowNotifs(false)} className="text-gray-400 hover:text-white"><X size={16}/></button>
                          </div>
                          <div className="max-h-80 overflow-y-auto">
                              {notifications.length === 0 ? (
-                                 <div className="p-6 text-center text-gray-500 dark:text-gray-400 text-xs">No notifications.</div>
+                                 <div className="p-6 text-center text-gray-500 text-xs">No notifications.</div>
                              ) : (
                                  notifications.map(n => (
                                      <div 
                                         key={n.id} 
                                         onClick={() => markNotificationRead(n.id)}
-                                        className={`p-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors ${n.isRead ? 'opacity-60' : 'bg-blue-50/50 dark:bg-blue-900/10'}`}
+                                        className={`p-3 border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${n.isRead ? 'opacity-50' : 'bg-emerald-500/5 border-l-2 border-l-emerald-500'}`}
                                      >
-                                         <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{n.title}</p>
-                                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{n.message}</p>
-                                         <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2 text-right">{new Date(n.createdAt).toLocaleTimeString()}</p>
+                                         <p className="text-sm font-bold text-gray-200">{n.title}</p>
+                                         <p className="text-xs text-gray-400 mt-1">{n.message}</p>
+                                         <p className="text-[10px] text-gray-500 mt-2 text-right">{new Date(n.createdAt).toLocaleTimeString()}</p>
                                      </div>
                                  ))
                              )}
@@ -291,7 +253,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
 
              {user.role === UserRole.DRIVER && (
                <div className="flex items-center gap-3">
-                 <span className={`px-3 py-1 text-xs font-bold rounded-full ${user.isOnline ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
+                 <span className={`px-3 py-1 text-xs font-bold rounded-full border ${user.isOnline ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-gray-700/50 text-gray-400 border-gray-600'}`}>
                    {user.isOnline ? 'ONLINE' : 'OFFLINE'}
                  </span>
                </div>
@@ -299,7 +261,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50 dark:bg-gray-900 scroll-smooth relative transition-colors duration-200">
+        <main className="flex-1 overflow-auto p-4 md:p-6 scroll-smooth relative">
           {children}
           {user.role !== UserRole.ADMIN && user.role !== UserRole.STAFF && currentPage !== 'support' && (
               <SupportWidget user={user} />
