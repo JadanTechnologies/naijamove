@@ -23,13 +23,21 @@ const ICONS = {
     PIN: `<div style="background-color: white; width: 8px; height: 8px; border-radius: 50%;"></div>`
 };
 
-const createIcon = (color: string, type: VehicleType | 'PIN' = 'PIN') => {
+const createIcon = (color: string, type: VehicleType | 'PIN' = 'PIN', animated = false) => {
   const isVehicle = type !== 'PIN';
   const size = isVehicle ? 32 : 16;
   const iconContent = isVehicle ? ICONS[type as VehicleType] : ICONS.PIN;
+  
+  // Animation classes
+  let animationClass = '';
+  if (animated && !isVehicle) {
+      animationClass = 'marker-drop-anim';
+  } else if (isVehicle) {
+      animationClass = 'vehicle-move-anim'; 
+  }
 
   return new L.DivIcon({
-    className: 'custom-icon',
+    className: `custom-icon ${animationClass}`,
     html: `
       <div style="
         background-color: ${color}; 
@@ -37,13 +45,15 @@ const createIcon = (color: string, type: VehicleType | 'PIN' = 'PIN') => {
         height: ${size}px; 
         border-radius: 50%; 
         border: 2px solid white; 
-        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.4);
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: all 0.3s ease;
       ">
         ${iconContent}
       </div>
+      ${type === 'PIN' ? '<div class="pulse-ring"></div>' : ''}
     `,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
@@ -54,7 +64,7 @@ const createIcon = (color: string, type: VehicleType | 'PIN' = 'PIN') => {
 const RecenterMap = ({ coords }: { coords: [number, number] }) => {
     const map = useMap();
     useEffect(() => {
-        map.flyTo(coords, 14, { duration: 1.5 });
+        map.flyTo(coords, 14, { duration: 1.5, easeLinearity: 0.5 });
     }, [coords[0], coords[1], map]);
     return null;
 }
@@ -258,6 +268,32 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
 
   return (
     <div className="w-full h-full rounded-lg overflow-hidden border border-gray-200 z-0 relative isolate flex">
+      <style>{`
+        @keyframes marker-drop {
+            0% { transform: translateY(-50px); opacity: 0; }
+            60% { transform: translateY(10px); opacity: 1; }
+            100% { transform: translateY(0); }
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+        .marker-drop-anim {
+            animation: marker-drop 0.6s ease-out forwards;
+        }
+        .pulse-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid #10b981;
+            animation: pulse-ring 2s infinite;
+            z-index: -1;
+        }
+      `}</style>
       <div className="flex-1 relative">
           <MapContainer center={defaultPosition} zoom={13} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
             {focusedDriverId && <RecenterMap coords={getFocusedDriverPos() || defaultPosition} />}
@@ -350,10 +386,10 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
             {activeRide && route && vehiclePos && (
                 <>
                     <RecenterMap coords={vehiclePos} />
-                    <Marker position={route.start} icon={createIcon('#10b981', 'PIN')}>
+                    <Marker position={route.start} icon={createIcon('#10b981', 'PIN', true)}>
                         <Popup>Pickup: {activeRide.pickupAddress}</Popup>
                     </Marker>
-                    <Marker position={route.end} icon={createIcon('#ef4444', 'PIN')}>
+                    <Marker position={route.end} icon={createIcon('#ef4444', 'PIN', true)}>
                         <Popup>Dropoff: {activeRide.dropoffAddress}</Popup>
                     </Marker>
                     <Polyline positions={[route.start, route.end]} color="#6366f1" weight={4} dashArray="10, 10" opacity={0.6} />
