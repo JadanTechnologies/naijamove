@@ -4,6 +4,15 @@ import { VoiceCallModal } from './VoiceCallModal';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { User } from '../types';
 
+// Speech Recognition
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+if (recognition) {
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
+}
+
 interface SupportWidgetProps {
     user: User;
 }
@@ -83,17 +92,53 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ user }) => {
     const nextStartTimeRef = useRef(0);
     const sourcesRef = useRef(new Set<AudioBufferSourceNode>());
 
+    // AI
+    const genAIRef = useRef<GoogleGenerativeAI | null>(null);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isThinking]);
 
   useEffect(() => {
-    if (isListening) {
-      // Mock voice recognition - in real implementation, use Web Speech API or Google AI
-      setTimeout(() => {
-        setMessages(prev => [...prev, { text: "Hello! I'm your AI assistant. How can I help you with your ride or delivery today?", isBot: true }]);
+    if (typeof window !== 'undefined' && process.env.GEMINI_API_KEY) {
+      genAIRef.current = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isListening && recognition) {
+      recognition.start();
+      recognition.onresult = async (event) => {
+        const transcript = event.results[0][0].transcript;
+        setMessages(prev => [...prev, { text: transcript, isBot: false }]);
         setIsListening(false);
-      }, 2000);
+
+        // Send to AI
+        if (genAIRef.current) {
+          try {
+            const model = genAIRef.current.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const prompt = `You are a helpful AI assistant for NaijaMove, a ride-hailing and logistics app in Nigeria. Answer the user's question: ${transcript}`;
+            const result = await model.generateContent(prompt);
+            const response = result.response.text();
+
+            setMessages(prev => [...prev, { text: response, isBot: true }]);
+
+            // Speak the response
+            if ('speechSynthesis' in window) {
+              const utterance = new SpeechSynthesisUtterance(response);
+              window.speechSynthesis.speak(utterance);
+            }
+          } catch (error) {
+            console.error('AI Error:', error);
+            setMessages(prev => [...prev, { text: "Sorry, I couldn't process that. Please try again.", isBot: true }]);
+          }
+        }
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+        setMessages(prev => [...prev, { text: "Voice recognition failed. Please try again.", isBot: true }]);
+      };
     }
   }, [isListening]);
 
@@ -150,8 +195,15 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ user }) => {
               placeholder="Type your message..."
             />
             <button
-              onClick={() => setIsListening(!isListening)}
-              className={`px-3 py-2 rounded ${isListening ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-600'}`}
+              onClick={() => {
+                if (recognition) {
+                  setIsListening(!isListening);
+                } else {
+                  alert('Voice recognition not supported in this browser');
+                }
+              }}
+              disabled={!recognition}
+              className={`px-3 py-2 rounded ${isListening ? 'bg-red-500 text-white' : recognition ? 'bg-gray-200 text-gray-600 hover:bg-gray-300' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
             >
               {isListening ? <MicOff size={16} /> : <Mic size={16} />}
             </button>
