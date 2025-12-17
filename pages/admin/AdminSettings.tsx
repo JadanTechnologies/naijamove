@@ -1,9 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
 import { getSystemSettings, updateSystemSettings, getTemplates, saveTemplate, deleteTemplate, getAnnouncements, createAnnouncement, speak } from '../../services/mockService';
 import { SystemSettings, TrackerConfig, NotificationTemplate, Announcement, VehicleType } from '../../types';
 import { Button } from '../../components/ui/Button';
-import { Shield, CreditCard, Bell, Sparkles, Smartphone, Globe, Activity, Router, Plus, Trash2, FileText, Megaphone, Edit, Send, Eye, EyeOff, X, Monitor, Map, Globe2, ShieldAlert, LayoutTemplate, Download, Coins, Plug, AlertTriangle, Box, Truck, Save, RefreshCw, Key, Link } from 'lucide-react';
+import { Shield, CreditCard, Bell, Sparkles, Smartphone, Router, Trash2, Megaphone, Eye, EyeOff, X, Monitor, Globe2, LayoutTemplate, Coins, Save, Link, Plus, Check } from 'lucide-react';
 import { CURRENCY_SYMBOL } from '../../constants';
 
 const PasswordInput = ({ value, onChange, placeholder }: { value?: string, onChange: (val: string) => void, placeholder?: string }) => {
@@ -94,11 +93,6 @@ const AdminSettings: React.FC = () => {
       serverIp: '0.0.0.0'
   });
 
-  // Template State
-  const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
-  const [editingTemplate, setEditingTemplate] = useState<NotificationTemplate | null>(null);
-  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
-
   // Announcement State
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [newAnnouncement, setNewAnnouncement] = useState<{title: string; message: string; target: Announcement['target']}>({
@@ -109,7 +103,7 @@ const AdminSettings: React.FC = () => {
 
   useEffect(() => {
     getSystemSettings().then(setSettings);
-    getTemplates().then(setTemplates);
+    getTemplates().then(() => {}); // Preload templates if needed
     getAnnouncements().then(setAnnouncements);
   }, []);
 
@@ -167,20 +161,6 @@ const AdminSettings: React.FC = () => {
         landingPage: {
             ...settings.landingPage,
             [key]: value
-        }
-      });
-  };
-
-  const updateLandingPageStats = (key: string, value: any) => {
-      if (!settings) return;
-      setSettings({
-        ...settings,
-        landingPage: {
-            ...settings.landingPage,
-            stats: {
-                ...settings.landingPage.stats,
-                [key]: value
-            }
         }
       });
   };
@@ -247,35 +227,6 @@ const AdminSettings: React.FC = () => {
       });
   };
 
-  const handleSaveTemplate = async () => {
-      if(!editingTemplate) return;
-      await saveTemplate(editingTemplate);
-      setTemplates(await getTemplates());
-      setEditingTemplate(null);
-      setIsTemplateModalOpen(false);
-      speak("Notification template saved.");
-  };
-
-  const handleDeleteTemplate = async (id: string) => {
-      if(confirm('Delete this template?')) {
-          await deleteTemplate(id);
-          setTemplates(await getTemplates());
-          speak("Template deleted.");
-      }
-  };
-
-  const openNewTemplate = () => {
-      setEditingTemplate({
-          id: '',
-          name: '',
-          type: 'EMAIL',
-          subject: '',
-          body: '',
-          variables: []
-      });
-      setIsTemplateModalOpen(true);
-  };
-
   const handleSendAnnouncement = async () => {
       if(!newAnnouncement.title || !newAnnouncement.message) return;
       await createAnnouncement(newAnnouncement);
@@ -289,7 +240,6 @@ const AdminSettings: React.FC = () => {
 
   const renderTabContent = () => {
     switch(activeTab) {
-        // ... (Branding, Mobile, Pricing, Payments Tabs - same as before, see snippet for full inclusion if needed, assuming they are preserved as per instruction to RESTORE) ...
         case 'branding':
             return (
                 <div className="space-y-6 animate-in fade-in">
@@ -316,6 +266,165 @@ const AdminSettings: React.FC = () => {
                     </div>
                 </div>
             );
+        
+        case 'mobile':
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Smartphone size={20}/> Mobile App Distribution</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-1">Android Play Store URL</label>
+                                <input className="w-full p-2 border rounded" value={settings.mobileApps.androidUrl} onChange={e => updateMobileAppField('androidUrl', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-1">iOS App Store URL</label>
+                                <input className="w-full p-2 border rounded" value={settings.mobileApps.iosUrl} onChange={e => updateMobileAppField('iosUrl', e.target.value)} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Current Version</label>
+                                    <input className="w-full p-2 border rounded" value={settings.mobileApps.version} onChange={e => updateMobileAppField('version', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Release Notes</label>
+                                    <input className="w-full p-2 border rounded" value={settings.mobileApps.releaseNotes} onChange={e => updateMobileAppField('releaseNotes', e.target.value)} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+        case 'pricing':
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                    <h3 className="text-lg font-bold flex items-center gap-2"><Coins size={20}/> Fare & Pricing Model</h3>
+                    
+                    <div className="grid md:grid-cols-2 gap-6">
+                        {Object.keys(settings.pricing).filter(k => k !== 'logistics').map((vType) => (
+                            <div key={vType} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                                <h4 className="font-bold text-gray-900 mb-3 capitalize">{vType.toLowerCase()} Fares</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Base Fare ({CURRENCY_SYMBOL})</label>
+                                        <input 
+                                            type="number"
+                                            className="w-full p-2 border rounded"
+                                            value={settings.pricing[vType as VehicleType].base}
+                                            onChange={e => updatePricing(vType as VehicleType, 'base', parseInt(e.target.value))}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Per KM ({CURRENCY_SYMBOL})</label>
+                                        <input 
+                                            type="number"
+                                            className="w-full p-2 border rounded"
+                                            value={settings.pricing[vType as VehicleType].perKm}
+                                            onChange={e => updatePricing(vType as VehicleType, 'perKm', parseInt(e.target.value))}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="bg-orange-50 p-6 rounded-xl border border-orange-100">
+                        <h4 className="font-bold text-orange-900 mb-4">Logistics & Cargo Pricing</h4>
+                        <div className="grid md:grid-cols-4 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-orange-800 mb-1">Base Fee</label>
+                                <input 
+                                    type="number"
+                                    className="w-full p-2 border border-orange-200 rounded"
+                                    value={settings.pricing.logistics.baseFare}
+                                    onChange={e => updateLogisticsPricing('baseFare', parseInt(e.target.value))}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-orange-800 mb-1">Per KG</label>
+                                <input 
+                                    type="number"
+                                    className="w-full p-2 border border-orange-200 rounded"
+                                    value={settings.pricing.logistics.perKg}
+                                    onChange={e => updateLogisticsPricing('perKg', parseInt(e.target.value))}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-orange-800 mb-1">Per KM</label>
+                                <input 
+                                    type="number"
+                                    className="w-full p-2 border border-orange-200 rounded"
+                                    value={settings.pricing.logistics.perKm}
+                                    onChange={e => updateLogisticsPricing('perKm', parseInt(e.target.value))}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-orange-800 mb-1">Interstate Multiplier</label>
+                                <input 
+                                    type="number"
+                                    step="0.1"
+                                    className="w-full p-2 border border-orange-200 rounded"
+                                    value={settings.pricing.logistics.interstateMultiplier}
+                                    onChange={e => updateLogisticsPricing('interstateMultiplier', parseFloat(e.target.value))}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+        case 'trackers':
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-bold flex items-center gap-2"><Router size={20}/> GPS Tracker Integrations</h3>
+                        <Button onClick={() => setIsAddingTracker(!isAddingTracker)} size="sm">
+                            {isAddingTracker ? 'Cancel' : 'Add Tracker'}
+                        </Button>
+                    </div>
+
+                    {isAddingTracker && (
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4 animate-in slide-in-from-top-2">
+                            <h4 className="font-bold text-gray-700 mb-3">Configure New Device Stream</h4>
+                            <div className="grid md:grid-cols-4 gap-4 mb-4">
+                                <input placeholder="Integration Name" className="p-2 border rounded" value={newTracker.name} onChange={e => setNewTracker({...newTracker, name: e.target.value})} />
+                                <select className="p-2 border rounded" value={newTracker.provider} onChange={e => setNewTracker({...newTracker, provider: e.target.value as any})}>
+                                    <option value="TELTONIKA">Teltonika</option>
+                                    <option value="CONCOX">Concox</option>
+                                    <option value="RUPTELA">Ruptela</option>
+                                    <option value="QUECLINK">Queclink</option>
+                                </select>
+                                <input placeholder="Server IP" className="p-2 border rounded" value={newTracker.serverIp} onChange={e => setNewTracker({...newTracker, serverIp: e.target.value})} />
+                                <input placeholder="Port" type="number" className="p-2 border rounded" value={newTracker.port} onChange={e => setNewTracker({...newTracker, port: parseInt(e.target.value)})} />
+                            </div>
+                            <Button onClick={addTracker}>Establish Connection</Button>
+                        </div>
+                    )}
+
+                    <div className="grid gap-4">
+                        {settings.trackers.integrations.map(tracker => (
+                            <div key={tracker.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Router size={24}/></div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900">{tracker.name}</h4>
+                                        <p className="text-xs text-gray-500">{tracker.provider} • {tracker.protocol} • Port {tracker.port}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                        Active
+                                    </span>
+                                    <button onClick={() => removeTracker(tracker.id)} className="text-red-400 hover:text-red-600"><Trash2 size={18}/></button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+
         case 'notifications':
             return (
                 <div className="space-y-6 animate-in fade-in">
@@ -416,6 +525,7 @@ const AdminSettings: React.FC = () => {
                     </div>
                 </div>
             );
+
         case 'security':
             return (
                 <div className="space-y-6 animate-in fade-in">
@@ -457,6 +567,7 @@ const AdminSettings: React.FC = () => {
                     </div>
                 </div>
             );
+
         case 'ai':
             return (
                 <div className="space-y-6 animate-in fade-in">
@@ -497,7 +608,8 @@ const AdminSettings: React.FC = () => {
                     </div>
                 </div>
             );
-        // ... (Default, Mobile, Payments, Trackers - preserved/restored as needed)
+
+        // Payments (Default)
         default:
             return (
                 <div className="space-y-6 animate-in fade-in">
@@ -519,7 +631,41 @@ const AdminSettings: React.FC = () => {
                                 />
                             </div>
                         </div>
-                        {/* Other payment cards from previous snippet... */}
+
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
+                            <div className="flex justify-between items-center mb-4">
+                                <h4 className="font-bold text-gray-900">Flutterwave</h4>
+                                <div onClick={() => updateField('payments', 'flutterwaveEnabled', !settings.payments.flutterwaveEnabled)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${settings.payments.flutterwaveEnabled ? 'bg-emerald-500' : 'bg-gray-300'}`}>
+                                    <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform ${settings.payments.flutterwaveEnabled ? 'translate-x-6' : ''}`}></div>
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <label className="block text-xs font-bold text-gray-500">Secret Key</label>
+                                <PasswordInput 
+                                    value={settings.payments.flutterwaveSecretKey} 
+                                    onChange={(v) => updateField('payments', 'flutterwaveSecretKey', v)} 
+                                    placeholder="FLWSECK_..." 
+                                />
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm md:col-span-2">
+                            <div className="flex justify-between items-center mb-4">
+                                <h4 className="font-bold text-gray-900">Manual Bank Transfer</h4>
+                                <div onClick={() => updateField('payments', 'manualEnabled', !settings.payments.manualEnabled)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${settings.payments.manualEnabled ? 'bg-emerald-500' : 'bg-gray-300'}`}>
+                                    <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform ${settings.payments.manualEnabled ? 'translate-x-6' : ''}`}></div>
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <label className="block text-xs font-bold text-gray-500">Bank Account Instructions</label>
+                                <textarea 
+                                    className="w-full p-3 border rounded text-sm h-24"
+                                    value={settings.payments.manualBankDetails}
+                                    onChange={(e) => updateField('payments', 'manualBankDetails', e.target.value)}
+                                    placeholder="e.g. GTBank - 0123456789 - NaijaMove Ltd"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             );
