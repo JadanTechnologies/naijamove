@@ -179,10 +179,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
         </div>
         
         <div className="hidden md:flex gap-8 text-sm font-medium text-gray-600 dark:text-gray-400">
-          <button onClick={() => onOpenStatic('about')} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">About Us</button>
-          <button onClick={() => onOpenStatic('faq')} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">FAQs</button>
-          <a href={`mailto:${cms.contactEmail}`} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Contact Us</a>
-        </div>
+           <button onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">How it Works</button>
+           <button onClick={() => onOpenStatic('about')} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">About Us</button>
+           <button onClick={() => onOpenStatic('faq')} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">FAQs</button>
+           <a href={`mailto:${cms.contactEmail}`} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Contact Us</a>
+         </div>
 
         <div className="flex items-center gap-4">
              <button 
@@ -418,6 +419,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
                   <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">Major Cities</div>
               </div>
           </div>
+
+          {/* Scroll Down Button */}
+          <div className="flex justify-center mt-12">
+              <button
+                  onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="p-3 rounded-full bg-white/10 dark:bg-white/5 backdrop-blur-sm border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/10 transition-all animate-bounce"
+              >
+                  <ChevronDown size={24} className="text-gray-600 dark:text-gray-400" />
+              </button>
+          </div>
         </div>
 
         <div className="flex-1 w-full max-w-lg hidden md:block relative h-[600px] flex items-center justify-center">
@@ -431,6 +442,82 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
             </div>
         </div>
       </main>
+
+      {/* How It Works Section */}
+      <section id="how-it-works" className="relative z-10 py-24 bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+              How It Works
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              Get started with NaijaMove in just a few simple steps. Whether you're a passenger or driver, we've made it easy to move around Nigeria.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Step 1 */}
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                <User size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">1. Sign Up</h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Create your account with NIN verification for secure access. Choose whether you're a passenger or driver partner.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                <Map size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">2. Request or Accept</h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Passengers request rides or deliveries. Drivers accept requests and navigate using our real-time GPS tracking.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                <Zap size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">3. Ride & Pay</h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Enjoy safe, affordable transportation. Pay securely with multiple options including wallet, card, or cash.
+              </p>
+            </div>
+          </div>
+
+          {/* Additional Features */}
+          <div className="mt-20 grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
+              <ShieldCheck className="w-8 h-8 text-emerald-600 dark:text-emerald-400 mx-auto mb-3" />
+              <h4 className="font-bold text-gray-900 dark:text-white mb-2">Verified Drivers</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">All drivers are NIN-verified and background checked.</p>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
+              <Map className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-3" />
+              <h4 className="font-bold text-gray-900 dark:text-white mb-2">Real-time Tracking</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Track your ride in real-time with GPS accuracy.</p>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
+              <CreditCard className="w-8 h-8 text-purple-600 dark:text-purple-400 mx-auto mb-3" />
+              <h4 className="font-bold text-gray-900 dark:text-white mb-2">Secure Payments</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Multiple payment options with fraud protection.</p>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
+              <Phone className="w-8 h-8 text-orange-600 dark:text-orange-400 mx-auto mb-3" />
+              <h4 className="font-bold text-gray-900 dark:text-white mb-2">24/7 Support</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Round-the-clock customer support in multiple languages.</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <footer className="relative z-10 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-900">
           <div className="max-w-7xl mx-auto px-6 py-16">
