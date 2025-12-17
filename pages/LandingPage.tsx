@@ -370,6 +370,125 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
           </div>
       )}
 
+      {/* --- Signup Modal --- */}
+      {isSignupOpen && (
+          <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden animate-in zoom-in-95">
+                  <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">Create Account</h3>
+                      <button onClick={() => setIsSignupOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white"><ChevronDown size={20}/></button>
+                  </div>
+
+                  <div className="p-6">
+                      {signupStep === 1 ? (
+                          <div className="space-y-4 animate-in fade-in">
+                              <div>
+                                  <label className="block text-xs font-bold text-gray-500 mb-1">National Identity Number (NIN)</label>
+                                  <input
+                                      className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded p-2 text-gray-900 dark:text-white outline-none focus:border-emerald-500"
+                                      placeholder="12345678901"
+                                      value={signupData.nin}
+                                      onChange={e => setSignupData({...signupData, nin: e.target.value})}
+                                  />
+                              </div>
+                              <div>
+                                  <label className="block text-xs font-bold text-gray-500 mb-1">Account Type</label>
+                                  <select
+                                      className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded p-2 text-gray-900 dark:text-white outline-none focus:border-emerald-500"
+                                      value={signupData.role}
+                                      onChange={e => setSignupData({...signupData, role: e.target.value as UserRole})}
+                                  >
+                                      <option value={UserRole.PASSENGER}>Passenger</option>
+                                      <option value={UserRole.DRIVER}>Driver Partner</option>
+                                  </select>
+                              </div>
+                              {signupData.role === UserRole.DRIVER && (
+                                  <div>
+                                      <label className="block text-xs font-bold text-gray-500 mb-1">Vehicle Type</label>
+                                      <select
+                                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded p-2 text-gray-900 dark:text-white outline-none focus:border-emerald-500"
+                                          value={signupData.vehicleType}
+                                          onChange={e => setSignupData({...signupData, vehicleType: e.target.value as VehicleType})}
+                                      >
+                                          <option value={VehicleType.OKADA}>Okada</option>
+                                          <option value={VehicleType.KEKE}>Keke</option>
+                                          <option value={VehicleType.MINIBUS}>Mini-bus</option>
+                                          <option value={VehicleType.TRUCK}>Truck</option>
+                                      </select>
+                                  </div>
+                              )}
+                              <button
+                                  onClick={handleVerifyNin}
+                                  disabled={ninLoading || !signupData.nin}
+                                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold flex items-center justify-center gap-2"
+                              >
+                                  {ninLoading ? <Loader2 className="animate-spin"/> : 'Verify Identity'}
+                              </button>
+                              <button onClick={() => setIsSignupOpen(false)} className="w-full text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white">Cancel</button>
+                          </div>
+                      ) : (
+                          <div className="space-y-4 animate-in fade-in">
+                              {verifiedNinData && (
+                                  <div className="bg-emerald-50 dark:bg-emerald-500/10 p-4 rounded-lg border border-emerald-200 dark:border-emerald-500/30">
+                                      <h4 className="font-bold text-emerald-900 dark:text-emerald-400 mb-2">Identity Verified</h4>
+                                      <p className="text-sm text-emerald-700 dark:text-emerald-300">
+                                          {verifiedNinData.firstName} {verifiedNinData.lastName}
+                                      </p>
+                                  </div>
+                              )}
+                              <div>
+                                  <label className="block text-xs font-bold text-gray-500 mb-1">Full Name</label>
+                                  <input
+                                      className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded p-2 text-gray-900 dark:text-white outline-none focus:border-emerald-500"
+                                      value={signupData.name}
+                                      onChange={e => setSignupData({...signupData, name: e.target.value})}
+                                  />
+                              </div>
+                              <div>
+                                  <label className="block text-xs font-bold text-gray-500 mb-1">Email</label>
+                                  <input
+                                      type="email"
+                                      className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded p-2 text-gray-900 dark:text-white outline-none focus:border-emerald-500"
+                                      placeholder="your@email.com"
+                                      value={signupData.email}
+                                      onChange={e => setSignupData({...signupData, email: e.target.value})}
+                                  />
+                              </div>
+                              <div>
+                                  <label className="block text-xs font-bold text-gray-500 mb-1">Phone Number</label>
+                                  <input
+                                      className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded p-2 text-gray-900 dark:text-white outline-none focus:border-emerald-500"
+                                      placeholder="+2348012345678"
+                                      value={signupData.phone}
+                                      onChange={e => setSignupData({...signupData, phone: e.target.value})}
+                                  />
+                              </div>
+                              {signupData.role === UserRole.DRIVER && (
+                                  <div>
+                                      <label className="block text-xs font-bold text-gray-500 mb-1">License Plate</label>
+                                      <input
+                                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded p-2 text-gray-900 dark:text-white outline-none focus:border-emerald-500"
+                                          placeholder="ABC-123-XY"
+                                          value={signupData.licensePlate}
+                                          onChange={e => setSignupData({...signupData, licensePlate: e.target.value})}
+                                      />
+                                  </div>
+                              )}
+                              <button
+                                  onClick={handleSignupComplete}
+                                  disabled={ninLoading || !signupData.name || !signupData.email || !signupData.phone}
+                                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold flex items-center justify-center gap-2"
+                              >
+                                  {ninLoading ? <Loader2 className="animate-spin"/> : 'Create Account'}
+                              </button>
+                              <button onClick={() => setSignupStep(1)} className="w-full text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white">Back</button>
+                          </div>
+                      )}
+                  </div>
+              </div>
+          </div>
+      )}
+
       {/* --- Main Hero Content --- */}
       <main className="relative z-10 flex flex-col md:flex-row items-center justify-between px-6 md:px-12 max-w-7xl mx-auto mt-8 md:mt-16 gap-12 flex-grow">
         
