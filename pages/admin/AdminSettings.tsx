@@ -217,12 +217,14 @@ const AdminSettings: React.FC = () => {
       if(!settings) return;
       const list = settings.security[listKey];
       
-      // Fix: Ensure list is an array before spreading, as magicLinkExpiryHours is a number
       if (!Array.isArray(list)) return;
 
-      let newList = [...list];
-      if(action === 'ADD' && !list.includes(value)) newList.push(value);
-      if(action === 'REMOVE') newList = list.filter(i => i !== value);
+      // Explicitly cast list to string[] to satisfy TypeScript compiler
+      const listArray = list as string[];
+      let newList = [...listArray];
+      
+      if(action === 'ADD' && !listArray.includes(value)) newList.push(value);
+      if(action === 'REMOVE') newList = listArray.filter(i => i !== value);
       
       setSettings({
           ...settings,
