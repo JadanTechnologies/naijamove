@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, LayersControl, Polyline, useMap
 import L from 'leaflet';
 import { UserRole, VehicleType, RideRequest, RideStatus } from '../types';
 import { socketService } from '../services/mockService';
-import { Navigation, Gauge, Radio, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Gauge, Radio, ChevronRight, ChevronLeft } from 'lucide-react';
 
 interface MapMockProps {
   role?: UserRole;
@@ -93,26 +93,9 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
 
   const [drivers, setDrivers] = useState([
     { 
-        id: '1', 
-        type: VehicleType.OKADA, 
-        lat: 13.0100, 
-        lng: 5.2500, 
-        name: "Musa Ibrahim", 
-        status: "BUSY",
-        rating: 4.8,
-        trips: 1240,
-        loadKg: 75,
-        maxLoad: 150,
-        speed: 45,
-        heading: 0,
-        action: "Cruising",
-        currentRide: {
-            id: 'RIDE-8821',
-            passenger: 'Adebayo T.',
-            dest: 'Sokoto Market'
-        }
+        id: '1', type: VehicleType.OKADA, lat: 13.0100, lng: 5.2500, name: "Musa Ibrahim", status: "BUSY", rating: 4.8, trips: 1240, loadKg: 75, maxLoad: 150, speed: 45, heading: 0, action: "Cruising",
+        currentRide: { id: 'RIDE-8821', passenger: 'Adebayo T.', dest: 'Sokoto Market' }
     },
-    // ... (Keep other drivers unchanged for brevity, reusing state)
     { 
         id: '2', type: VehicleType.KEKE, lat: 13.0050, lng: 5.2480, name: "Sani Abacha", status: "IDLE", rating: 4.5, trips: 890, loadKg: 0, maxLoad: 400, speed: 0, heading: 90, action: "Stopped", currentRide: null 
     },
@@ -221,7 +204,7 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
             <LayersControl position="topright">
                 <LayersControl.BaseLayer checked name="Dark Matter">
                     <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                        attribution='&copy; CARTO'
                         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                     />
                 </LayersControl.BaseLayer>
@@ -243,7 +226,7 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
                     eventHandlers={{ click: () => { if(enableAdminFeatures) setFocusedDriverId(d.id); } }}
                 >
                     <Popup className="glass-popup" closeButton={false}>
-                        <div className="p-3 min-w-[200px] bg-gray-900/90 text-white rounded-lg backdrop-blur-md border border-gray-700">
+                        <div className="p-3 min-w-[200px] text-white">
                             <div className="flex justify-between items-start mb-2 border-b border-gray-700 pb-2">
                                 <div>
                                     <h3 className="font-bold text-emerald-400">{d.name}</h3>
@@ -295,7 +278,7 @@ const MapMock: React.FC<MapMockProps> = ({ role, showDrivers = true, activeRide,
                   </h3>
                   <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">{drivers.length}</span>
               </div>
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
                   {drivers.map(d => (
                       <div 
                         key={d.id} 

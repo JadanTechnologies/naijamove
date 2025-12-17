@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserRole, NotificationItem } from '../types';
 import { APP_NAME } from '../constants';
-import { Menu, X, LogOut, LayoutDashboard, Car, Package, Settings, CreditCard, User as UserIcon, Users, Activity, ChevronLeft, ChevronRight, Headphones, Wallet, Zap, Bell, Wifi, WifiOff, Clock, FileBarChart, Moon, Sun } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard, Car, Package, Settings, CreditCard, User as UserIcon, Users, Activity, ChevronLeft, ChevronRight, Headphones, Wallet, Zap, Bell, Wifi, WifiOff, Clock, FileBarChart } from 'lucide-react';
 import { getSystemSettings, getNotifications, markNotificationRead } from '../services/mockService';
 import { SupportWidget } from './SupportWidget';
 
@@ -19,18 +19,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [appName, setAppName] = useState(APP_NAME);
   
-  // Header States
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
-  
-  // Dark Mode State - Enforced
-  const [isDarkMode, setIsDarkMode] = useState(true);
 
   useEffect(() => {
     getSystemSettings().then(s => setAppName(s.branding.appName));
-    document.documentElement.classList.add('dark'); // Force dark mode class
+    document.documentElement.classList.add('dark'); 
 
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     
