@@ -728,36 +728,63 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
 
                 {/* Featured Products */}
                 <div className="glass-panel p-6 rounded-xl shadow-lg border border-white/10">
-                    <h3 className="font-bold text-white mb-4">Featured Products</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <h3 className="font-bold text-white mb-6">Featured Products</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Sample Product Cards */}
-                        <div className="bg-white/5 p-4 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
-                            <img src="https://via.placeholder.com/200x150?text=Product" alt="Product" className="w-full h-32 object-cover rounded mb-3" />
-                            <h4 className="font-medium text-white mb-1">Wireless Headphones</h4>
-                            <p className="text-sm text-gray-400 mb-2">High-quality sound, 30hr battery</p>
-                            <div className="flex justify-between items-center">
-                                <span className="font-bold text-emerald-400">₦25,000</span>
-                                <Button size="sm" className="bg-purple-600 hover:bg-purple-700">Order Now</Button>
+                        <div className="bg-white/5 p-6 rounded-xl border border-white/10 hover:bg-white/10 hover:border-purple-500/30 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10">
+                            <div className="aspect-video bg-gray-800 rounded-lg mb-4 overflow-hidden">
+                                <img src="https://via.placeholder.com/300x200?text=Wireless+Headphones" alt="Wireless Headphones" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                            </div>
+                            <div className="space-y-3">
+                                <h4 className="font-bold text-white text-lg">Wireless Headphones</h4>
+                                <p className="text-sm text-gray-400 leading-relaxed">High-quality sound with 30-hour battery life and premium comfort</p>
+                                <div className="flex items-center justify-between pt-2">
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-emerald-400 text-xl">₦25,000</span>
+                                        <span className="text-xs text-gray-500">Free delivery</span>
+                                    </div>
+                                    <Button className="bg-purple-600 hover:bg-purple-700 px-6 py-2 font-semibold">
+                                        Order Now
+                                    </Button>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="bg-white/5 p-4 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
-                            <img src="https://via.placeholder.com/200x150?text=Product" alt="Product" className="w-full h-32 object-cover rounded mb-3" />
-                            <h4 className="font-medium text-white mb-1">Smart Watch</h4>
-                            <p className="text-sm text-gray-400 mb-2">Fitness tracking & notifications</p>
-                            <div className="flex justify-between items-center">
-                                <span className="font-bold text-emerald-400">₦45,000</span>
-                                <Button size="sm" className="bg-purple-600 hover:bg-purple-700">Order Now</Button>
+                        <div className="bg-white/5 p-6 rounded-xl border border-white/10 hover:bg-white/10 hover:border-purple-500/30 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10">
+                            <div className="aspect-video bg-gray-800 rounded-lg mb-4 overflow-hidden">
+                                <img src="https://via.placeholder.com/300x200?text=Smart+Watch" alt="Smart Watch" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                            </div>
+                            <div className="space-y-3">
+                                <h4 className="font-bold text-white text-lg">Smart Watch</h4>
+                                <p className="text-sm text-gray-400 leading-relaxed">Advanced fitness tracking with heart rate monitoring and notifications</p>
+                                <div className="flex items-center justify-between pt-2">
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-emerald-400 text-xl">₦45,000</span>
+                                        <span className="text-xs text-gray-500">Free delivery</span>
+                                    </div>
+                                    <Button className="bg-purple-600 hover:bg-purple-700 px-6 py-2 font-semibold">
+                                        Order Now
+                                    </Button>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="bg-white/5 p-4 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
-                            <img src="https://via.placeholder.com/200x150?text=Product" alt="Product" className="w-full h-32 object-cover rounded mb-3" />
-                            <h4 className="font-medium text-white mb-1">Laptop Bag</h4>
-                            <p className="text-sm text-gray-400 mb-2">Waterproof, professional design</p>
-                            <div className="flex justify-between items-center">
-                                <span className="font-bold text-emerald-400">₦15,000</span>
-                                <Button size="sm" className="bg-purple-600 hover:bg-purple-700">Order Now</Button>
+                        <div className="bg-white/5 p-6 rounded-xl border border-white/10 hover:bg-white/10 hover:border-purple-500/30 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 md:col-span-2">
+                            <div className="aspect-video bg-gray-800 rounded-lg mb-4 overflow-hidden">
+                                <img src="https://via.placeholder.com/600x200?text=Laptop+Bag" alt="Laptop Bag" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                            </div>
+                            <div className="space-y-3">
+                                <h4 className="font-bold text-white text-lg">Professional Laptop Bag</h4>
+                                <p className="text-sm text-gray-400 leading-relaxed">Waterproof, professional design with multiple compartments and premium padding</p>
+                                <div className="flex items-center justify-between pt-2">
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-emerald-400 text-xl">₦15,000</span>
+                                        <span className="text-xs text-gray-500">Free delivery</span>
+                                    </div>
+                                    <Button className="bg-purple-600 hover:bg-purple-700 px-6 py-2 font-semibold">
+                                        Order Now
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>

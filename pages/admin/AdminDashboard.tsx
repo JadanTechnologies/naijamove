@@ -4,19 +4,285 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { getDashboardStats, getActiveRides, getSystemHealth, getTransactions, getOnlineDrivers, manualAssignDriver, approveTransaction, generateReport, getSupportTickets } from '../../services/mockService';
 import { CURRENCY_SYMBOL } from '../../constants';
 import MapMock from '../../components/MapMock';
-import { 
-  Users, TrendingUp, AlertTriangle, ShieldCheck, Truck, CreditCard, 
-  Download, Search, Car, Activity, Server, Database, Radio, 
-  CheckCircle, AlertCircle, XCircle, Cpu, RefreshCw, Briefcase, Map, Phone, Wallet, User as UserIcon, FileText, Check, X, Clock, MessageSquare
+import {
+  Users, TrendingUp, AlertTriangle, ShieldCheck, Truck, CreditCard,
+  Download, Search, Car, Activity, Server, Database, Radio,
+  CheckCircle, AlertCircle, XCircle, Cpu, RefreshCw, Briefcase, Map, Phone, Wallet, User as UserIcon, FileText, Check, X, Clock, MessageSquare,
+  ShoppingBag, Store, Package, Settings
 } from 'lucide-react';
 import AdminSettings from './AdminSettings';
 import UserManagement from './UserManagement';
 import SupportManagement from './SupportManagement';
 import Automation from './Automation';
-import { RideRequest, UserRole, SystemHealth, DashboardStats, PaymentTransaction, User, RideStatus, SupportTicket } from '../../types';
-import { VoiceCallModal } from '../../components/VoiceCallModal';
-import { Button } from '../../components/ui/Button';
-import { useToast } from '../../components/ui/Toast';
+
+// New Management Components
+const EShagoManagement = () => (
+  <div className="space-y-6 animate-in fade-in">
+    <h1 className="text-2xl font-bold text-white">E-Shago Marketplace Management</h1>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Product Management */}
+      <div className="glass-panel p-6 rounded-xl border border-white/10 shadow-lg">
+        <div className="w-12 h-12 bg-purple-500/20 text-purple-400 rounded-full flex items-center justify-center mb-4 border border-purple-500/30">
+          <ShoppingBag size={24} />
+        </div>
+        <h3 className="font-bold text-lg text-white mb-2">Product Management</h3>
+        <p className="text-sm text-gray-400 mb-4">Add, edit, and manage marketplace products</p>
+        <Button className="w-full bg-purple-600 hover:bg-purple-700">Manage Products</Button>
+      </div>
+
+      {/* Store Management */}
+      <div className="glass-panel p-6 rounded-xl border border-white/10 shadow-lg">
+        <div className="w-12 h-12 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center mb-4 border border-blue-500/30">
+          <Store size={24} />
+        </div>
+        <h3 className="font-bold text-lg text-white mb-2">Store Management</h3>
+        <p className="text-sm text-gray-400 mb-4">Manage partner stores and vendors</p>
+        <Button className="w-full bg-blue-600 hover:bg-blue-700">Manage Stores</Button>
+      </div>
+
+      {/* Order Management */}
+      <div className="glass-panel p-6 rounded-xl border border-white/10 shadow-lg">
+        <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mb-4 border border-emerald-500/30">
+          <Package size={24} />
+        </div>
+        <h3 className="font-bold text-lg text-white mb-2">Order Management</h3>
+        <p className="text-sm text-gray-400 mb-4">Process and track marketplace orders</p>
+        <Button className="w-full bg-emerald-600 hover:bg-emerald-700">View Orders</Button>
+      </div>
+    </div>
+
+    {/* Recent Orders Table */}
+    <div className="glass-panel rounded-xl shadow-lg border border-white/10 overflow-hidden">
+      <div className="p-4 border-b border-white/10">
+        <h3 className="font-bold text-white">Recent Marketplace Orders</h3>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-white/5 text-gray-400 font-semibold">
+            <tr>
+              <th className="px-6 py-3">Order ID</th>
+              <th className="px-6 py-3">Customer</th>
+              <th className="px-6 py-3">Product</th>
+              <th className="px-6 py-3">Amount</th>
+              <th className="px-6 py-3">Status</th>
+              <th className="px-6 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            <tr className="hover:bg-white/5">
+              <td className="px-6 py-4 font-mono text-xs">#ESH-001</td>
+              <td className="px-6 py-4">John Doe</td>
+              <td className="px-6 py-4">Wireless Headphones</td>
+              <td className="px-6 py-4 font-bold text-emerald-400">₦25,000</td>
+              <td className="px-6 py-4"><span className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded text-xs">Processing</span></td>
+              <td className="px-6 py-4 text-right">
+                <Button size="sm" variant="outline" className="border-white/20 text-white hover:bg-white/10">View</Button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+);
+
+const ReferralManagement = () => (
+  <div className="space-y-6 animate-in fade-in">
+    <h1 className="text-2xl font-bold text-white">Referral Program Management</h1>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Program Stats */}
+      <div className="glass-panel p-6 rounded-xl border border-white/10">
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-sm text-gray-400 font-medium mb-1">Total Referrals</p>
+            <h3 className="text-3xl font-bold text-emerald-400">1,247</h3>
+          </div>
+          <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400 border border-emerald-500/30">
+            <Users size={24} />
+          </div>
+        </div>
+      </div>
+
+      <div className="glass-panel p-6 rounded-xl border border-white/10">
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-sm text-gray-400 font-medium mb-1">Referral Earnings</p>
+            <h3 className="text-3xl font-bold text-purple-400">₦2.4M</h3>
+          </div>
+          <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 border border-purple-500/30">
+            <Wallet size={24} />
+          </div>
+        </div>
+      </div>
+
+      <div className="glass-panel p-6 rounded-xl border border-white/10">
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-sm text-gray-400 font-medium mb-1">Active Referrers</p>
+            <h3 className="text-3xl font-bold text-blue-400">892</h3>
+          </div>
+          <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400 border border-blue-500/30">
+            <TrendingUp size={24} />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Program Settings */}
+    <div className="glass-panel p-6 rounded-xl shadow-lg border border-white/10">
+      <h3 className="font-bold text-white mb-6">Referral Program Settings</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Referral Bonus (₦)</label>
+          <input type="number" defaultValue="500" className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-emerald-500 outline-none" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Minimum Ride Value</label>
+          <input type="number" defaultValue="1000" className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-emerald-500 outline-none" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Program Status</label>
+          <select className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-emerald-500 outline-none">
+            <option>Active</option>
+            <option>Paused</option>
+            <option>Disabled</option>
+          </select>
+        </div>
+        <div className="flex items-end">
+          <Button className="w-full bg-emerald-600 hover:bg-emerald-700">Update Settings</Button>
+        </div>
+      </div>
+    </div>
+
+    {/* Top Referrers */}
+    <div className="glass-panel rounded-xl shadow-lg border border-white/10 overflow-hidden">
+      <div className="p-4 border-b border-white/10">
+        <h3 className="font-bold text-white">Top Referrers</h3>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-white/5 text-gray-400 font-semibold">
+            <tr>
+              <th className="px-6 py-3">User</th>
+              <th className="px-6 py-3">Referrals</th>
+              <th className="px-6 py-3">Earnings</th>
+              <th className="px-6 py-3">Join Date</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            <tr className="hover:bg-white/5">
+              <td className="px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
+                  <span className="text-white">Sarah Johnson</span>
+                </div>
+              </td>
+              <td className="px-6 py-4">47</td>
+              <td className="px-6 py-4 font-bold text-emerald-400">₦23,500</td>
+              <td className="px-6 py-4 text-gray-400">Jan 2024</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+);
+
+const PlatformMaintenance = () => (
+  <div className="space-y-6 animate-in fade-in">
+    <h1 className="text-2xl font-bold text-white">Platform Maintenance</h1>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* System Status */}
+      <div className="glass-panel p-6 rounded-xl border border-white/10">
+        <h3 className="font-bold text-white mb-6 flex items-center gap-2">
+          <Server size={20} className="text-blue-400" />
+          System Status
+        </h3>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-300">Database</span>
+            <span className="bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-xs">Operational</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-300">API Services</span>
+            <span className="bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-xs">Operational</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-300">Payment Gateway</span>
+            <span className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded text-xs">Maintenance</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Maintenance Actions */}
+      <div className="glass-panel p-6 rounded-xl border border-white/10">
+        <h3 className="font-bold text-white mb-6 flex items-center gap-2">
+          <Settings size={20} className="text-orange-400" />
+          Maintenance Actions
+        </h3>
+        <div className="space-y-3">
+          <Button className="w-full bg-blue-600 hover:bg-blue-700 flex items-center gap-2">
+            <RefreshCw size={18} />
+            Clear Cache
+          </Button>
+          <Button className="w-full bg-yellow-600 hover:bg-yellow-700 flex items-center gap-2">
+            <Database size={18} />
+            Database Backup
+          </Button>
+          <Button className="w-full bg-red-600 hover:bg-red-700 flex items-center gap-2">
+            <AlertTriangle size={18} />
+            Emergency Shutdown
+          </Button>
+        </div>
+      </div>
+    </div>
+
+    {/* Maintenance Schedule */}
+    <div className="glass-panel p-6 rounded-xl shadow-lg border border-white/10">
+      <h3 className="font-bold text-white mb-6">Scheduled Maintenance</h3>
+      <div className="space-y-4">
+        <div className="flex justify-between items-center p-4 bg-white/5 rounded-lg border border-white/10">
+          <div>
+            <h4 className="font-medium text-white">Server Updates</h4>
+            <p className="text-sm text-gray-400">Security patches and performance improvements</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-400">Next: Dec 25, 2:00 AM</p>
+            <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-xs">Scheduled</span>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center p-4 bg-white/5 rounded-lg border border-white/10">
+          <div>
+            <h4 className="font-medium text-white">Database Optimization</h4>
+            <p className="text-sm text-gray-400">Index rebuilding and query optimization</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-400">Next: Dec 28, 1:00 AM</p>
+            <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs">Completed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* System Logs */}
+    <div className="glass-panel rounded-xl shadow-lg border border-white/10 overflow-hidden">
+      <div className="p-4 border-b border-white/10 flex justify-between items-center">
+        <h3 className="font-bold text-white">System Logs</h3>
+        <Button size="sm" variant="outline" className="border-white/20 text-white hover:bg-white/10">Export Logs</Button>
+      </div>
+      <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
+        <div className="text-sm text-gray-400">[2024-12-18 14:30:22] Database connection established</div>
+        <div className="text-sm text-gray-400">[2024-12-18 14:25:15] Payment gateway maintenance completed</div>
+        <div className="text-sm text-emerald-400">[2024-12-18 14:20:08] System backup completed successfully</div>
+        <div className="text-sm text-gray-400">[2024-12-18 14:15:45] User authentication service restarted</div>
+      </div>
+    </div>
+  </div>
+);
 
 interface AdminDashboardProps {
     view: string;
@@ -155,6 +421,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   if (view === 'users') return <UserManagement />;
   if (view === 'support') return <SupportManagement />;
   if (view === 'automation') return <Automation />;
+  if (view === 'eshago') return <EShagoManagement />;
+  if (view === 'referrals') return <ReferralManagement />;
+  if (view === 'maintenance') return <PlatformMaintenance />;
   
   if (view === 'reports') {
       return (
@@ -627,7 +896,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-white">Super Admin Console</h1>
+        <h1 className="text-2xl font-bold text-white">AmanaRide Admin Console</h1>
         <div className="flex gap-2">
             <button className="bg-white/5 border border-white/10 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/10">Export Report</button>
         </div>
