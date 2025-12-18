@@ -228,8 +228,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
                       {loginMode === 'USER' ? (
                           <div className="space-y-2">
                               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Select your dashboard to continue.</p>
-                              <button 
-                                onClick={() => handleQuickLogin('musa@naijamove.ng')}
+                              <button
+                                onClick={() => handleQuickLogin('musa@amanaride.ng')}
                                 className="w-full flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-700 transition-all group"
                               >
                                   <div className="w-10 h-10 bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-500 rounded-lg flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-colors">
@@ -273,9 +273,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
                                   <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
                                       <div>
                                           <label className="block text-xs font-bold text-gray-500 mb-1">Email / Username</label>
-                                          <input 
+                                          <input
                                               className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded p-2 text-gray-900 dark:text-white outline-none focus:border-emerald-500"
-                                              placeholder="admin@naijamove.ng"
+                                              placeholder="admin@amanaride.ng"
                                               value={loginData.email}
                                               onChange={e => setLoginData({...loginData, email: e.target.value})}
                                           />
@@ -300,9 +300,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
                                       <button onClick={() => setLoginMode('USER')} className="w-full text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white">Cancel</button>
                                       
                                       <div className="pt-4 border-t border-gray-200 dark:border-gray-800 text-center">
-                                          <button 
+                                          <button
                                               type="button"
-                                              onClick={() => setLoginData({ email: 'admin@naijamove.ng', password: 'password', token: '' })}
+                                              onClick={() => setLoginData({ email: 'admin@amanaride.ng', password: 'password', token: '' })}
                                               className="text-xs text-emerald-600 font-bold hover:text-emerald-500 underline"
                                           >
                                               Auto-fill Super Admin
@@ -317,7 +317,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
                                           <ShieldCheck size={32} />
                                       </div>
                                       <h4 className="font-bold text-lg dark:text-white">Setup Authenticator</h4>
-                                      <p className="text-xs text-gray-500 dark:text-gray-400">Scan this code with the NaijaMove Authenticator App to link your account.</p>
+                                      <p className="text-xs text-gray-500 dark:text-gray-400">Scan this code with the AmanaRide Authenticator App to link your account.</p>
                                       
                                       <div className="bg-white p-2 rounded-xl inline-block mx-auto border border-gray-200">
                                           <img src={totpSetupData?.qrCode} alt="QR" className="w-40 h-40" />
@@ -343,7 +343,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
                                           <Lock size={32} />
                                       </div>
                                       <h4 className="font-bold text-lg dark:text-white">Enter Token</h4>
-                                      <p className="text-xs text-gray-500 dark:text-gray-400">Open your NaijaMove Authenticator and enter the 6-digit code.</p>
+                                      <p className="text-xs text-gray-500 dark:text-gray-400">Open your AmanaRide Authenticator and enter the 6-digit code.</p>
                                       
                                       <input 
                                           type="text"
@@ -570,7 +570,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
               How It Works
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Get started with NaijaMove in just a few simple steps. Whether you're a passenger or driver, we've made it easy to move around Nigeria.
+              Get started with AmanaRide in just a few simple steps. Whether you're a passenger or driver, we've made it easy to move around Nigeria.
             </p>
           </div>
 
