@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Bike, Box, Car, ChevronRight, ShieldCheck, Zap, Map, ChevronDown, Download, Phone, Mail, Key, User, CreditCard, ScanLine, ArrowRight, Loader2, Truck, Smartphone, Lock, QrCode, Copy, Sun, Moon } from 'lucide-react';
+import { Bike, Box, Car, ChevronRight, ShieldCheck, Zap, Map, ChevronDown, Download, Phone, Mail, Key, User, CreditCard, ScanLine, ArrowRight, Loader2, Truck, Smartphone, Lock, QrCode, Copy, Sun, Moon, ShoppingBag, Shield, Star } from 'lucide-react';
 import { getSystemSettings, verifyNin, signup, login, setupTotp, verifyTotpToken } from '../services/mockService';
 import { SystemSettings, UserRole, VehicleType } from '../types';
 import { useToast } from '../components/ui/Toast';
@@ -128,7 +128,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
   const apps = settings.mobileApps;
 
   return (
-    <div className="min-h-screen dark:bg-black bg-slate-50 dark:text-white text-gray-900 overflow-x-hidden relative selection:bg-emerald-500 selection:text-white font-sans flex flex-col transition-colors duration-300">
+    <div className="min-h-screen dark:bg-black bg-gray-50 dark:text-white text-gray-900 overflow-x-hidden relative selection:bg-emerald-500 selection:text-white font-sans flex flex-col transition-colors duration-300">
       
       <style>{`
         .hologram-bike {
@@ -643,6 +643,124 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loading, onOpenStati
               <h4 className="font-bold text-gray-900 dark:text-white mb-2">24/7 Support</h4>
               <p className="text-sm text-gray-600 dark:text-gray-400">Round-the-clock customer support in multiple languages.</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* E-Shago Marketplace Section */}
+      <section className="relative z-10 py-24 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-500/20 border border-purple-200 dark:border-purple-500/30 backdrop-blur-sm mb-6">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
+              </span>
+              <span className="text-sm font-medium text-purple-700 dark:text-purple-300">E-Shago Marketplace</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+              Shop & Deliver with AmanaRide
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              Order from your favorite stores and get instant delivery through our network of verified drivers. From groceries to electronics, we bring the market to you.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            {/* Featured Store 1 */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all group">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-red-100 dark:bg-red-500/20 rounded-lg flex items-center justify-center">
+                  <img src="https://logos-world.net/wp-content/uploads/2020/11/Shoprite-Logo.png" alt="Shoprite" className="w-8 h-8 object-contain" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-white">Shoprite Nigeria</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Supermarket Chain</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Fresh groceries, household items, and more delivered to your door.</p>
+              <div className="flex items-center justify-between">
+                <span className="text-xs bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 px-2 py-1 rounded">Open Now</span>
+                <span className="text-sm font-medium text-purple-600 dark:text-purple-400">30-45 min delivery</span>
+              </div>
+            </div>
+
+            {/* Featured Store 2 */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all group">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-orange-100 dark:bg-orange-500/20 rounded-lg flex items-center justify-center">
+                  <img src="https://logos-world.net/wp-content/uploads/2020/11/Jumia-Logo.png" alt="Jumia" className="w-8 h-8 object-contain" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-white">Jumia Nigeria</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Online Marketplace</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Electronics, fashion, and home appliances with fast delivery.</p>
+              <div className="flex items-center justify-between">
+                <span className="text-xs bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 px-2 py-1 rounded">Open Now</span>
+                <span className="text-sm font-medium text-purple-600 dark:text-purple-400">45-60 min delivery</span>
+              </div>
+            </div>
+
+            {/* Featured Store 3 */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all group">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-500/20 rounded-lg flex items-center justify-center">
+                  <img src="https://logos-world.net/wp-content/uploads/2020/11/Konga-Logo.png" alt="Konga" className="w-8 h-8 object-contain" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-white">Konga</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">E-commerce Platform</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Wide range of products from books to beauty products.</p>
+              <div className="flex items-center justify-between">
+                <span className="text-xs bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 px-2 py-1 rounded">Open Now</span>
+                <span className="text-sm font-medium text-purple-600 dark:text-purple-400">30-50 min delivery</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Marketplace Features */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <ShoppingBag size={28} />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Shop Online</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Browse thousands of products from trusted stores</p>
+            </div>
+
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <Truck size={28} />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Fast Delivery</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Same-day delivery with real-time tracking</p>
+            </div>
+
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <Shield size={28} />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Secure Payment</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Safe transactions with multiple payment options</p>
+            </div>
+
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-teal-100 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <Star size={28} />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Quality Guarantee</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">100% satisfaction guarantee on all orders</p>
+            </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <button className="px-8 py-4 bg-purple-600 text-white rounded-full font-bold text-lg hover:bg-purple-700 dark:hover:bg-purple-500 shadow-[0_0_30px_rgba(147,51,234,0.4)] transition-all transform hover:scale-105 flex items-center justify-center gap-2 mx-auto">
+              <ShoppingBag size={20} /> Explore E-Shago Marketplace
+            </button>
           </div>
         </div>
       </section>

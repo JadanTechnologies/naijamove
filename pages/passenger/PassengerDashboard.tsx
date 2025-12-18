@@ -5,7 +5,7 @@ import { calculateFare, createRide, getActiveRides, updateRideStatus, getUserTra
 import { Button } from '../../components/ui/Button';
 import { CURRENCY_SYMBOL } from '../../constants';
 import MapMock from '../../components/MapMock';
-import { Bike, Car, Box, Truck, MapPin, Phone, MessageSquare, History, Clock, Bell, X, Star, CheckCircle, Navigation, Wallet, Copy, ArrowUpRight, ArrowDownLeft, Users, TrendingUp } from 'lucide-react';
+import { Bike, Car, Box, Truck, MapPin, Phone, MessageSquare, History, Clock, Bell, X, Star, CheckCircle, Navigation, Wallet, Copy, ArrowUpRight, ArrowDownLeft, Users, TrendingUp, ShoppingBag } from 'lucide-react';
 import { ChatWindow } from '../../components/ChatWindow';
 import { VoiceCallModal } from '../../components/VoiceCallModal';
 import { useToast } from '../../components/ui/Toast';
@@ -15,7 +15,7 @@ interface PassengerDashboardProps {
 }
 
 const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
-  const [view, setView] = useState<'BOOKING' | 'HISTORY' | 'WALLET' | 'REFERRALS'>('BOOKING');
+  const [view, setView] = useState<'BOOKING' | 'HISTORY' | 'WALLET' | 'REFERRALS' | 'MARKETPLACE'>('BOOKING');
   const [mode, setMode] = useState<'RIDE' | 'LOGISTICS'>('RIDE');
   const [pickup, setPickup] = useState('Sokoto Central Market');
   const [dropoff, setDropoff] = useState('');
@@ -436,6 +436,12 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
               >
                   Referrals
               </button>
+              <button
+                onClick={() => setView('MARKETPLACE')}
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${view === 'MARKETPLACE' ? 'bg-white/10 shadow text-white border border-white/10' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                  E-Shago
+              </button>
         </div>
 
         {view === 'WALLET' ? (
@@ -673,6 +679,101 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
                             <div className="w-6 h-6 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-xs font-bold">3</div>
                             <p>Earn more with each successful referral!</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+        ) : view === 'MARKETPLACE' ? (
+            <div className="space-y-6 animate-in fade-in">
+                {/* Marketplace Header */}
+                <div className="glass-panel p-6 rounded-xl shadow-lg border border-white/10">
+                    <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                        <ShoppingBag size={20} className="text-purple-400" />
+                        E-Shago Marketplace
+                    </h3>
+                    <p className="text-sm text-gray-400 mb-4">Order from your favorite stores and get instant delivery</p>
+
+                    {/* Quick Store Access */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-purple-500/10 p-4 rounded-lg border border-purple-500/30 hover:bg-purple-500/20 transition-colors cursor-pointer">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-8 h-8 bg-red-100 dark:bg-red-500/20 rounded flex items-center justify-center">
+                                    <img src="https://logos-world.net/wp-content/uploads/2020/11/Shoprite-Logo.png" alt="Shoprite" className="w-6 h-6 object-contain" />
+                                </div>
+                                <span className="font-medium text-white">Shoprite</span>
+                            </div>
+                            <p className="text-xs text-gray-400">Groceries & Household</p>
+                        </div>
+
+                        <div className="bg-purple-500/10 p-4 rounded-lg border border-purple-500/30 hover:bg-purple-500/20 transition-colors cursor-pointer">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-8 h-8 bg-orange-100 dark:bg-orange-500/20 rounded flex items-center justify-center">
+                                    <img src="https://logos-world.net/wp-content/uploads/2020/11/Jumia-Logo.png" alt="Jumia" className="w-6 h-6 object-contain" />
+                                </div>
+                                <span className="font-medium text-white">Jumia</span>
+                            </div>
+                            <p className="text-xs text-gray-400">Electronics & Fashion</p>
+                        </div>
+
+                        <div className="bg-purple-500/10 p-4 rounded-lg border border-purple-500/30 hover:bg-purple-500/20 transition-colors cursor-pointer">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-500/20 rounded flex items-center justify-center">
+                                    <img src="https://logos-world.net/wp-content/uploads/2020/11/Konga-Logo.png" alt="Konga" className="w-6 h-6 object-contain" />
+                                </div>
+                                <span className="font-medium text-white">Konga</span>
+                            </div>
+                            <p className="text-xs text-gray-400">Books & Beauty</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Featured Products */}
+                <div className="glass-panel p-6 rounded-xl shadow-lg border border-white/10">
+                    <h3 className="font-bold text-white mb-4">Featured Products</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {/* Sample Product Cards */}
+                        <div className="bg-white/5 p-4 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
+                            <img src="https://via.placeholder.com/200x150?text=Product" alt="Product" className="w-full h-32 object-cover rounded mb-3" />
+                            <h4 className="font-medium text-white mb-1">Wireless Headphones</h4>
+                            <p className="text-sm text-gray-400 mb-2">High-quality sound, 30hr battery</p>
+                            <div className="flex justify-between items-center">
+                                <span className="font-bold text-emerald-400">₦25,000</span>
+                                <Button size="sm" className="bg-purple-600 hover:bg-purple-700">Order Now</Button>
+                            </div>
+                        </div>
+
+                        <div className="bg-white/5 p-4 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
+                            <img src="https://via.placeholder.com/200x150?text=Product" alt="Product" className="w-full h-32 object-cover rounded mb-3" />
+                            <h4 className="font-medium text-white mb-1">Smart Watch</h4>
+                            <p className="text-sm text-gray-400 mb-2">Fitness tracking & notifications</p>
+                            <div className="flex justify-between items-center">
+                                <span className="font-bold text-emerald-400">₦45,000</span>
+                                <Button size="sm" className="bg-purple-600 hover:bg-purple-700">Order Now</Button>
+                            </div>
+                        </div>
+
+                        <div className="bg-white/5 p-4 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
+                            <img src="https://via.placeholder.com/200x150?text=Product" alt="Product" className="w-full h-32 object-cover rounded mb-3" />
+                            <h4 className="font-medium text-white mb-1">Laptop Bag</h4>
+                            <p className="text-sm text-gray-400 mb-2">Waterproof, professional design</p>
+                            <div className="flex justify-between items-center">
+                                <span className="font-bold text-emerald-400">₦15,000</span>
+                                <Button size="sm" className="bg-purple-600 hover:bg-purple-700">Order Now</Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Request Product */}
+                <div className="glass-panel p-6 rounded-xl shadow-lg border border-white/10">
+                    <h3 className="font-bold text-white mb-4">Can't Find What You Need?</h3>
+                    <p className="text-sm text-gray-400 mb-4">Tell us what you're looking for and we'll help you get it delivered.</p>
+                    <div className="flex gap-3">
+                        <input
+                            type="text"
+                            placeholder="Describe the product you want..."
+                            className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:border-purple-500 outline-none"
+                        />
+                        <Button className="bg-purple-600 hover:bg-purple-700">Request Product</Button>
                     </div>
                 </div>
             </div>
