@@ -14,8 +14,17 @@ import AdminSettings from './AdminSettings';
 import UserManagement from './UserManagement';
 import SupportManagement from './SupportManagement';
 import Automation from './Automation';
+import { RideRequest, UserRole, SystemHealth, DashboardStats, PaymentTransaction, User, RideStatus, SupportTicket } from '../../types';
+import { VoiceCallModal } from '../../components/VoiceCallModal';
+import { Button } from '../../components/ui/Button';
+import { useToast } from '../../components/ui/Toast';
 
-// New Management Components
+
+interface AdminDashboardProps {
+    view: string;
+}
+
+// Management Components
 const EShagoManagement = () => (
   <div className="space-y-6 animate-in fade-in">
     <h1 className="text-2xl font-bold text-white">E-Shago Marketplace Management</h1>
@@ -283,10 +292,6 @@ const PlatformMaintenance = () => (
     </div>
   </div>
 );
-
-interface AdminDashboardProps {
-    view: string;
-}
 
 // Helper Components
 const StatusDot = ({ status }: { status: string }) => {
