@@ -265,8 +265,10 @@ const AIVoiceCallModal: React.FC<{ user: User; onEndCall: () => void }> = ({ use
 
   useEffect(() => {
     // Initialize Gemini AI
-    if (typeof window !== 'undefined' && process.env.GEMINI_API_KEY) {
-      genAIRef.current = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    if (typeof window !== 'undefined') {
+      // Using provided API key for demo - in production, use environment variables
+      const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyBQQnUqzCI_UzqpDXA-Bi0EQ9klC3903g4';
+      genAIRef.current = new GoogleGenerativeAI(apiKey);
     }
 
     // Initialize speech recognition
