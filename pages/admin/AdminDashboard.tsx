@@ -8,7 +8,7 @@ import {
   Users, TrendingUp, AlertTriangle, ShieldCheck, Truck, CreditCard,
   Download, Search, Car, Activity, Server, Database, Radio,
   CheckCircle, AlertCircle, XCircle, Cpu, RefreshCw, Briefcase, Map, Phone, Wallet, User as UserIcon, FileText, Check, X, Clock, MessageSquare,
-  ShoppingBag, Store, Package, Settings
+  ShoppingBag, Store, Package, Settings, UserPlus
 } from 'lucide-react';
 import AdminSettings from './AdminSettings';
 import UserManagement from './UserManagement';
@@ -429,6 +429,93 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
   if (view === 'eshago') return <EShagoManagement />;
   if (view === 'referrals') return <ReferralManagement />;
   if (view === 'maintenance') return <PlatformMaintenance />;
+
+  // Staff & Driver Recruitment View
+  if (view === 'recruitment') {
+    return (
+      <div className="space-y-6 animate-in fade-in">
+        <h1 className="text-2xl font-bold text-white">Staff & Driver Recruitment</h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Create Staff */}
+          <div className="glass-panel p-6 rounded-xl border border-white/10">
+            <h3 className="font-bold text-white mb-6 flex items-center gap-2">
+              <UserPlus size={20} className="text-blue-400" />
+              Create Staff Account
+            </h3>
+            <div className="space-y-4">
+              <input type="text" placeholder="Full Name" className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-blue-500 outline-none" />
+              <input type="email" placeholder="Email Address" className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-blue-500 outline-none" />
+              <input type="tel" placeholder="Phone Number" className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-blue-500 outline-none" />
+              <select className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-blue-500 outline-none">
+                <option>Support Agent</option>
+                <option>Finance Manager</option>
+                <option>Operations Manager</option>
+              </select>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">Create Staff Account</Button>
+            </div>
+          </div>
+
+          {/* Recruit Driver */}
+          <div className="glass-panel p-6 rounded-xl border border-white/10">
+            <h3 className="font-bold text-white mb-6 flex items-center gap-2">
+              <Car size={20} className="text-orange-400" />
+              Recruit Driver Partner
+            </h3>
+            <div className="space-y-4">
+              <input type="text" placeholder="Full Name" className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-orange-500 outline-none" />
+              <input type="email" placeholder="Email Address" className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-orange-500 outline-none" />
+              <input type="tel" placeholder="Phone Number" className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-orange-500 outline-none" />
+              <select className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-orange-500 outline-none">
+                <option>Okada (Motorbike)</option>
+                <option>Keke (Tricycle)</option>
+                <option>Mini Bus</option>
+                <option>Logistics Truck</option>
+              </select>
+              <input type="text" placeholder="License Plate" className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-orange-500 outline-none" />
+              <Button className="w-full bg-orange-600 hover:bg-orange-700">Send Recruitment Invite</Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Recruits */}
+        <div className="glass-panel rounded-xl shadow-lg border border-white/10 overflow-hidden">
+          <div className="p-4 border-b border-white/10">
+            <h3 className="font-bold text-white">Recent Recruits</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-white/5 text-gray-400 font-semibold">
+                <tr>
+                  <th className="px-6 py-3">Name</th>
+                  <th className="px-6 py-3">Role</th>
+                  <th className="px-6 py-3">Vehicle</th>
+                  <th className="px-6 py-3">Status</th>
+                  <th className="px-6 py-3">Joined</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                <tr className="hover:bg-white/5">
+                  <td className="px-6 py-4 text-white">Sarah Johnson</td>
+                  <td className="px-6 py-4 text-blue-400">Staff</td>
+                  <td className="px-6 py-4">-</td>
+                  <td className="px-6 py-4"><span className="bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-xs">Active</span></td>
+                  <td className="px-6 py-4 text-gray-400">2 days ago</td>
+                </tr>
+                <tr className="hover:bg-white/5">
+                  <td className="px-6 py-4 text-white">Musa Ibrahim</td>
+                  <td className="px-6 py-4 text-orange-400">Driver</td>
+                  <td className="px-6 py-4 text-gray-400">Okada</td>
+                  <td className="px-6 py-4"><span className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded text-xs">Pending</span></td>
+                  <td className="px-6 py-4 text-gray-400">1 week ago</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   if (view === 'reports') {
       return (

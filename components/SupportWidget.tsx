@@ -118,7 +118,7 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ user }) => {
         if (genAIRef.current) {
           try {
             const model = genAIRef.current.getGenerativeModel({ model: "gemini-1.5-flash" });
-            const prompt = `You are a helpful AI assistant for NaijaMove, a ride-hailing and logistics app in Nigeria. Answer the user's question: ${transcript}`;
+            const prompt = `You are a helpful AI assistant for AmanaRide, a ride-hailing and logistics app in Nigeria. Answer the user's question: ${transcript}`;
             const result = await model.generateContent(prompt);
             const response = result.response.text();
 
@@ -164,7 +164,7 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ user }) => {
       {isOpen && (
         <div className="bg-white w-80 h-[500px] rounded-2xl shadow-2xl mb-4 flex flex-col overflow-hidden">
           <div className="p-4 bg-emerald-600 text-white flex justify-between">
-            <h3 className="font-bold">NaijaMove AI</h3>
+            <h3 className="font-bold">AmanaRide AI</h3>
             <button onClick={() => setIsOpen(false)}>
               <X size={18} />
             </button>
@@ -176,7 +176,7 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ user }) => {
                 key={i}
                 className={`mb-2 ${m.isBot ? 'text-left' : 'text-right'}`}
               >
-                <span className="inline-block bg-gray-100 px-3 py-2 rounded-lg">
+                <span className={`inline-block px-3 py-2 rounded-lg ${m.isBot ? 'bg-emerald-100 text-gray-800' : 'bg-blue-500 text-white'}`}>
                   {m.text}
                 </span>
               </div>
@@ -227,7 +227,7 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ user }) => {
 
       {showCall && (
         <VoiceCallModal
-          recipientName="NaijaMove Support"
+          recipientName="AmanaRide Support"
           recipientRole="Human Agent"
           onEndCall={() => setShowCall(false)}
         />
