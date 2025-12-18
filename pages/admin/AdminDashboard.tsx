@@ -621,7 +621,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ view }) => {
     );
   }
 
-  if (loading || !stats) return <div className="p-10 text-center animate-pulse text-gray-500">Connecting to NaijaMove Servers...</div>;
+  if (loading || !stats) return <div className="p-10 text-center animate-pulse text-gray-500">Connecting to AmanaRide Servers...</div>;
 
   // Default Dashboard View (view === 'dashboard' or fallback)
   return (

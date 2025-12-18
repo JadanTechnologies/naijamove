@@ -21,17 +21,17 @@ const MainApp: React.FC = () => {
   // Theme Management
   const [isDarkMode, setIsDarkMode] = useState(() => {
       // Check local storage or preference
-      const saved = localStorage.getItem('naijamove_theme');
+      const saved = localStorage.getItem('amanaride_theme');
       return saved ? saved === 'dark' : true; // Default to dark
   });
 
   useEffect(() => {
       if (isDarkMode) {
           document.documentElement.classList.add('dark');
-          localStorage.setItem('naijamove_theme', 'dark');
+          localStorage.setItem('amanaride_theme', 'dark');
       } else {
           document.documentElement.classList.remove('dark');
-          localStorage.setItem('naijamove_theme', 'light');
+          localStorage.setItem('amanaride_theme', 'light');
       }
   }, [isDarkMode]);
 

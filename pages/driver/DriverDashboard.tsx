@@ -486,7 +486,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
                       </div>
                       <div>
                           <h3 className="font-bold text-white">Need Help?</h3>
-                          <p className="text-sm text-gray-400">Contact the NaijaMove admin team directly.</p>
+                          <p className="text-sm text-gray-400">Contact the AmanaRide admin team directly.</p>
                       </div>
                   </div>
 
@@ -533,7 +533,7 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ user, view = 'dashboa
               
               {showSupportCall && (
                   <VoiceCallModal 
-                      recipientName="NaijaMove Support"
+                      recipientName="AmanaRide Support"
                       recipientRole="Customer Service"
                       onEndCall={() => setShowSupportCall(false)}
                   />

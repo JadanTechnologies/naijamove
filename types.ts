@@ -73,6 +73,11 @@ export interface User {
   isTotpSetup?: boolean;
   magicLink?: string;
   magicLinkExpires?: string;
+  // Referral System
+  referralCode?: string;
+  referredBy?: string;
+  referralCount?: number;
+  referralEarnings?: number;
 }
 
 export interface UserActivity {
@@ -351,4 +356,60 @@ export interface NotificationItem {
     message: string;
     isRead: boolean;
     createdAt: string;
+}
+
+// E-commerce interfaces for E-Shago
+export interface Company {
+    id: string;
+    name: string;
+    description?: string;
+    logoUrl?: string;
+    location?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+    website?: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Product {
+    id: string;
+    name: string;
+    description?: string;
+    price: number;
+    imageUrl?: string;
+    category?: string;
+    stockQuantity: number;
+    companyId?: string;
+    company?: Company;
+    isAvailable: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Order {
+    id: string;
+    passengerId: string;
+    passenger?: User;
+    productId: string;
+    product?: Product;
+    quantity: number;
+    totalPrice: number;
+    status: 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+    deliveryAddress?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface ProductRequest {
+    id: string;
+    passengerId: string;
+    passenger?: User;
+    productName: string;
+    description?: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'FULFILLED';
+    adminNotes?: string;
+    createdAt: string;
+    updatedAt: string;
 }

@@ -2,7 +2,7 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# NaijaMove - AI-Powered Ride Hailing & Logistics Platform
+# AmanaRide - AI-Powered Ride Hailing & Logistics Platform
 
 A comprehensive transportation platform for Nigeria featuring AI-powered ride matching, real-time tracking, and voice-enabled customer support.
 
@@ -27,7 +27,7 @@ A comprehensive transportation platform for Nigeria featuring AI-powered ride ma
 ### 1. Clone and Install
 ```bash
 git clone <repository-url>
-cd naijamove
+cd amanaride
 npm install
 ```
 
@@ -74,10 +74,10 @@ The `schema.sql` file contains all necessary tables and demo data. Key tables:
 
 ## Demo Accounts
 
-- **Admin:** admin@naijamove.ng / password
-- **Driver:** musa@naijamove.ng (quick login)
+- **Admin:** admin@amanaride.ng / password
+- **Driver:** musa@amanaride.ng (quick login)
 - **Passenger:** tola@gmail.com (quick login)
-- **Staff:** staff@naijamove.ng / password123
+- **Staff:** staff@amanaride.ng / password123
 
 ## Deployment
 

@@ -1,4 +1,4 @@
--- NaijaMove Supabase Database Schema
+-- AmanaRide Supabase Database Schema
 -- Copy and paste this into Supabase SQL Editor
 
 -- Enable necessary extensions
@@ -37,6 +37,10 @@ CREATE TABLE users (
     magic_link_expires TIMESTAMP WITH TIME ZONE,
     permissions TEXT[],
     token TEXT,
+    referral_code TEXT UNIQUE,
+    referred_by UUID REFERENCES users(id),
+    referral_count INTEGER DEFAULT 0,
+    referral_earnings DECIMAL(10,2) DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -187,10 +191,10 @@ CREATE TABLE announcements (
 -- Insert demo data
 -- System settings
 INSERT INTO system_settings (branding, landing_page, mobile_apps, payments, communication, ai, trackers, security, pricing, integrations) VALUES (
-    '{"appName": "NaijaMove", "logoUrl": "https://cdn-icons-png.flaticon.com/512/2972/2972185.png", "primaryColor": "#10b981"}',
-    '{"heroTitle": "The Future of Logistics & Rides", "heroSubtitle": "Moving Sokoto & Nigeria Forward", "heroDescription": "Move parcels, people, and cargo with Nigeria''s most advanced AI-powered fleet. Real-time tracking for Okada, Keke, and Mini-bus in Sokoto and beyond.", "stats": {"rides": "2.5M+", "drivers": "50k+", "matchTime": "0.5s", "cities": "36"}, "contactEmail": "support@naijamove.ng", "contactPhone": "+234 800 NAIJA"}',
-    '{"androidUrl": "https://play.google.com/store/apps/details?id=com.naijamove.app", "iosUrl": "https://apps.apple.com/ng/app/naijamove", "version": "2.1.0", "releaseNotes": "Performance improvements and new dark mode.", "lastUpdated": "2024-12-17T00:00:00Z"}',
-    '{"paystackEnabled": true, "paystackSecretKey": "sk_test_xxxxxxxxxxxxxxxxxxxx", "flutterwaveEnabled": false, "flutterwaveSecretKey": "", "monnifyEnabled": false, "manualEnabled": true, "manualBankDetails": "GTBank - 0123456789 - NaijaMove Ltd"}',
+    '{"appName": "AmanaRide", "logoUrl": "https://cdn-icons-png.flaticon.com/512/2972/2972185.png", "primaryColor": "#10b981"}',
+    '{"heroTitle": "The Future of Logistics & Rides", "heroSubtitle": "Moving Sokoto & Nigeria Forward", "heroDescription": "Move parcels, people, and cargo with Nigeria''s most advanced AI-powered fleet. Real-time tracking for Okada, Keke, and Mini-bus in Sokoto and beyond.", "stats": {"rides": "2.5M+", "drivers": "50k+", "matchTime": "0.5s", "cities": "36"}, "contactEmail": "support@amanaride.ng", "contactPhone": "+234 800 NAIJA"}',
+    '{"androidUrl": "https://play.google.com/store/apps/details?id=com.amanaride.app", "iosUrl": "https://apps.apple.com/ng/app/amanaride", "version": "2.1.0", "releaseNotes": "Performance improvements and new dark mode.", "lastUpdated": "2024-12-17T00:00:00Z"}',
+    '{"paystackEnabled": true, "paystackSecretKey": "sk_test_xxxxxxxxxxxxxxxxxxxx", "flutterwaveEnabled": false, "flutterwaveSecretKey": "", "monnifyEnabled": false, "manualEnabled": true, "manualBankDetails": "GTBank - 0123456789 - AmanaRide Ltd"}',
     '{"emailProvider": "RESEND", "emailApiKey": "re_123456789", "smsProvider": "TWILIO", "smsApiKey": "", "pushProvider": "ONESIGNAL", "pushApiKey": ""}',
     '{"geminiEnabled": true, "provider": "GEMINI", "apiKey": ""}',
     '{"enabled": true, "integrations": [{"id": "trk-1", "provider": "TELTONIKA", "name": "Okada Fleet Tracker", "enabled": true, "serverIp": "192.168.1.50", "port": 5027, "protocol": "TCP"}]}',
@@ -200,11 +204,11 @@ INSERT INTO system_settings (branding, landing_page, mobile_apps, payments, comm
 );
 
 -- Demo users
-INSERT INTO users (id, name, email, role, wallet_balance, phone, avatar, status, location, is_totp_setup, totp_secret) VALUES
-('550e8400-e29b-41d4-a716-446655440000', 'Super Admin', 'admin@naijamove.ng', 'ADMIN', 5000000, '+2348012345678', 'https://ui-avatars.com/api/?name=Super+Admin&background=10b981&color=fff', 'ACTIVE', '{"lat": 13.0059, "lng": 5.2476}', true, 'NAIJAMOVEADMIN'),
-('550e8400-e29b-41d4-a716-446655440001', 'Support Agent', 'staff@naijamove.ng', 'STAFF', 0, '+2348023456789', 'https://ui-avatars.com/api/?name=Support+Agent&background=6366f1&color=fff', 'ACTIVE', '{"lat": 13.0060, "lng": 5.2470}', false, null),
-('550e8400-e29b-41d4-a716-446655440002', 'Musa Ibrahim', 'musa@naijamove.ng', 'DRIVER', 12500, '+2348012345678', 'https://ui-avatars.com/api/?name=Musa+Ibrahim&background=f97316&color=fff', 'ACTIVE', '{"lat": 13.0100, "lng": 5.2500}', true, 'DRIVERSECRET'),
-('550e8400-e29b-41d4-a716-446655440003', 'Tola Adebayo', 'tola@gmail.com', 'PASSENGER', 5000, '+2348098765432', 'https://ui-avatars.com/api/?name=Tola+Adebayo&background=3b82f6&color=fff', 'ACTIVE', '{"lat": 13.0080, "lng": 5.2480}', true, 'PASSENGERSECRET');
+INSERT INTO users (id, name, email, role, wallet_balance, phone, avatar, status, location, is_totp_setup, totp_secret, referral_code) VALUES
+('550e8400-e29b-41d4-a716-446655440000', 'Super Admin', 'admin@amanaride.ng', 'ADMIN', 5000000, '+2348012345678', 'https://ui-avatars.com/api/?name=Super+Admin&background=10b981&color=fff', 'ACTIVE', '{"lat": 13.0059, "lng": 5.2476}', true, 'AMANARIDEADMIN', 'ADMIN2024'),
+('550e8400-e29b-41d4-a716-446655440001', 'Support Agent', 'staff@amanaride.ng', 'STAFF', 0, '+2348023456789', 'https://ui-avatars.com/api/?name=Support+Agent&background=6366f1&color=fff', 'ACTIVE', '{"lat": 13.0060, "lng": 5.2470}', false, null, 'STAFF2024'),
+('550e8400-e29b-41d4-a716-446655440002', 'Musa Ibrahim', 'musa@amanaride.ng', 'DRIVER', 12500, '+2348012345678', 'https://ui-avatars.com/api/?name=Musa+Ibrahim&background=f97316&color=fff', 'ACTIVE', '{"lat": 13.0100, "lng": 5.2500}', true, 'DRIVERSECRET', 'MUSA123'),
+('550e8400-e29b-41d4-a716-446655440003', 'Tola Adebayo', 'tola@gmail.com', 'PASSENGER', 5000, '+2348098765432', 'https://ui-avatars.com/api/?name=Tola+Adebayo&background=3b82f6&color=fff', 'ACTIVE', '{"lat": 13.0080, "lng": 5.2480}', true, 'PASSENGERSECRET', 'TOLA456');
 
 -- Update driver details
 UPDATE users SET
@@ -216,12 +220,12 @@ UPDATE users SET
     vehicle_capacity_kg = 150,
     current_load_kg = 0,
     load_status = 'EMPTY',
-    bank_account = '{"bankName": "Wema Bank", "accountNumber": "9923456781", "accountName": "NaijaMove - Musa Ibrahim"}'
+    bank_account = '{"bankName": "Wema Bank", "accountNumber": "9923456781", "accountName": "AmanaRide - Musa Ibrahim"}'
 WHERE id = '550e8400-e29b-41d4-a716-446655440002';
 
 -- Update passenger details
 UPDATE users SET
-    bank_account = '{"bankName": "GTBank", "accountNumber": "0123456789", "accountName": "NaijaMove - Tola Adebayo"}'
+    bank_account = '{"bankName": "GTBank", "accountNumber": "0123456789", "accountName": "AmanaRide - Tola Adebayo"}'
 WHERE id = '550e8400-e29b-41d4-a716-446655440003';
 
 -- Demo knowledge base
@@ -255,5 +259,101 @@ ALTER TABLE payment_transactions ENABLE ROW LEVEL SECURITY;
 -- Create policies (basic example - adjust as needed)
 CREATE POLICY "Users can view their own data" ON users FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Admins can view all users" ON users FOR SELECT USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN'));
+
+-- E-commerce tables for E-Shago
+
+-- Companies table
+CREATE TABLE companies (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    description TEXT,
+    logo_url TEXT,
+    location TEXT,
+    contact_email TEXT,
+    contact_phone TEXT,
+    website TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Products table
+CREATE TABLE products (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    image_url TEXT,
+    category TEXT,
+    stock_quantity INTEGER DEFAULT 0,
+    company_id UUID REFERENCES companies(id),
+    is_available BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Orders table
+CREATE TABLE orders (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    passenger_id UUID REFERENCES users(id),
+    product_id UUID REFERENCES products(id),
+    quantity INTEGER NOT NULL,
+    total_price DECIMAL(10,2) NOT NULL,
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED')),
+    delivery_address TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Product requests table
+CREATE TABLE product_requests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    passenger_id UUID REFERENCES users(id),
+    product_name TEXT NOT NULL,
+    description TEXT,
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'FULFILLED')),
+    admin_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Insert demo companies
+INSERT INTO companies (id, name, description, logo_url, location, contact_email, contact_phone, website) VALUES
+('550e8400-e29b-41d4-a716-446655440010', 'Shoprite Nigeria', 'Leading supermarket chain in Nigeria', 'https://example.com/shoprite-logo.png', 'Sokoto, Nigeria', 'info@shoprite.ng', '+2348012345678', 'https://shoprite.ng'),
+('550e8400-e29b-41d4-a716-446655440011', 'Jumia Nigeria', 'Online marketplace for electronics and more', 'https://example.com/jumia-logo.png', 'Lagos, Nigeria', 'support@jumia.com.ng', '+2348023456789', 'https://jumia.com.ng'),
+('550e8400-e29b-41d4-a716-446655440012', 'Konga', 'E-commerce platform for various products', 'https://example.com/konga-logo.png', 'Lagos, Nigeria', 'hello@konga.com', '+2348034567890', 'https://konga.com');
+
+-- Insert demo products
+INSERT INTO products (name, description, price, image_url, category, stock_quantity, company_id) VALUES
+('iPhone 15 Pro', 'Latest Apple smartphone with advanced features', 1500000.00, 'https://example.com/iphone15.jpg', 'Electronics', 10, '550e8400-e29b-41d4-a716-446655440011'),
+('Samsung Galaxy S24', 'High-end Android smartphone', 1200000.00, 'https://example.com/galaxy-s24.jpg', 'Electronics', 15, '550e8400-e29b-41d4-a716-446655440011'),
+('Nike Air Max', 'Comfortable running shoes', 45000.00, 'https://example.com/nike-airmax.jpg', 'Fashion', 50, '550e8400-e29b-41d4-a716-446655440010'),
+('Dell Laptop', 'Powerful laptop for work and gaming', 800000.00, 'https://example.com/dell-laptop.jpg', 'Electronics', 5, '550e8400-e29b-41d4-a716-446655440012'),
+('Rice (50kg)', 'Premium quality rice', 35000.00, 'https://example.com/rice.jpg', 'Food', 100, '550e8400-e29b-41d4-a716-446655440010');
+
+-- Create indexes for e-commerce tables
+CREATE INDEX idx_products_company_id ON products(company_id);
+CREATE INDEX idx_orders_passenger_id ON orders(passenger_id);
+CREATE INDEX idx_orders_product_id ON orders(product_id);
+CREATE INDEX idx_product_requests_passenger_id ON product_requests(passenger_id);
+
+-- Enable Row Level Security for e-commerce tables
+ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_requests ENABLE ROW LEVEL SECURITY;
+
+-- Basic policies (adjust as needed)
+CREATE POLICY "Public can view active companies" ON companies FOR SELECT USING (is_active = true);
+CREATE POLICY "Admins can manage companies" ON companies FOR ALL USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN'));
+
+CREATE POLICY "Public can view available products" ON products FOR SELECT USING (is_available = true);
+CREATE POLICY "Admins can manage products" ON products FOR ALL USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN'));
+
+CREATE POLICY "Users can view their own orders" ON orders FOR SELECT USING (passenger_id = auth.uid());
+CREATE POLICY "Admins can view all orders" ON orders FOR SELECT USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN'));
+
+CREATE POLICY "Users can view their own requests" ON product_requests FOR SELECT USING (passenger_id = auth.uid());
+CREATE POLICY "Admins can view all requests" ON product_requests FOR SELECT USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN'));
 
 -- Note: Add more policies as needed for your security requirements

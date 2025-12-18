@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, VehicleType, RideRequest, RideStatus, PaymentTransaction } from '../../types';
-import { calculateFare, createRide, getActiveRides, updateRideStatus, getUserTransactions, simulateDeposit } from '../../services/mockService';
+import { calculateFare, createRide, getActiveRides, updateRideStatus, getUserTransactions, simulateDeposit, generateReferralCode, getReferralStats } from '../../services/mockService';
 import { Button } from '../../components/ui/Button';
 import { CURRENCY_SYMBOL } from '../../constants';
 import MapMock from '../../components/MapMock';
-import { Bike, Car, Box, Truck, MapPin, Phone, MessageSquare, History, Clock, Bell, X, Star, CheckCircle, Navigation, Wallet, Copy, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { Bike, Car, Box, Truck, MapPin, Phone, MessageSquare, History, Clock, Bell, X, Star, CheckCircle, Navigation, Wallet, Copy, ArrowUpRight, ArrowDownLeft, Users, TrendingUp } from 'lucide-react';
 import { ChatWindow } from '../../components/ChatWindow';
 import { VoiceCallModal } from '../../components/VoiceCallModal';
 import { useToast } from '../../components/ui/Toast';
@@ -15,7 +15,7 @@ interface PassengerDashboardProps {
 }
 
 const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
-  const [view, setView] = useState<'BOOKING' | 'HISTORY' | 'WALLET'>('BOOKING');
+  const [view, setView] = useState<'BOOKING' | 'HISTORY' | 'WALLET' | 'REFERRALS'>('BOOKING');
   const [mode, setMode] = useState<'RIDE' | 'LOGISTICS'>('RIDE');
   const [pickup, setPickup] = useState('Sokoto Central Market');
   const [dropoff, setDropoff] = useState('');
@@ -44,9 +44,14 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
   // Notification State
   const [notification, setNotification] = useState<string | null>(null);
   const [hasNotifiedArrival, setHasNotifiedArrival] = useState(false);
-  
+
   // Progress State
   const [rideProgress, setRideProgress] = useState(0);
+
+  // Referral State
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralStats, setReferralStats] = useState<any>(null);
+  const [generatingCode, setGeneratingCode] = useState(false);
 
   useEffect(() => {
     getActiveRides(user.role, user.id).then(rides => {
@@ -76,12 +81,21 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
 
   useEffect(() => {
     if (dropoff.length > 3) {
-      setDistance(Math.floor(Math.random() * 15) + 2); 
+      setDistance(Math.floor(Math.random() * 15) + 2);
     } else {
         setDistance(0);
         setSelectedVehicle(null);
     }
   }, [dropoff]);
+
+  useEffect(() => {
+    if (view === 'REFERRALS') {
+      getReferralStats(user.id).then(setReferralStats);
+      if (!referralCode) {
+        generateReferralCode(user.id).then(setReferralCode);
+      }
+    }
+  }, [view, user.id, referralCode]);
 
   const handleBooking = async () => {
     if (!selectedVehicle || !pickup || !dropoff) return;
@@ -398,24 +412,30 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
       <div className="lg:w-1/3 glass-panel p-6 rounded-xl shadow-lg border border-white/10 flex flex-col h-fit">
         {/* Toggle View */}
         <div className="flex p-1 bg-gray-900/50 rounded-lg mb-6 border border-white/5">
-             <button 
+              <button
                 onClick={() => setView('BOOKING')}
                 className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${view === 'BOOKING' ? 'bg-white/10 shadow text-white border border-white/10' : 'text-gray-500 hover:text-gray-300'}`}
-             >
-                 Book
-             </button>
-             <button 
+              >
+                  Book
+              </button>
+              <button
                 onClick={() => setView('HISTORY')}
                 className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${view === 'HISTORY' ? 'bg-white/10 shadow text-white border border-white/10' : 'text-gray-500 hover:text-gray-300'}`}
-             >
-                 History
-             </button>
-             <button 
+              >
+                  History
+              </button>
+              <button
                 onClick={() => setView('WALLET')}
                 className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${view === 'WALLET' ? 'bg-white/10 shadow text-white border border-white/10' : 'text-gray-500 hover:text-gray-300'}`}
-             >
-                 Wallet
-             </button>
+              >
+                  Wallet
+              </button>
+              <button
+                onClick={() => setView('REFERRALS')}
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${view === 'REFERRALS' ? 'bg-white/10 shadow text-white border border-white/10' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                  Referrals
+              </button>
         </div>
 
         {view === 'WALLET' ? (
@@ -563,6 +583,99 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
                     {mode === 'RIDE' ? 'Confirm Ride' : 'Confirm Delivery'}
                 </Button>
             </>
+        ) : view === 'REFERRALS' ? (
+            <div className="space-y-6 animate-in fade-in">
+                {/* Referral Code Card */}
+                <div className="glass-panel p-6 rounded-xl shadow-lg border border-white/10">
+                    <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                        <Star size={20} className="text-yellow-400" />
+                        Your Referral Code
+                    </h3>
+                    <div className="bg-white/5 p-4 rounded-lg border border-white/10">
+                        <p className="text-sm text-gray-400 mb-2">Share this code with friends to earn rewards!</p>
+                        <div className="flex items-center gap-3">
+                            <code className="flex-1 bg-black/30 p-3 rounded font-mono text-lg text-emerald-400 border border-white/10">
+                                {referralCode || 'Generating...'}
+                            </code>
+                            <Button
+                                onClick={() => navigator.clipboard.writeText(referralCode || '')}
+                                className="bg-emerald-600 hover:bg-emerald-700"
+                                disabled={!referralCode}
+                            >
+                                <Copy size={18} className="mr-2" />
+                                Copy
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Referral Stats */}
+                {referralStats && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="glass-panel p-4 rounded-xl border border-white/10 text-center">
+                            <div className="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <Users size={20} />
+                            </div>
+                            <p className="text-2xl font-bold text-white">{referralStats.referralCount}</p>
+                            <p className="text-xs text-gray-400">Friends Referred</p>
+                        </div>
+                        <div className="glass-panel p-4 rounded-xl border border-white/10 text-center">
+                            <div className="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <Wallet size={20} />
+                            </div>
+                            <p className="text-2xl font-bold text-white">{CURRENCY_SYMBOL}{referralStats.referralEarnings}</p>
+                            <p className="text-xs text-gray-400">Earnings</p>
+                        </div>
+                        <div className="glass-panel p-4 rounded-xl border border-white/10 text-center">
+                            <div className="w-10 h-10 bg-purple-500/20 text-purple-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <TrendingUp size={20} />
+                            </div>
+                            <p className="text-2xl font-bold text-white">{referralStats.referredUsers.length}</p>
+                            <p className="text-xs text-gray-400">Active Referrals</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Referred Users List */}
+                {referralStats && referralStats.referredUsers.length > 0 && (
+                    <div className="glass-panel p-6 rounded-xl shadow-lg border border-white/10">
+                        <h3 className="font-bold text-white mb-4">Your Referrals</h3>
+                        <div className="space-y-3">
+                            {referralStats.referredUsers.map((ref: any, idx: number) => (
+                                <div key={idx} className="flex justify-between items-center p-3 bg-white/5 rounded-lg border border-white/5">
+                                    <div>
+                                        <p className="font-medium text-white">{ref.name}</p>
+                                        <p className="text-sm text-gray-400">{ref.email}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs text-gray-500">Joined {new Date(ref.joinedAt).toLocaleDateString()}</p>
+                                        <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">Active</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* How it Works */}
+                <div className="glass-panel p-6 rounded-xl shadow-lg border border-white/10">
+                    <h3 className="font-bold text-white mb-4">How Referrals Work</h3>
+                    <div className="space-y-3 text-sm text-gray-300">
+                        <div className="flex items-start gap-3">
+                            <div className="w-6 h-6 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-xs font-bold">1</div>
+                            <p>Share your referral code with friends and family</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                            <div className="w-6 h-6 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-xs font-bold">2</div>
+                            <p>When they sign up and complete their first ride, you both get {CURRENCY_SYMBOL}500 bonus</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                            <div className="w-6 h-6 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-xs font-bold">3</div>
+                            <p>Earn more with each successful referral!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         ) : (
             <div className="space-y-4 overflow-y-auto max-h-[500px] pr-2 custom-scrollbar">
                 {history.length === 0 ? (

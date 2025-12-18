@@ -4,18 +4,22 @@ import { CITIES } from '../constants';
 
 // --- Local Storage Helpers ---
 const STORAGE_KEYS = {
-  SETTINGS: 'naijamove_settings',
-  USERS: 'naijamove_users',
-  RIDES: 'naijamove_rides',
-  TEMPLATES: 'naijamove_templates',
-  ANNOUNCEMENTS: 'naijamove_announcements',
-  MESSAGES: 'naijamove_messages',
-  TICKETS: 'naijamove_tickets',
-  KB: 'naijamove_kb',
-  ACTIVITIES: 'naijamove_activities',
-  TRANSACTIONS: 'naijamove_transactions',
-  CRON_JOBS: 'naijamove_cron_jobs',
-  NOTIFICATIONS: 'naijamove_notifications'
+  SETTINGS: 'amanaride_settings',
+  USERS: 'amanaride_users',
+  RIDES: 'amanaride_rides',
+  TEMPLATES: 'amanaride_templates',
+  ANNOUNCEMENTS: 'amanaride_announcements',
+  MESSAGES: 'amanaride_messages',
+  TICKETS: 'amanaride_tickets',
+  KB: 'amanaride_kb',
+  ACTIVITIES: 'amanaride_activities',
+  TRANSACTIONS: 'amanaride_transactions',
+  CRON_JOBS: 'amanaride_cron_jobs',
+  NOTIFICATIONS: 'amanaride_notifications',
+  COMPANIES: 'amanaride_companies',
+  PRODUCTS: 'amanaride_products',
+  ORDERS: 'amanaride_orders',
+  PRODUCT_REQUESTS: 'amanaride_product_requests'
 };
 
 const load = <T>(key: string, defaultValue: T): T => {
@@ -110,7 +114,7 @@ const DEFAULT_SETTINGS: SystemSettings = {
       metaTitle: "NaijaMove - Logistics & Ride Hailing",
       metaDescription: "Reliable transportation for Okada, Keke, and Cargo in Northern Nigeria.",
       keywords: "logistics, ride hailing, okada, keke, sokoto, transport",
-      ogImage: "https://naijamove.ng/og-image.png"
+      ogImage: "https://amanaride.ng/og-image.png"
   },
   landingPage: {
     heroTitle: "The Future of Logistics & Rides",
@@ -122,12 +126,12 @@ const DEFAULT_SETTINGS: SystemSettings = {
         matchTime: "0.5s",
         cities: "36"
     },
-    contactEmail: "support@naijamove.ng",
+    contactEmail: "support@amanaride.ng",
     contactPhone: "+234 800 NAIJA"
   },
   mobileApps: {
-      androidUrl: "https://play.google.com/store/apps/details?id=com.naijamove.app",
-      iosUrl: "https://apps.apple.com/ng/app/naijamove",
+      androidUrl: "https://play.google.com/store/apps/details?id=com.amanaride.app",
+      iosUrl: "https://apps.apple.com/ng/app/amanaride",
       version: "2.1.0",
       releaseNotes: "Performance improvements and new dark mode.",
       lastUpdated: new Date().toISOString()
@@ -216,7 +220,8 @@ const DEFAULT_USERS: User[] = [
   {
     id: 'admin-1',
     name: 'Super Admin',
-    email: 'admin@naijamove.ng',
+    email: 'admin@amanaride.ng',
+    referralCode: 'ADMIN2024',
     role: UserRole.ADMIN,
     walletBalance: 5000000,
     avatar: 'https://ui-avatars.com/api/?name=Super+Admin&background=10b981&color=fff',
@@ -231,7 +236,8 @@ const DEFAULT_USERS: User[] = [
   {
     id: 'staff-1',
     name: 'Support Agent',
-    email: 'staff@naijamove.ng',
+    email: 'staff@amanaride.ng',
+    referralCode: 'STAFF2024',
     role: UserRole.STAFF,
     token: 'STAFF-TOKEN-123',
     password: 'password123',
@@ -248,7 +254,8 @@ const DEFAULT_USERS: User[] = [
   {
     id: 'driver-default',
     name: 'Musa Ibrahim',
-    email: 'musa@naijamove.ng',
+    email: 'musa@amanaride.ng',
+    referralCode: 'MUSA123',
     phone: '+2348012345678',
     role: UserRole.DRIVER,
     vehicleType: VehicleType.OKADA,
@@ -270,7 +277,7 @@ const DEFAULT_USERS: User[] = [
   {
     id: 'driver-2',
     name: 'Sani Abacha',
-    email: 'sani@naijamove.ng',
+    email: 'sani@amanaride.ng',
     role: UserRole.DRIVER,
     vehicleType: VehicleType.KEKE,
     licensePlate: 'SOK-KEK-01',
@@ -306,7 +313,7 @@ const DEFAULT_USERS: User[] = [
   {
     id: 'driver-4',
     name: 'Chinedu Okeke',
-    email: 'chinedu@naijamove.ng',
+    email: 'chinedu@amanaride.ng',
     role: UserRole.DRIVER,
     vehicleType: VehicleType.MINIBUS,
     licensePlate: 'ABJ-BUS-44',
@@ -326,6 +333,7 @@ const DEFAULT_USERS: User[] = [
     id: 'passenger-default',
     name: 'Tola Adebayo',
     email: 'tola@gmail.com',
+    referralCode: 'TOLA456',
     phone: '+2348098765432',
     role: UserRole.PASSENGER,
     walletBalance: 5000,
@@ -433,9 +441,19 @@ export const verifyNin = async (nin: string) => {
     throw new Error("Invalid NIN. Please check the number.");
 };
 
-export const signup = async (data: { name: string, email: string, phone: string, nin: string, role: UserRole, vehicleType?: VehicleType, licensePlate?: string }) => {
+export const signup = async (data: { name: string, email: string, phone: string, nin: string, role: UserRole, vehicleType?: VehicleType, licensePlate?: string, referralCode?: string }) => {
     await new Promise(resolve => setTimeout(resolve, 1500));
     if (USERS.find(u => u.email === data.email || u.nin === data.nin)) { throw new Error("User with this Email or NIN already exists."); }
+
+    // Handle referral code
+    let referredBy: string | undefined;
+    if (data.referralCode) {
+        const referrer = USERS.find(u => u.referralCode === data.referralCode);
+        if (referrer) {
+            referredBy = referrer.id;
+        }
+    }
+
     const newUser: User = {
         id: `user-${Date.now()}`,
         name: data.name,
@@ -448,7 +466,8 @@ export const signup = async (data: { name: string, email: string, phone: string,
         isNinVerified: true,
         bankAccount: generateVirtualAccount(data.name),
         avatar: `https://ui-avatars.com/api/?name=${data.name.replace(' ', '+')}&background=random`,
-        location: { lat: 13.0059, lng: 5.2476 }, 
+        location: { lat: 13.0059, lng: 5.2476 },
+        referredBy,
         ...(data.role === UserRole.DRIVER && {
             vehicleType: data.vehicleType || VehicleType.OKADA,
             licensePlate: data.licensePlate || 'PENDING',
@@ -462,7 +481,7 @@ export const signup = async (data: { name: string, email: string, phone: string,
     };
     USERS = [...USERS, newUser];
     save(STORAGE_KEYS.USERS, USERS);
-    logActivity(newUser.id, 'SIGNUP', `New ${data.role} registration via Web`);
+    logActivity(newUser.id, 'SIGNUP', `New ${data.role} registration via Web${referredBy ? ` (Referred by ${referredBy})` : ''}`);
     return newUser;
 };
 
@@ -514,7 +533,7 @@ export const createStaffUser = async (adminId: string, data: { name: string, ema
         walletBalance: 0,
         status: 'ACTIVE',
         isTotpSetup: false,
-        magicLink: `https://naijamove.ng/auth/setup?token=${magicToken}`,
+        magicLink: `https://amanaride.ng/auth/setup?token=${magicToken}`,
         magicLinkExpires: new Date(Date.now() + (expiryHours * 60 * 60 * 1000)).toISOString(),
         avatar: `https://ui-avatars.com/api/?name=${data.name}&background=6366f1&color=fff`,
     };
@@ -528,7 +547,7 @@ export const createStaffUser = async (adminId: string, data: { name: string, ema
 // ... (Login, TOTP, User Management functions same as before) ...
 export const login = async (identifier: string, isToken = false): Promise<User> => {
   await new Promise(resolve => setTimeout(resolve, 800)); 
-  if (SETTINGS.maintenanceMode && identifier !== 'admin@naijamove.ng' && !isToken) throw new Error("System maintenance.");
+  if (SETTINGS.maintenanceMode && identifier !== 'admin@amanaride.ng' && !isToken) throw new Error("System maintenance.");
   if (isToken) {
     const user = USERS.find(u => u.token === identifier);
     if (!user) throw new Error('Invalid Staff Token');
@@ -663,6 +682,22 @@ export const updateRideStatus = async (rideId: string, status: RideStatus, drive
       if (driverIdx !== -1) USERS[driverIdx].walletBalance += (ride.price * 0.8);
       updatedRide.endTime = new Date().toISOString();
       save(STORAGE_KEYS.USERS, USERS);
+
+      // Check for referral rewards
+      const passenger = USERS[passengerIdx];
+      if (passenger && passenger.referredBy) {
+          // Check if this is the passenger's first completed ride
+          const passengerRides = RIDES.filter(r => r.passengerId === passenger.id && r.status === RideStatus.COMPLETED);
+          if (passengerRides.length === 1) { // Just completed their first ride
+              // Award bonus to referrer
+              const referrerIdx = USERS.findIndex(u => u.id === passenger.referredBy);
+              if (referrerIdx !== -1) {
+                  processReferralReward(passenger.referredBy, 500);
+              }
+              // Award bonus to new user
+              processReferralReward(passenger.id, 500);
+          }
+      }
   }
   
   RIDES[rideIndex] = updatedRide;
@@ -859,7 +894,7 @@ export const generateReport = async (type: 'FINANCE' | 'GROWTH' | 'TRIPS', dateR
     await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate processing
     // In real app, this returns a Blob/URL
     return {
-        url: `https://mock-reports.naijamove.ng/${type.toLowerCase()}_${Date.now()}.pdf`,
+        url: `https://mock-reports.amanaride.ng/${type.toLowerCase()}_${Date.now()}.pdf`,
         generatedAt: new Date().toISOString()
     };
 };
@@ -1002,4 +1037,75 @@ export const triggerSOS = async (userId: string, location: Coordinates) => {
     TICKETS = [ticket, ...TICKETS]; save(STORAGE_KEYS.TICKETS, TICKETS);
     createNotification("SOS ALERT", `Distress signal from ${ticket.userName}`);
     return true;
+};
+
+// --- Referral System ---
+
+export const generateReferralCode = async (userId: string) => {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const userIdx = USERS.findIndex(u => u.id === userId);
+    if (userIdx === -1) throw new Error("User not found");
+
+    if (USERS[userIdx].referralCode) return USERS[userIdx].referralCode; // Already has one
+
+    const code = `${USERS[userIdx].name.split(' ')[0].toUpperCase()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    USERS[userIdx].referralCode = code;
+    save(STORAGE_KEYS.USERS, USERS);
+    return code;
+};
+
+export const applyReferralCode = async (newUserId: string, referralCode: string) => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const referrer = USERS.find(u => u.referralCode === referralCode);
+    if (!referrer) throw new Error("Invalid referral code");
+
+    const newUserIdx = USERS.findIndex(u => u.id === newUserId);
+    if (newUserIdx === -1) throw new Error("New user not found");
+
+    USERS[newUserIdx].referredBy = referrer.id;
+    USERS[referrer.id].referralCount = (USERS[referrer.id].referralCount || 0) + 1;
+    save(STORAGE_KEYS.USERS, USERS);
+    logActivity(newUserId, 'REFERRAL_APPLIED', `Referred by ${referrer.name}`);
+    return true;
+};
+
+export const processReferralReward = async (userId: string, rewardAmount: number = 500) => {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const userIdx = USERS.findIndex(u => u.id === userId);
+    if (userIdx === -1) throw new Error("User not found");
+
+    USERS[userIdx].referralEarnings = (USERS[userIdx].referralEarnings || 0) + rewardAmount;
+    USERS[userIdx].walletBalance += rewardAmount;
+    save(STORAGE_KEYS.USERS, USERS);
+
+    const transaction: PaymentTransaction = {
+        id: `txn-ref-${Date.now()}`,
+        type: 'DEPOSIT',
+        passengerId: userId,
+        passengerName: USERS[userIdx].name,
+        amount: rewardAmount,
+        channel: 'WALLET',
+        status: 'SUCCESS',
+        date: new Date().toISOString(),
+        reference: `REF-${Math.random().toString(36).substring(7).toUpperCase()}`,
+        bankDetails: 'Referral Reward'
+    };
+
+    TRANSACTIONS = [transaction, ...TRANSACTIONS];
+    save(STORAGE_KEYS.TRANSACTIONS, TRANSACTIONS);
+    logActivity(userId, 'REFERRAL_REWARD', `Earned ${rewardAmount} from referral`);
+    return transaction;
+};
+
+export const getReferralStats = async (userId: string) => {
+    const user = USERS.find(u => u.id === userId);
+    if (!user) throw new Error("User not found");
+
+    const referredUsers = USERS.filter(u => u.referredBy === userId);
+    return {
+        referralCode: user.referralCode,
+        referralCount: user.referralCount || 0,
+        referralEarnings: user.referralEarnings || 0,
+        referredUsers: referredUsers.map(u => ({ name: u.name, email: u.email, joinedAt: new Date().toISOString() })) // Mock joined date
+    };
 };
