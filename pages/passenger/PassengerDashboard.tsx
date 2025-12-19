@@ -14,8 +14,10 @@ interface PassengerDashboardProps {
   user: User;
 }
 
+type ViewType = 'BOOKING' | 'HISTORY' | 'WALLET' | 'REFERRALS' | 'ESHAGO';
+
 const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
-  const [view, setView] = useState('BOOKING' as 'BOOKING' | 'HISTORY' | 'WALLET' | 'REFERRALS' | 'ESHAGO');
+  const [view, setView] = useState<ViewType>('BOOKING');
   const [mode, setMode] = useState<'RIDE' | 'LOGISTICS'>('RIDE');
   const [pickup, setPickup] = useState('Sokoto Central Market');
   const [dropoff, setDropoff] = useState('');
