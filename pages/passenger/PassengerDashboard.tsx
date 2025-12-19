@@ -15,7 +15,7 @@ interface PassengerDashboardProps {
 }
 
 const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
-  const [view, setView] = useState<'BOOKING' | 'HISTORY' | 'WALLET' | 'REFERRALS' | 'MARKETPLACE'>('BOOKING');
+  const [view, setView] = useState('BOOKING' as 'BOOKING' | 'HISTORY' | 'WALLET' | 'REFERRALS' | 'ESHAGO');
   const [mode, setMode] = useState<'RIDE' | 'LOGISTICS'>('RIDE');
   const [pickup, setPickup] = useState('Sokoto Central Market');
   const [dropoff, setDropoff] = useState('');
@@ -437,8 +437,8 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
                   Referrals
               </button>
               <button
-                onClick={() => setView('MARKETPLACE')}
-                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${view === 'MARKETPLACE' ? 'bg-white/10 shadow text-white border border-white/10' : 'text-gray-500 hover:text-gray-300'}`}
+                onClick={() => setView('ESHAGO')}
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${view === 'ESHAGO' ? 'bg-white/10 shadow text-white border border-white/10' : 'text-gray-500 hover:text-gray-300'}`}
               >
                   E-Shago
               </button>
@@ -511,18 +511,24 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
             <>
                 {/* Toggle Mode */}
                 <div className="flex gap-4 mb-6">
-                    <button 
-                        onClick={() => setMode('RIDE')}
-                        className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold flex flex-col items-center gap-2 transition-all ${mode === 'RIDE' ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'border-white/10 text-gray-500 hover:border-white/20 bg-white/5 hover:text-white'}`}
-                    >
-                        <Car size={20}/> Ride
-                    </button>
-                    <button 
-                        onClick={() => setMode('LOGISTICS')}
-                        className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold flex flex-col items-center gap-2 transition-all ${mode === 'LOGISTICS' ? 'border-orange-500 bg-orange-500/10 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'border-white/10 text-gray-500 hover:border-white/20 bg-white/5 hover:text-white'}`}
-                    >
-                        <Box size={20}/> Logistics
-                    </button>
+                  <button
+                    onClick={() => setMode('RIDE')}
+                    className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold flex flex-col items-center gap-2 transition-all ${mode === 'RIDE' ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'border-white/10 text-gray-500 hover:border-white/20 bg-white/5 hover:text-white'}`}
+                  >
+                    <Car size={20}/> Ride
+                  </button>
+                  <button
+                    onClick={() => setMode('LOGISTICS')}
+                    className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold flex flex-col items-center gap-2 transition-all ${mode === 'LOGISTICS' ? 'border-orange-500 bg-orange-500/10 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'border-white/10 text-gray-500 hover:border-white/20 bg-white/5 hover:text-white'}`}
+                  >
+                    <Box size={20}/> Logistics
+                  </button>
+                  <button
+                    onClick={() => setView('ESHAGO')}
+                    className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold flex flex-col items-center gap-2 transition-all ${view === 'ESHAGO' ? 'border-purple-500 bg-purple-500/10 text-purple-400 shadow-[0_0_15px_rgba(147,51,234,0.2)]' : 'border-white/10 text-gray-500 hover:border-white/20 bg-white/5 hover:text-white'}`}
+                  >
+                    <ShoppingBag size={20}/> E-Shago
+                  </button>
                 </div>
 
                 <div className="space-y-4 mb-6">
@@ -682,7 +688,7 @@ const PassengerDashboard: React.FC<PassengerDashboardProps> = ({ user }) => {
                     </div>
                 </div>
             </div>
-        ) : view === 'MARKETPLACE' ? (
+        ) : view === 'ESHAGO' ? (
             <div className="space-y-6 animate-in fade-in">
                 {/* Marketplace Header */}
                 <div className="glass-panel p-6 rounded-xl shadow-lg border border-white/10">

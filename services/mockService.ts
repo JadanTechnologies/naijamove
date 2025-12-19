@@ -194,6 +194,11 @@ const DEFAULT_SETTINGS: SystemSettings = {
       voiceProvider: 'ZEGOCLOUD',
       voiceAppId: "1234567890",
       voiceAppSign: "abcdef1234567890"
+  },
+  referrals: {
+      rewardAmount: 500,
+      maxReferrals: 10,
+      terms: "Refer friends and earn rewards. Terms apply."
   }
 };
 

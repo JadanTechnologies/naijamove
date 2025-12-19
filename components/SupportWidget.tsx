@@ -344,25 +344,45 @@ const AIVoiceCallModal: React.FC<{ user: User; onEndCall: () => void }> = ({ use
     try {
       if (genAIRef.current) {
         const model = genAIRef.current.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const context = `You are an AI assistant for AmanaRide, a ride-hailing and logistics platform in Nigeria.
+        const context = `You are Ada, a friendly female AI assistant for AmanaRide, a ride-hailing and logistics platform in Nigeria.
         You are having a voice conversation with ${user.name}, a ${user.role.toLowerCase()}.
-        Be helpful, friendly, and knowledgeable about transportation services.
-        Keep responses concise for voice conversations.
+        Be extremely helpful, friendly, and knowledgeable about transportation services.
+        Keep responses concise for voice conversations (under 50 words when possible).
         Current conversation: ${conversation.slice(-3).join(' | ')}
 
         User said: "${input}"
 
-        Respond naturally as if in a phone conversation. Ask follow-up questions when appropriate.`;
+        If this is the first message, greet warmly and ask what they need help with today (traveling, shopping, or logistics).
+        If they want to speak to a human agent, ask for their phone number and tell them an agent will call back.
+        Always be polite, use contractions, and sound natural like a helpful customer service representative.
+        If they ask about services, explain clearly what AmanaRide offers.`;
 
         const result = await model.generateContent(context);
         const response = result.response.text();
 
-        setConversation(prev => [...prev, `AI: ${response}`]);
+        setConversation(prev => [...prev, `Ada: ${response}`]);
         setStatus('SPEAKING');
 
-        // Speak the response
+        // Speak the response with female voice settings
         if ('speechSynthesis' in window) {
           const utterance = new SpeechSynthesisUtterance(response);
+          utterance.rate = 0.9; // Slightly slower for clarity
+          utterance.pitch = 1.1; // Higher pitch for female voice
+          utterance.volume = 0.8;
+
+          // Try to use a female voice if available
+          const voices = speechSynthesis.getVoices();
+          const femaleVoice = voices.find(voice =>
+            voice.name.toLowerCase().includes('female') ||
+            voice.name.toLowerCase().includes('woman') ||
+            voice.name.toLowerCase().includes('zira') ||
+            voice.name.toLowerCase().includes('samantha') ||
+            voice.lang.startsWith('en-')
+          );
+          if (femaleVoice) {
+            utterance.voice = femaleVoice;
+          }
+
           utterance.onend = () => {
             setStatus('LISTENING');
             startListening();
@@ -377,11 +397,14 @@ const AIVoiceCallModal: React.FC<{ user: User; onEndCall: () => void }> = ({ use
       }
     } catch (error) {
       console.error('AI Error:', error);
-      const fallbackResponse = "I'm sorry, I didn't catch that. Could you please repeat your question?";
-      setConversation(prev => [...prev, `AI: ${fallbackResponse}`]);
+      const fallbackResponse = "I'm sorry, I didn't catch that. Could you please repeat what you said?";
+      setConversation(prev => [...prev, `Ada: ${fallbackResponse}`]);
 
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(fallbackResponse);
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        utterance.volume = 0.8;
         utterance.onend = () => {
           setStatus('LISTENING');
           startListening();
@@ -438,7 +461,7 @@ const AIVoiceCallModal: React.FC<{ user: User; onEndCall: () => void }> = ({ use
             <Phone size={32} className="text-white" />
           </div>
 
-          <h2 className="text-xl font-bold text-white mb-1 text-center">AmanaRide AI Assistant</h2>
+          <h2 className="text-xl font-bold text-white mb-1 text-center">Ada - AmanaRide AI Assistant</h2>
           <p className="text-blue-400 text-sm font-medium mb-4 uppercase tracking-wider">Voice Conversation</p>
 
           <div className="text-center mb-4">

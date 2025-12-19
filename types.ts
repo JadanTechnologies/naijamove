@@ -274,6 +274,14 @@ export interface SystemSettings {
     geminiEnabled: boolean;
     provider: 'GEMINI' | 'OPENAI' | 'ANTHROPIC';
     apiKey?: string;
+    knowledgeBase?: string;
+    voiceSpeed?: number;
+    voicePitch?: number;
+  };
+  referrals: {
+    rewardAmount: number;
+    maxReferrals: number;
+    terms: string;
   };
   trackers: {
       enabled: boolean;

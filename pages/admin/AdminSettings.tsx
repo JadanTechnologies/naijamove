@@ -774,6 +774,89 @@ const AdminSettings: React.FC = () => {
                 </div>
             );
 
+        case 'referrals':
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-gray-900 dark:text-white"><Tag size={20}/> Referral Program Management</h3>
+
+                    <div className="glass-panel p-6 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50">
+                        <h4 className="font-bold text-gray-900 dark:text-white mb-4">Program Settings</h4>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Referral Reward ({CURRENCY_SYMBOL})</label>
+                                <input
+                                    type="number"
+                                    className={inputClass}
+                                    value={settings.referrals?.rewardAmount || 500}
+                                    onChange={e => updateField('referrals', 'rewardAmount', parseInt(e.target.value))}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Max Referrals per User</label>
+                                <input
+                                    type="number"
+                                    className={inputClass}
+                                    value={settings.referrals?.maxReferrals || 10}
+                                    onChange={e => updateField('referrals', 'maxReferrals', parseInt(e.target.value))}
+                                />
+                            </div>
+                        </div>
+                        <div className="mt-4">
+                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Terms & Conditions</label>
+                            <textarea
+                                className={inputClass + " h-24"}
+                                value={settings.referrals?.terms || "Refer friends and earn rewards. Terms apply."}
+                                onChange={e => updateField('referrals', 'terms', e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="glass-panel p-6 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50">
+                        <h4 className="font-bold text-gray-900 dark:text-white mb-4">AI Knowledge Base</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Configure what the AI assistant knows about AmanaRide services.</p>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Knowledge Base Content</label>
+                            <textarea
+                                className={inputClass + " h-32"}
+                                value={settings.ai?.knowledgeBase || "AmanaRide is Nigeria's premier ride-hailing and logistics platform. We offer safe, affordable transportation with Okada, Keke, Mini-bus, and truck services. Our AI-powered matching ensures fast connections. E-Shago marketplace allows shopping for essentials. Referral program rewards users for bringing new customers."}
+                                onChange={e => updateField('ai', 'knowledgeBase', e.target.value)}
+                                placeholder="Enter information about services, policies, etc."
+                            />
+                        </div>
+                    </div>
+
+                    <div className="glass-panel p-6 rounded-xl border border-gray-200 dark:border-white/10 dark:bg-gray-900/50">
+                        <h4 className="font-bold text-gray-900 dark:text-white mb-4">Voice Settings</h4>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Voice Speed (0.1 - 2.0)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0.1"
+                                    max="2.0"
+                                    className={inputClass}
+                                    value={settings.ai?.voiceSpeed || 0.9}
+                                    onChange={e => updateField('ai', 'voiceSpeed', parseFloat(e.target.value))}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Voice Pitch (0.1 - 2.0)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0.1"
+                                    max="2.0"
+                                    className={inputClass}
+                                    value={settings.ai?.voicePitch || 1.1}
+                                    onChange={e => updateField('ai', 'voicePitch', parseFloat(e.target.value))}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
         default:
             return (
                 <div className="space-y-6 animate-in fade-in">
@@ -854,8 +937,8 @@ const AdminSettings: React.FC = () => {
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-all ${
-                          activeTab === tab.id 
-                          ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30' 
+                          activeTab === tab.id
+                          ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30'
                           : 'bg-white dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/10 border border-gray-200 dark:border-white/5'
                       }`}
                   >
@@ -863,6 +946,17 @@ const AdminSettings: React.FC = () => {
                       {tab.label}
                   </button>
               ))}
+              <button
+                  onClick={() => setActiveTab('referrals')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-all ${
+                      activeTab === 'referrals'
+                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30'
+                      : 'bg-white dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/10 border border-gray-200 dark:border-white/5'
+                  }`}
+              >
+                  <Tag size={16} />
+                  Referrals
+              </button>
           </div>
           
           {renderTabContent()}

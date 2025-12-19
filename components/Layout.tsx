@@ -84,19 +84,16 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavi
       return (
         <>
           <LinkItem icon={LayoutDashboard} label="Overview" page="dashboard" />
-          <LinkItem icon={Users} label="User Management" page="users" permission="MANAGE_USERS" />
-          <LinkItem icon={UserPlus} label="Staff & Drivers" page="recruitment" permission="MANAGE_USERS" />
-          <LinkItem icon={Car} label="Active Trips" page="trips" permission="MANAGE_RIDES" />
+          <LinkItem icon={Users} label="Users" page="users" permission="MANAGE_USERS" />
+          <LinkItem icon={UserPlus} label="Recruitment" page="recruitment" permission="MANAGE_USERS" />
+          <LinkItem icon={Car} label="Trips" page="trips" permission="MANAGE_RIDES" />
           <LinkItem icon={Package} label="Logistics" page="logistics" permission="MANAGE_RIDES" />
           <LinkItem icon={ShoppingBag} label="E-Shago" page="eshago" permission="MANAGE_MARKETPLACE" />
-          <LinkItem icon={Gift} label="Referrals" page="referrals" permission="MANAGE_REFERRALS" />
           <LinkItem icon={CreditCard} label="Finance" page="finance" permission="VIEW_FINANCE" />
           <LinkItem icon={FileBarChart} label="Reports" page="reports" permission="VIEW_REPORTS" />
-          <LinkItem icon={Headphones} label="Support Center" page="support" permission="SUPPORT" />
-          <LinkItem icon={Zap} label="Automation" page="automation" permission="MANAGE_SETTINGS" />
-          <LinkItem icon={Activity} label="System Health" page="health" permission="MANAGE_SETTINGS" />
-          <LinkItem icon={Settings} label="Maintenance" page="maintenance" permission="MANAGE_SETTINGS" />
-          <LinkItem icon={Settings} label="System Config" page="settings" permission="MANAGE_SETTINGS" />
+          <LinkItem icon={Headphones} label="Support" page="support" permission="SUPPORT" />
+          <LinkItem icon={Activity} label="Health" page="health" permission="MANAGE_SETTINGS" />
+          <LinkItem icon={Settings} label="Settings" page="settings" permission="MANAGE_SETTINGS" />
         </>
       );
     }
